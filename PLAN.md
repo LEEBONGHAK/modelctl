@@ -16,9 +16,7 @@ modelctl은 다양한 AI Coding Agent와 LLM Provider를 하나의 CLI 인터페
 
 ---
 
-# 핵심 사용 경험
-
-사용자는 이것만 알면 됩니다.
+# 사용 예시
 
 ```bash
 modelctl
@@ -251,6 +249,7 @@ Claude Code 실행
 ---
 
 # 개발 규칙
+
 ## Code Style
 
 * Python 3.12+
@@ -356,21 +355,35 @@ main
 
 ## Step 1
 
-`pyproject.toml`
-
-* 패키지 정의
-* 의존성
-* CLI entry point
+- Python 패키지 구조 생성
+- CLI 진입점 구성
+- 개발 환경 구성
+- 기본 명령어 동작
 
 ## Step 2
 
-기본 CLI
+핵심 기반 구조 구현
 
-```bash
-modelctl --version
-```
+1. `core/config.py`
 
-동작
+- OS별 config path
+- TOML 설정
+- `modelctl init`
+
+2. `keyring`
+
+- OpenRouter API Key 안전 저장
+
+3. `doctor`
+
+- Python
+- Claude Code
+- Git
+- API Key
+- Database 상태 검사
+
+4. GitHub Actions CI
+
 
 ## Step 3
 

@@ -5,6 +5,16 @@ from rich.console import Console
 
 from modelctl import __version__
 
+from modelctl.core.config import (
+    ModelctlConfig,
+    save_config,
+)
+
+from modelctl.core.database import (
+    init_database,
+)
+
+from modelctl.commands.doctor import run_doctor
 
 app = typer.Typer(
     name="modelctl",
@@ -44,6 +54,17 @@ def init():
         "🚀 Initializing modelctl..."
     )
 
+    save_config(
+        ModelctlConfig()
+    )
+
+    init_database()
+
+
+    console.print(
+        "✅ modelctl initialized"
+    )
+
 
 @app.command()
 def doctor():
@@ -55,6 +76,7 @@ def doctor():
         "🩺 Running diagnostics..."
     )
 
+    run_doctor(console)
 
 @app.command()
 def providers():
