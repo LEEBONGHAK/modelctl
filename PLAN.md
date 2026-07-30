@@ -349,9 +349,7 @@ main
 
 ---
 
-# Milestone#1
-
-**Sprint 0 - Repository Bootstrap**
+# Sprint 0 - Repository Bootstrap
 
 ## Step 1
 
@@ -384,20 +382,63 @@ main
 
 4. GitHub Actions CI
 
+---
 
-## Step 3
+# Sprint 1 - Core Engine
 
-Config 시스템
+다음 구현:
 
-```bash
-modelctl init
+## Provider Interface
+
+```python
+class Provider:
+
+    name
+
+    login()
+
+    list_models()
+
+    validate()
 ```
 
-## Step 4
+## 첫 번째 Provider:
 
-SQLite Database
+### OpenRouter Provider
 
-## Step 5
+기능:
+```bash
+modelctl login openrouter
+```
 
-Provider/Launcher Interface
+↓
+
+API Key 저장
+```bash
+modelctl refresh
+```
+
+↓
+
+OpenRouter API 호출
+
+↓
+
+SQLite 저장
+
+```bash
+modelctl models
+```
+
+↓
+
+출력:
+
+```bash
+openai/gpt-5
+google/gemini-2.5-pro
+anthropic/claude-sonnet-4
+deepseek/deepseek-chat-v3
+...
+```
 
