@@ -1,21 +1,18 @@
 import typer
 
+from modelctl_cli.context import container
+
+
 models_app = typer.Typer()
 
 
 @models_app.command()
 def sync():
-    """
-    Synchronize models from provider.
-    """
 
-    print("Not implemented")
+    service = container.model_service()
 
+    count = service.sync()
 
-@models_app.command("list")
-def list_models():
-    """
-    List cached models.
-    """
-
-    print("Not implemented")
+    typer.echo(
+        f"Synced {count} models"
+    )

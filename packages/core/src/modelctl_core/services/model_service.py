@@ -6,23 +6,27 @@ class ModelService:
     def __init__(
         self,
         repository: ModelRepository,
-        provider,
-        mapper,
+        provider_registry,
+        credentials,
     ):
         self.repository = repository
-        self.provider = provider
-        self.mapper = mapper
+        self.provider_registry = (provider_registry)
+        self.credentials = credentials
 
-    def sync(self):
+    def sync(self, provider_name="openrouter"):
+        provider = (
+            self.provider_registry.get(provider_name)
+        )
 
-        raw_models = self.provider.list_models()
+        token = (
+            self.credentials.load(provider_name)
+        )
 
-        models = [
-            self.mapper.map(m)
-            for m in raw_models
-        ]
+        provider.authenticate(token)
 
-        self.repository.delete_all()
+        models = (
+            provider.list_models()
+        )
 
         self.repository.save_many(models)
 
