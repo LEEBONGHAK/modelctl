@@ -392,7 +392,6 @@ main
 
 ```python
 class Provider:
-
     name
 
     login()
