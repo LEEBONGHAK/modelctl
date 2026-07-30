@@ -23,3 +23,4 @@ with one command.
 
 ```bash
 pip install modelctl
+```
