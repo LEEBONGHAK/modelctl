@@ -1,60 +1,40 @@
-[build-system]
-requires = [
-    "hatchling"
-]
-build-backend = "hatchling.build"
-
-
 [project]
-name = "modelctl"
-
+name = "modelctl-workspace"
 version = "0.1.0"
+requires-python = ">=3.13"
 
-description = "The universal AI model and coding agent control plane"
-
-readme = "README.md"
-
-requires-python = ">=3.12"
-
-license = {text = "MIT"}
-
-authors = [
-    {name = "modelctl contributors"}
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+    "ruff>=0.12",
+    "basedpyright>=1.31",
+    "pre-commit",
 ]
 
-
-dependencies = [
-    "typer>=0.12.0",
-    "rich>=13.7.0",
-    "pydantic>=2.7.0",
-    "platformdirs>=4.2.0",
-    "keyring>=25.0.0",
-    "sqlmodel>=0.0.20",
-    "httpx>=0.27.0"
+[tool.uv.workspace]
+members = [
+    "apps/modelctl",
+    "packages/core",
+    "packages/sdk",
 ]
 
-
-[project.scripts]
-
-modelctl = "modelctl.cli:app"
-
-
-[tool.hatch.build.targets.wheel]
-
-packages = [
-    "src/modelctl"
-]
-
+[tool.uv.sources]
+modelctl-core = { workspace = true }
+modelctl-sdk = { workspace = true }
 
 [tool.ruff]
-
 line-length = 100
+target-version = "py313"
 
-target-version = "py312"
-
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+]
 
 [tool.pytest.ini_options]
-
-pythonpath = [
-    "src"
-]
+testpaths = ["tests"]

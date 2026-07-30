@@ -1,0 +1,30 @@
+[build-system]
+requires = [
+    "hatchling"
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "modelctl"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "modelctl-core",
+    "modelctl-sdk",
+    "typer>=0.16",
+    "rich>=14",
+]
+
+[project.scripts]
+modelctl = "modelctl_cli.main:app"
+
+
+[tool.uv.sources]
+modelctl-core = { workspace = true }
+modelctl-sdk = { workspace = true }
+
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/modelctl_cli"
+]
