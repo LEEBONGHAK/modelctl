@@ -1,3 +1,5 @@
+from modelctl_core.config.manager import ConfigManager
+
 class ConfigService:
     def __init__(self):
 

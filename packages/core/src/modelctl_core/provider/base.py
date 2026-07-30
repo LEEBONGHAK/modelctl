@@ -4,11 +4,21 @@ from modelctl_core.plugins.metadata import (
 )
 
 
-class ProviderPlugin(ABC):
-    metadata: PluginMetadata
+class Provider(ABC):
+
+    metadata: ProviderMetadata
 
     @abstractmethod
-    def validate(self) -> bool: ...
+    def authenticate(
+        self,
+        credentials,
+    ):
+        print("1")
 
     @abstractmethod
-    def list_models(self): ...
+    def list_models(self):
+        print("1")
+
+    @abstractmethod
+    def chat(self):
+        print("1")
