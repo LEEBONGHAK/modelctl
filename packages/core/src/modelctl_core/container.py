@@ -3,8 +3,9 @@ from functools import cached_property
 from modelctl_core.auth.service import CredentialService
 from modelctl_core.config.manager import ConfigManager
 from modelctl_core.database.engine import get_engine
-
 from modelctl_core.provider.registry import ProviderRegistry
+from modelctl_core.selector.fzf_selector import FzfSelector
+from modelctl_core.services.selection_service import SelectionService
 
 from modelctl_core.repository.model_repository import (
     ModelRepository,
@@ -59,4 +60,16 @@ class Container:
             repository=self.models,
             provider_registry=self.providers,
             credentials=self.credentials,
+        )
+
+    @cached_property
+    def profiles(self):
+        return ""
+
+    def selection_service(self):
+
+        return SelectionService(
+            self.provider_registry,
+            self.model_repository,
+            FzfSelector(),
         )

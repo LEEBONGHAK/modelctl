@@ -2,35 +2,28 @@ from datetime import UTC, datetime
 from sqlmodel import Field, SQLModel
 
 
-class UniversalModel(SQLModel, table=True):
-    __tablename__ = "models"
+class UserModelState(SQLModel, table=True):
+    __tablename__ = "user_model_state"
 
-    id: int | None = Field(default=None, primary_key=True)
-
-    provider: str = Field(index=True)
-
-    model_id: str = Field(
-        unique=True,
-        index=True,
+    profile_name: str = Field(
+        foreign_key="profiles.name",
+        primary_key=True,
     )
 
-    display_name: str
+    model_id: str = Field(
+        foreign_key="models.model_id",
+        primary_key=True,
+    )
 
-    organization: str | None = None
+    favorite: bool = False
 
-    family: str | None = None
+    pinned: bool = False
 
-    context_length: int = 0
+    alias: str | None = None
 
-    prompt_price: float = 0
+    usage_count: int = 0
 
-    completion_price: float = 0
-
-    supports_vision: bool = False
-
-    supports_tools: bool = False
-
-    supports_reasoning: bool = False
+    last_used_at: datetime | None = None
 
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),

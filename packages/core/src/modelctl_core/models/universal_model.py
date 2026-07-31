@@ -1,11 +1,15 @@
 from datetime import UTC, datetime
+
 from sqlmodel import Field, SQLModel
 
 
 class UniversalModel(SQLModel, table=True):
     __tablename__ = "models"
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = Field(
+        default=None,
+        primary_key=True,
+    )
 
     provider: str = Field(index=True)
 
@@ -14,11 +18,7 @@ class UniversalModel(SQLModel, table=True):
         index=True,
     )
 
-    display_name: str
-
-    organization: str | None = None
-
-    family: str | None = None
+    name: str
 
     context_length: int = 0
 
@@ -32,10 +32,10 @@ class UniversalModel(SQLModel, table=True):
 
     supports_reasoning: bool = False
 
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-    )
+    favorite: bool = False
 
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC),
-    )
+    last_used_at: datetime | None = None
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

@@ -2,12 +2,10 @@ from pydantic import BaseModel
 
 
 class ModelctlConfig(BaseModel):
-    provider: str = "openrouter"
+    provider: str | None = None
 
     default_model: str | None = None
 
-    theme: str = "auto"
+    launcher: str = "claude"
 
     database_path: str
-
-    plugin_dir: str

@@ -1,46 +1,54 @@
-from modelctl_core.repository.model_repository import ModelRepository
-
-
 class ModelService:
     def __init__(
         self,
-        repository: ModelRepository,
-        provider_registry,
-        credentials,
+        repository,
+        providers,
+        credential_store,
     ):
+
         self.repository = repository
-        self.provider_registry = provider_registry
-        self.credentials = credentials
 
-    def sync(self, provider_name="openrouter"):
-        provider = self.provider_registry.get(provider_name)
+        self.providers = providers
 
-        token = self.credentials.load(provider_name)
+        self.credential_store = credential_store
 
-        provider.authenticate(token)
+    def sync(
+        self,
+        provider_name="openrouter",
+    ):
 
-        models = provider.list_models()
+        provider = self.providers.get(provider_name)
+
+        credential = self.credential_store.get(provider_name)
+
+        models = provider.list_models(credential)
 
         self.repository.save_many(models)
 
         return len(models)
 
     def list(self):
+
         return self.repository.list()
 
-    def search(self):
-        return ""
+    def search(
+        self,
+        keyword,
+    ):
 
-    def favorite(self):
-        return ""
+        return self.repository.search(keyword)
 
-    def use(self, model_id: str):
-        model = self.repository.get(model_id)
-        self.repository.mark_used(model_id)
+    def favorite(
+        self,
+        model_id,
+        value=True,
+    ):
 
-        config = self.config.load()
-        config.default_model = model.model_id
-        self.config.save(config)
+        return self.repository.favorite(
+            model_id,
+            value,
+        )
 
-    def recent(self):
-        return ""
+    def favorites(self):
+
+        return self.repository.favorites()
