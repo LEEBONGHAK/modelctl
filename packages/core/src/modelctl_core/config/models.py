@@ -1,15 +1,13 @@
-from pathlib import Path
-
 from pydantic import BaseModel
 
 
-class AppConfig(BaseModel):
-    default_provider: str | None = None
-
-    default_launcher: str | None = None
+class ModelctlConfig(BaseModel):
+    provider: str = "openrouter"
 
     default_model: str | None = None
 
-    database_path: Path
+    theme: str = "auto"
 
-    cache_dir: Path
+    database_path: str
+
+    plugin_dir: str

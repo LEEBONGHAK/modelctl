@@ -27,3 +27,20 @@ class ModelService:
 
     def list(self):
         return self.repository.list()
+
+    def search(self):
+        return ""
+
+    def favorite(self):
+        return ""
+
+    def use(self, model_id: str):
+        model = self.repository.get(model_id)
+        self.repository.mark_used(model_id)
+
+        config = self.config.load()
+        config.default_model = model.model_id
+        self.config.save(config)
+
+    def recent(self):
+        return ""
