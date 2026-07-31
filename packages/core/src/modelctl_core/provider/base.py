@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
+
+from modelctl_core.auth.types import Credential
 from modelctl_core.plugins.metadata import (
     PluginMetadata,
 )
 
 
 class Provider(ABC):
-
+    id: str
+    display_name: str
     metadata: ProviderMetadata
 
     @abstractmethod
@@ -16,7 +19,7 @@ class Provider(ABC):
         print("1")
 
     @abstractmethod
-    def list_models(self):
+    def list_models(self, credential: Credential):
         print("1")
 
     @abstractmethod

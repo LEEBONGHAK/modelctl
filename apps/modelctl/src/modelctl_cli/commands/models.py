@@ -9,10 +9,6 @@ models_app = typer.Typer()
 @models_app.command()
 def sync():
 
-    service = container.model_service()
+    count = container.model_service().sync()
 
-    count = service.sync()
-
-    typer.echo(
-        f"Synced {count} models"
-    )
+    console.print(f"✔ Synced {count} models")

@@ -17,6 +17,7 @@ dependencies = [
     "platformdirs>=4",
     "keyring>=25",
     "pydantic>=2",
+    "tomli-w>=1.2.0",
 ]
 
 

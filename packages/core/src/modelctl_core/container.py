@@ -22,28 +22,22 @@ class Container:
     모든 Core 객체의 생명주기를 관리한다.
     """
 
-
     @cached_property
     def config(self):
 
         return ConfigManager()
-
 
     @cached_property
     def engine(self):
 
         cfg = self.config.load()
 
-        return get_engine(
-            cfg.database_path
-        )
-
+        return get_engine(cfg.database_path)
 
     @cached_property
     def credentials(self):
 
         return CredentialService()
-
 
     @cached_property
     def providers(self):
@@ -54,23 +48,15 @@ class Container:
 
         return registry
 
-
     @cached_property
     def models(self):
 
-        return ModelRepository(
-            self.engine
-        )
-
+        return ModelRepository(self.engine)
 
     def model_service(self):
 
         return ModelService(
-
             repository=self.models,
-
             provider_registry=self.providers,
-
             credentials=self.credentials,
-
         )

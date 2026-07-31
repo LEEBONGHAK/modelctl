@@ -1,27 +1,17 @@
-from modelctl_core.providers.openrouter.client import (
-    OpenRouterClient,
-)
-
-
 class OpenRouterProvider(Provider):
+    id = "openrouter"
 
-    name = "openrouter"
-    metadata = ProviderMetadata(
-        id="openrouter",
-        display_name="OpenRouter",
-        homepage="https://openrouter.ai",
-    )
+    display_name = "OpenRouter"
 
-    def __init__(self):
+    def list_models(
+        self,
+        credential,
+    ):
 
-        self.client = None
+        client = OpenRouterClient(credential)
 
-    def login(self, api_key):
+        raw = client.get_models()
 
-        self.client = OpenRouterClient(
-            api_key
-        )
+        mapper = OpenRouterMapper()
 
-    def list_models(self):
-
-        return self.client.get_models()
+        return [mapper.map(m) for m in raw]

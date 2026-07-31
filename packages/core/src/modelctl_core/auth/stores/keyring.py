@@ -4,7 +4,6 @@ from modelctl_core.auth.base import CredentialStore
 
 
 class KeyringStore(CredentialStore):
-
     def save(self, service, key, secret):
 
         keyring.set_password(
