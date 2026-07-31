@@ -6,6 +6,7 @@ from modelctl_cli.commands.plugins import plugins_app
 from modelctl_cli.commands.models import models_app
 from modelctl_cli.commands.auth import auth_app
 from modelctl_cli.commands.use import use_app
+from modelctl_cli.commands.run import run_app
 
 app = typer.Typer(
     name="modelctl",
@@ -37,6 +38,11 @@ app.add_typer(
 app.add_typer(
     use_app,
     name="use",
+)
+
+app.add_typer(
+    run_app,
+    name="run",
 )
 
 if __name__ == "__main__":

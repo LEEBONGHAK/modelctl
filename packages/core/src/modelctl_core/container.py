@@ -7,13 +7,11 @@ from modelctl_core.provider.registry import ProviderRegistry
 from modelctl_core.selector.fzf_selector import FzfSelector
 from modelctl_core.services.selection_service import SelectionService
 
-from modelctl_core.repository.model_repository import (
-    ModelRepository,
-)
+from modelctl_core.repository.model_repository import ModelRepository
+from modelctl_core.services.model_service import ModelService
 
-from modelctl_core.services.model_service import (
-    ModelService,
-)
+from modelctl_core.launcher.registry import LauncherRegistry
+from modelctl_core.services.launcher_service import LauncherService
 
 
 class Container:
@@ -72,4 +70,11 @@ class Container:
             self.provider_registry,
             self.model_repository,
             FzfSelector(),
+        )
+
+    def launcher_service(self):
+
+        return LauncherService(
+            LauncherRegistry(),
+            self.config(),
         )
