@@ -10,8 +10,8 @@ version = "0.1.0"
 description = "Universal AI model and coding-agent control plane"
 requires-python = ">=3.13"
 dependencies = [
-    "modelctl-core==0.1.0",
-    "modelctl-sdk==0.1.0",
+    "modelctl-core",
+    "modelctl-sdk",
     "typer>=0.16",
     "rich>=14",
 ]
