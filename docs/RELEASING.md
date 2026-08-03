@@ -10,7 +10,8 @@ This document describes coordinated development releases for the `modelctl`, `mo
 
 - `release.toml` is the machine-readable release decision.
 - A version is eligible for a tag only when its manifest status is `ready`.
-- A trusted push to `refac` independently runs dependency audit, lint, tests, package builds, and installed-wheel smoke validation.
+- A trusted push to `refac`, or the merged event of a pull request whose base is `refac`, independently runs dependency audit, lint, tests, package builds, and installed-wheel smoke validation.
+- Closed but unmerged pull requests do not run release publication.
 - After all checks pass, the workflow creates the coordinated `v*` tag and one GitHub Release.
 - Existing tags and GitHub Release assets are never overwritten.
 - **PyPI publication is not configured and no PyPI publishing job exists.**
@@ -48,7 +49,7 @@ Validation also requires the matching changelog entry, English and Korean README
 
 ### Pull-request dry run
 
-A relevant pull request runs the complete release validation without creating a tag or release:
+An opened, synchronized, or reopened relevant pull request runs the complete release validation without creating a tag or release:
 
 - validate package versions, manifest, documentation, and proposed tag
 - install the locked workspace
@@ -70,16 +71,24 @@ To mark a version complete:
 4. Set the matching version and `status = "ready"` in `release.toml`.
 5. Merge the reviewed release-readiness pull request into `refac`.
 
-The trusted `refac` push then runs all release gates. If successful and the tag does not exist, it creates `v<version>` at that exact commit and publishes the GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
+The trusted merged event checks out the exact merge commit and reruns every release gate. If successful and the tag does not exist, it creates `v<version>` at that merge commit and publishes the GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
 
-A manually created matching `v*` tag is still supported. It must point to a commit contained in `refac` and passes the same full validation before a release is created.
+A direct trusted push to `refac` and a manually created matching `v*` tag are also supported. A manual tag must point to a commit contained in `refac` and passes the same full validation before a release is created.
+
+### Trust boundaries
+
+- The merged-event publication condition requires `pull_request.merged == true` and base branch `refac`.
+- The workflow checks out `pull_request.merge_commit_sha`, not an untrusted head branch, for the post-merge release run.
+- Closed but unmerged pull requests are skipped.
+- Pull-request dry runs do not receive content write permission.
+- Only the publication job receives `contents: write`, after all validation succeeds.
 
 ### Immutability and recovery
 
 - An existing tag is never moved.
 - Existing GitHub Release assets are never replaced.
 - If a version needs correction after tagging, prepare a new patch version instead of modifying the existing release.
-- If a tag exists at another commit, later `refac` pushes skip that version rather than overwriting it.
+- If a tag exists at another commit, later release triggers skip that version rather than overwriting it.
 
 ### PyPI
 
@@ -91,7 +100,8 @@ PyPI publication remains intentionally deferred. Enabling it later requires a se
 
 - `release.toml`을 기계가 판독하는 release 결정 파일로 사용합니다.
 - Manifest status가 `ready`인 버전만 tag 생성 대상이 됩니다.
-- 신뢰된 `refac` push에서 dependency audit, lint, test, package build, 설치된 wheel smoke 검증을 독립적으로 수행합니다.
+- 신뢰된 `refac` push 또는 base가 `refac`인 Pull Request의 실제 병합 이벤트에서 dependency audit, lint, test, package build, 설치된 wheel smoke 검증을 독립적으로 수행합니다.
+- 닫혔지만 병합되지 않은 Pull Request에서는 release 게시를 실행하지 않습니다.
 - 모든 검증을 통과한 경우 통합 `v*` tag와 하나의 GitHub Release를 생성합니다.
 - 기존 tag와 GitHub Release asset은 절대 덮어쓰지 않습니다.
 - **PyPI 게시는 구성되어 있지 않으며 PyPI 게시 job도 존재하지 않습니다.**
@@ -129,7 +139,7 @@ python scripts/release_validation.py --tag v0.1.0
 
 ### Pull Request dry run
 
-관련 Pull Request에서는 tag나 release를 생성하지 않고 전체 release 검증을 수행합니다.
+관련 Pull Request가 열리거나 갱신되거나 다시 열리면 tag나 release를 생성하지 않고 전체 release 검증을 수행합니다.
 
 - Package version, manifest, 문서, 제안 tag 검증
 - Lockfile 기반 workspace 설치
@@ -151,16 +161,24 @@ python scripts/release_validation.py --tag v0.1.0
 4. `release.toml`에 같은 version과 `status = "ready"`를 설정합니다.
 5. 검토된 release-readiness Pull Request를 `refac`에 병합합니다.
 
-신뢰된 `refac` push에서 모든 release gate를 실행합니다. 성공하고 tag가 존재하지 않으면 정확히 해당 commit에 `v<version>`을 생성하고, 자동 release note, Python 배포 파일 여섯 개, `SHA256SUMS`를 포함한 GitHub Release를 게시합니다.
+신뢰된 병합 이벤트는 정확한 merge commit을 checkout한 뒤 모든 release gate를 다시 실행합니다. 성공하고 tag가 존재하지 않으면 해당 merge commit에 `v<version>`을 생성하고 자동 release note, Python 배포 파일 여섯 개, `SHA256SUMS`를 포함한 GitHub Release를 게시합니다.
 
-동일한 형식의 `v*` tag를 수동으로 생성하는 방법도 계속 지원합니다. Tag는 `refac`에 포함된 commit을 가리켜야 하며 같은 전체 검증을 통과한 후에만 release가 생성됩니다.
+신뢰된 `refac` 직접 push와 동일 형식의 수동 `v*` tag도 지원합니다. 수동 tag는 `refac`에 포함된 commit을 가리켜야 하며 같은 전체 검증을 통과해야 합니다.
+
+### 신뢰 경계
+
+- 병합 이벤트 게시 조건은 `pull_request.merged == true`와 base branch `refac`을 모두 요구합니다.
+- 병합 후 release 실행에서는 신뢰할 수 없는 head branch가 아니라 `pull_request.merge_commit_sha`를 checkout합니다.
+- 닫혔지만 병합되지 않은 Pull Request는 건너뜁니다.
+- Pull Request dry run에는 content write 권한이 없습니다.
+- 모든 검증을 통과한 뒤 publication job에만 `contents: write` 권한을 부여합니다.
 
 ### 불변성 및 복구
 
 - 기존 tag는 이동하지 않습니다.
 - 기존 GitHub Release asset은 교체하지 않습니다.
 - Tag 생성 이후 수정이 필요하면 기존 release를 변경하지 않고 새로운 patch version을 준비합니다.
-- 같은 tag가 다른 commit에 이미 존재하면 이후 `refac` push는 해당 버전을 덮어쓰지 않고 건너뜁니다.
+- 같은 tag가 다른 commit에 이미 존재하면 이후 release trigger는 해당 버전을 덮어쓰지 않고 건너뜁니다.
 
 ### PyPI
 
