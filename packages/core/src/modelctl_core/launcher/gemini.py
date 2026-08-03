@@ -7,6 +7,7 @@ from modelctl_core.launcher.base import Launcher
 class GeminiCliLauncher(Launcher):
     name = "gemini"
     display_name = "Gemini CLI"
+    native_provider = "google"
 
     def available(self) -> bool:
         return shutil.which("gemini") is not None
