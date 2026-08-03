@@ -8,20 +8,26 @@ PRIVATE_DIRECTORY_MODE = 0o700
 PRIVATE_FILE_MODE = 0o600
 
 
-def _reject_symlink(path: Path) -> None:
-    if path.is_symlink():
-        raise RuntimeError(f"Refusing to access symbolic link: {path}")
+def _reject_symlink_components(path: Path) -> None:
+    current = path
+    while True:
+        if current.is_symlink():
+            raise RuntimeError(f"Refusing to access symbolic-link path: {current}")
+        if current.parent == current:
+            return
+        current = current.parent
 
 
 def ensure_private_directory(path: Path) -> None:
-    _reject_symlink(path)
+    _reject_symlink_components(path)
     path.mkdir(parents=True, exist_ok=True)
+    _reject_symlink_components(path)
     if os.name != "nt":
         path.chmod(PRIVATE_DIRECTORY_MODE)
 
 
 def harden_private_file(path: Path) -> None:
-    _reject_symlink(path)
+    _reject_symlink_components(path)
     if path.exists() and os.name != "nt":
         path.chmod(PRIVATE_FILE_MODE)
 
@@ -37,7 +43,7 @@ def atomic_write_private_text(
     *,
     encoding: str = "utf-8",
 ) -> None:
-    _reject_symlink(path)
+    _reject_symlink_components(path)
     ensure_private_directory(path.parent)
 
     descriptor, temporary_name = tempfile.mkstemp(
@@ -57,6 +63,7 @@ def atomic_write_private_text(
             temporary_file.flush()
             os.fsync(temporary_file.fileno())
 
+        _reject_symlink_components(path)
         os.replace(temporary_path, path)
         harden_private_file(path)
     except BaseException:
