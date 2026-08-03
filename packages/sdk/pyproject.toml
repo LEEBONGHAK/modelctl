@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "modelctl-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "SDK for modelctl plugins"
 requires-python = ">=3.13"
 

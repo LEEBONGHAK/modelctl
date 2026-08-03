@@ -102,9 +102,22 @@ class LauncherService:
         return provider, model, active_name
 
     def _selection(self):
-        provider, model, launcher_name = self._configured_values()
+        config = self.config.load()
+        launcher_name = config.get("launcher", "claude")
+        model = config.get("default_model")
+        provider = config.get("provider")
+
+        if not isinstance(model, str) or not model:
+            raise RuntimeError("No model selected. Run: modelctl use")
+        if not isinstance(launcher_name, str) or not launcher_name:
+            launcher_name = "claude"
+
         launcher = self.registry.get(launcher_name)
         if not launcher:
             raise RuntimeError(f"Unknown launcher: {launcher_name}")
 
-        return launcher, model, provider
+        return (
+            launcher,
+            model,
+            provider if isinstance(provider, str) and provider else None,
+        )

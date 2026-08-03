@@ -1,4 +1,4 @@
-version = "0.1.0"
-status = "ready"
+version = "0.2.0"
+status = "draft"
 channel = "development"
 publish_pypi = false

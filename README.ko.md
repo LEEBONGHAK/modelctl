@@ -6,7 +6,7 @@
 
 `modelctl`은 AI provider와 모델 선택, credential 및 기본 설정 관리, 로컬 환경 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 완성된 개발 버전은 `0.1.0`입니다. `main`은 공식 릴리스 브랜치이며 다음 버전 개발은 `refac`에서 계속합니다.
+> 현재 완성된 개발 버전은 `0.1.0`입니다. `0.2.0`은 `refac`에서 draft 상태로 개발을 시작했으며 `main`은 공식 릴리스 브랜치로 유지합니다.
 
 ## 현재 동작하는 기능
 
@@ -16,6 +16,7 @@
 - Claude Code, Gemini CLI, Codex CLI, Aider launcher
 - Shell 실행 없이 네이티브 인자 전달
 - Launcher 목록, 설치 상태 확인, 선택
+- Provider-aware launcher 추천과 명시적인 안전 적용 단계
 - `modelctl doctor` 진단 및 호환성 안내
 - 운영체제 keyring과 명시적 평문 fallback
 - Python 3.13 기반 Linux, macOS, Windows 테스트
@@ -75,8 +76,12 @@ modelctl use \
 
 ```bash
 modelctl launchers list
+modelctl launchers recommend
+modelctl launchers recommend --apply
 modelctl launchers use aider
 ```
+
+`recommend`는 선택한 provider와 model을 기준으로 가장 안전한 지원 launcher를 제안합니다. `--apply`를 지정하지 않으면 설정을 변경하지 않으며, 적용 시에는 `PATH`에서 사용할 수 없는 launcher를 거부합니다.
 
 | ID | 코딩 에이전트 | Native provider | 기본 명령 |
 | --- | --- | --- | --- |
@@ -156,10 +161,10 @@ Release 결정은 [`release.toml`](release.toml), 주요 변경 사항은 [`CHAN
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```
 
-`status = "ready"`인 신뢰된 `main` push 또는 검토된 `main` 대상 Pull Request 병합은 다음 검증을 독립적으로 통과해야 합니다.
+현재 `0.2.0` manifest는 `draft`이므로 release를 게시할 수 없습니다. 명시적으로 `ready`로 전환한 뒤 신뢰된 `main` push 또는 검토된 `main` 대상 Pull Request 병합은 다음 검증을 독립적으로 통과해야 합니다.
 
 - Package version, manifest, changelog, 문서 일치
 - Lockfile dependency audit
@@ -188,7 +193,7 @@ Credential 동작, 취약점 제보 방법, 지원 버전, 알려진 한계는 [
 
 ## 단기 로드맵
 
-- 더 엄격한 호환성 정책과 자동 조치
+- Provider-aware 추천을 더 엄격한 호환성 정책과 자동 조치로 확장
 - Launcher capability와 execution request 리팩터링
 - 완성된 사용자 흐름과 테스트를 전제로 한 profile 관리
 - 별도 검토를 거치는 PyPI 게시 milestone
