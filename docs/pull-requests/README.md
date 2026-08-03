@@ -23,6 +23,8 @@ This directory records the implementation history of `modelctl` one pull request
 | #15 | [PR-015.md](PR-015.md) | Validated tags and GitHub Release automation / tag 검증·GitHub Release 자동화 |
 | #16 | [PR-016.md](PR-016.md) | Credential, workflow, and local-state security hardening / credential·workflow·로컬 상태 보안 강화 |
 | #17 | [PR-017.md](PR-017.md) | v0.1.0 readiness manifest and complete release gates / v0.1.0 완료 선언·통합 release gate |
+| #18 | [PR-018.md](PR-018.md) | Trusted merged-PR release path / 신뢰된 병합 PR 릴리스 경로 |
+| #19 | [PR-019.md](PR-019.md) | Promote completed v0.1.0 to main / 완성된 v0.1.0 main 승격 |
 
 ## Document format / 문서 형식
 
