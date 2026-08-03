@@ -11,15 +11,11 @@ class ClaudeCodeLauncher(Launcher):
     def available(self) -> bool:
         return shutil.which("claude") is not None
 
-    def run(self, model: str):
+    def run(self, model: str, extra_args: list[str] | None = None) -> None:
         if not self.available():
-            raise RuntimeError("Claude Code CLI not found")
+            raise RuntimeError(
+                "Claude Code CLI not found. Install it and run `claude` once to authenticate."
+            )
 
-        subprocess.run(
-            [
-                "claude",
-                "--model",
-                model,
-            ],
-            check=True,
-        )
+        command = ["claude", "--model", model, *(extra_args or [])]
+        subprocess.run(command, check=True)
