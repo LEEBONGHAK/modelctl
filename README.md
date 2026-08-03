@@ -9,7 +9,7 @@
 ## What works today
 
 - OpenRouter credential and model workflow
-- Interactive provider/model selection with `modelctl use`
+- Interactive and non-interactive provider/model selection with `modelctl use`
 - Persistent provider, model, and launcher configuration
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers
 - Native launcher argument forwarding
@@ -41,11 +41,28 @@ uv run modelctl --help
 
 ### 1. Configure a provider and model
 
+Authenticate and synchronize the provider model catalog:
+
 ```bash
 modelctl auth login openrouter
 modelctl models sync openrouter
+```
+
+Select interactively:
+
+```bash
 modelctl use
 ```
+
+Select without a prompt for scripts and CI:
+
+```bash
+modelctl use \
+  --provider openrouter \
+  --model anthropic/claude-sonnet-4
+```
+
+`--provider` and `--model` must be supplied together. The command validates that the provider is registered and the model exists in the synchronized local catalog before updating the configuration.
 
 ### 2. Select a coding-agent launcher
 
@@ -159,7 +176,7 @@ docs/                project status and design documentation
 
 ## Near-term roadmap
 
-- Non-interactive model selection
 - Cross-platform CI
 - First development release
 - Stricter compatibility policies and automatic remediation
+- Launcher capability and execution-request refactoring
