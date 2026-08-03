@@ -16,13 +16,14 @@
 - Launcher discovery, installation status, and selection
 - Local environment diagnostics with `modelctl doctor`
 - Non-blocking provider/model/launcher compatibility feedback
-- Ruff and pytest GitHub Actions checks
+- Ruff validation on Linux
+- pytest validation on Linux, macOS, and Windows with Python 3.13
 
 For the detailed implementation history, architecture snapshot, known limitations, and roadmap, see [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
 ## Installation for development
 
-The repository is a uv workspace.
+The repository is a uv workspace and requires Python 3.13 or later.
 
 ```bash
 git clone https://github.com/LEEBONGHAK/modelctl.git
@@ -159,10 +160,16 @@ Default paths:
 ## Development checks
 
 ```bash
-uv sync --all-packages
+uv sync --all-packages --locked
 uv run ruff check .
 uv run pytest
 ```
+
+GitHub Actions runs lint once on Ubuntu and runs the complete pytest suite independently on:
+
+- Ubuntu with Python 3.13
+- macOS with Python 3.13
+- Windows with Python 3.13
 
 ## Project structure
 
@@ -176,7 +183,7 @@ docs/                project status and design documentation
 
 ## Near-term roadmap
 
-- Cross-platform CI
-- First development release
+- First installable development release
 - Stricter compatibility policies and automatic remediation
 - Launcher capability and execution-request refactoring
+- Profile management
