@@ -1,13 +1,16 @@
+import sys
+from importlib import import_module
 from pathlib import Path
 
 import pytest
 
-from scripts.release_validation import (
-    ReleaseValidationError,
-    validate_package_versions,
-    validate_release,
-    validate_tag,
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+release_validation = import_module("scripts.release_validation")
+
+ReleaseValidationError = release_validation.ReleaseValidationError
+validate_package_versions = release_validation.validate_package_versions
+validate_release = release_validation.validate_release
+validate_tag = release_validation.validate_tag
 
 
 def write_project(path: Path, name: str, version: str) -> None:
