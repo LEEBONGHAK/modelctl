@@ -27,10 +27,10 @@ def use(
     ] = None,
 ) -> None:
     """Select and persist the default provider and model."""
-    selection = container.selection_service()
-
     if (provider is None) != (model is None):
         raise typer.BadParameter("Use --provider and --model together.")
+
+    selection = container.selection_service()
 
     if provider is not None and model is not None:
         try:
