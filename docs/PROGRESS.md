@@ -113,10 +113,12 @@ openrouter/anthropic/claude-sonnet-4
 
 ### Quality gates
 
-- uv workspace installation in GitHub Actions
-- Ruff correctness checks
-- pytest regression suite
-- Separate `CI` and `Test` workflows
+- Locked uv workspace installation in GitHub Actions
+- Ruff correctness checks on Ubuntu with Python 3.13
+- Complete pytest suite on Ubuntu with Python 3.13
+- Complete pytest suite on macOS with Python 3.13
+- Complete pytest suite on Windows with Python 3.13
+- Matrix fail-fast disabled so every platform reports independently
 - Regression coverage for interactive and non-interactive selection
 - Repository-level coverage for provider-scoped model queries
 
@@ -134,6 +136,8 @@ openrouter/anthropic/claude-sonnet-4
 | #8 | Record project progress and rewrite the current README workflow | Merged |
 | #9 | Add `modelctl doctor` environment and configuration diagnostics | Merged |
 | #10 | Add provider/model/launcher compatibility feedback | Merged |
+| #11 | Add non-interactive provider and model selection | Merged |
+| #12 | Add Linux, macOS, and Windows test matrix | Merged |
 
 ## Architecture snapshot
 
@@ -167,14 +171,14 @@ The following items are intentionally deferred until more working integrations e
 - Typed execution target or launch request value objects
 - Full static type-check enforcement across the repository
 - Profile management implementation
-- Release packaging and cross-platform installation validation
+- Release packaging and installed-artifact smoke validation
 
 These are not blockers for the current working workflow, but they are candidates for later refactoring milestones.
 
 ## Next priorities
 
-1. Add cross-platform tests for macOS, Linux, and Windows.
-2. Prepare the first installable development release.
+1. Prepare the first installable development release.
+2. Add package-build and installed-wheel smoke tests.
 3. Add stricter compatibility policies after additional provider integrations exist.
 4. Refactor launcher capabilities and execution requests around proven requirements.
 5. Implement profile management after the core configuration workflow stabilizes.
@@ -182,7 +186,7 @@ These are not blockers for the current working workflow, but they are candidates
 ## Validation commands
 
 ```bash
-uv sync --all-packages
+uv sync --all-packages --locked
 uv run ruff check .
 uv run pytest
 ```
