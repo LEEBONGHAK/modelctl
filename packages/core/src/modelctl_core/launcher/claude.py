@@ -11,7 +11,14 @@ class ClaudeCodeLauncher(Launcher):
     def available(self) -> bool:
         return shutil.which("claude") is not None
 
-    def run(self, model: str, extra_args: list[str] | None = None) -> None:
+    def run(
+        self,
+        model: str,
+        extra_args: list[str] | None = None,
+        provider: str | None = None,
+    ) -> None:
+        del provider
+
         if not self.available():
             raise RuntimeError(
                 "Claude Code CLI not found. Install it and run `claude` once to authenticate."
