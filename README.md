@@ -31,7 +31,7 @@ Select a provider and model, choose an installed coding-agent launcher, and run 
 
 ```bash
 modelctl use
-modelctl config set launcher claude  # claude, gemini, or codex
+modelctl config set launcher claude  # claude, gemini, codex, or aider
 modelctl run
 ```
 
@@ -40,6 +40,17 @@ Native launcher arguments are forwarded after `run`:
 ```bash
 modelctl run --continue
 modelctl run --sandbox workspace-write
+modelctl run --no-auto-commits
+```
+
+Aider automatically receives the configured provider. OpenRouter selections are translated to Aider's required model format:
+
+```bash
+modelctl config set launcher aider
+modelctl config set provider openrouter
+modelctl config set model anthropic/claude-sonnet-4
+modelctl run
+# Runs: aider --model openrouter/anthropic/claude-sonnet-4
 ```
 
 You can inspect the persisted defaults with:
