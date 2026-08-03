@@ -15,6 +15,7 @@
 - Native launcher argument forwarding
 - Launcher discovery, installation status, and selection
 - Local environment diagnostics with `modelctl doctor`
+- Non-blocking provider/model/launcher compatibility feedback
 - Ruff and pytest GitHub Actions checks
 
 For the detailed implementation history, architecture snapshot, known limitations, and roadmap, see [`docs/PROGRESS.md`](docs/PROGRESS.md).
@@ -55,12 +56,12 @@ modelctl launchers use claude
 
 Supported launcher IDs:
 
-| ID | Coding agent | Base command |
-| --- | --- | --- |
-| `claude` | Claude Code | `claude --model <model>` |
-| `gemini` | Gemini CLI | `gemini --model <model>` |
-| `codex` | Codex CLI | `codex --model <model>` |
-| `aider` | Aider | `aider --model <model>` |
+| ID | Coding agent | Native provider | Base command |
+| --- | --- | --- | --- |
+| `claude` | Claude Code | Anthropic | `claude --model <model>` |
+| `gemini` | Gemini CLI | Google | `gemini --model <model>` |
+| `codex` | Codex CLI | OpenAI | `codex --model <model>` |
+| `aider` | Aider | Multiple providers | `aider --model <model>` |
 
 ### 3. Diagnose the local setup
 
@@ -74,6 +75,7 @@ The command checks:
 - selected provider and model
 - provider credential availability
 - selected launcher registration and installation
+- provider/model/launcher compatibility
 - local database connectivity
 
 Warnings do not fail the command, while configuration or runtime errors return a non-zero exit code.
@@ -90,6 +92,18 @@ Arguments after `run` are forwarded to the native launcher:
 modelctl run --continue
 modelctl run --sandbox workspace-write
 modelctl run --no-auto-commits
+```
+
+## Compatibility feedback
+
+Claude Code, Gemini CLI, and Codex CLI are native clients for Anthropic, Google, and OpenAI respectively. When a model selected from another provider is passed to one of those launchers, `modelctl` displays a non-blocking warning before execution and reports the same warning through `modelctl doctor`.
+
+The model is still forwarded unchanged because advanced users may have configured a compatible proxy or custom endpoint outside `modelctl`.
+
+For OpenRouter models, Aider is the currently supported automatic integration:
+
+```bash
+modelctl launchers use aider
 ```
 
 ## Aider with OpenRouter
@@ -145,7 +159,7 @@ docs/                project status and design documentation
 
 ## Near-term roadmap
 
-- Provider/model/launcher compatibility feedback
 - Non-interactive model selection
 - Cross-platform CI
 - First development release
+- Stricter compatibility policies and automatic remediation

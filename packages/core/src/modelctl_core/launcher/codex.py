@@ -7,6 +7,7 @@ from modelctl_core.launcher.base import Launcher
 class CodexCliLauncher(Launcher):
     name = "codex"
     display_name = "Codex CLI"
+    native_provider = "openai"
 
     def available(self) -> bool:
         return shutil.which("codex") is not None

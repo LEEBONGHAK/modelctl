@@ -21,7 +21,8 @@ modelctl auth login openrouter
 modelctl models sync openrouter
 modelctl use
 modelctl launchers list
-modelctl launchers use claude
+modelctl launchers use aider
+modelctl doctor
 modelctl run
 ```
 
@@ -60,12 +61,12 @@ The local model database defaults to:
 
 ### Coding-agent launchers
 
-| Launcher ID | CLI | Model invocation |
-| --- | --- | --- |
-| `claude` | Claude Code | `claude --model <model>` |
-| `gemini` | Gemini CLI | `gemini --model <model>` |
-| `codex` | Codex CLI | `codex --model <model>` |
-| `aider` | Aider | `aider --model <model>` |
+| Launcher ID | CLI | Native provider | Model invocation |
+| --- | --- | --- | --- |
+| `claude` | Claude Code | Anthropic | `claude --model <model>` |
+| `gemini` | Gemini CLI | Google | `gemini --model <model>` |
+| `codex` | Codex CLI | OpenAI | `codex --model <model>` |
+| `aider` | Aider | Multiple providers | `aider --model <model>` |
 
 All launchers support forwarding native arguments after `modelctl run`.
 
@@ -88,13 +89,23 @@ openrouter/anthropic/claude-sonnet-4
 - `modelctl launchers use <launcher-id>`
 - Validation for unknown launcher IDs
 
+### Diagnostics and compatibility feedback
+
+- `modelctl doctor`
+- Configuration, provider, credential, model, launcher, compatibility, and database checks
+- Non-zero exit code for required configuration or runtime failures
+- Non-blocking warnings for missing credentials, missing launcher installations, and uncertain compatibility
+- Native-provider metadata for Claude Code, Gemini CLI, and Codex CLI
+- OpenRouter mismatch warning before execution when a native launcher receives a model selected from OpenRouter
+- Aider remains the automatic OpenRouter integration and performs the required model-name translation
+
 ### Quality gates
 
 - uv workspace installation in GitHub Actions
 - Ruff correctness checks
 - pytest regression suite
 - Separate `CI` and `Test` workflows
-- Both workflows pass on the latest merged launcher-management changes
+- Both workflows pass on the latest merged diagnostic changes
 
 ## Completed pull requests
 
@@ -107,6 +118,8 @@ openrouter/anthropic/claude-sonnet-4
 | #5 | Add Codex CLI launcher | Merged |
 | #6 | Add provider-aware Aider launcher | Merged |
 | #7 | Add launcher listing and selection CLI | Merged |
+| #8 | Record project progress and rewrite the current README workflow | Merged |
+| #9 | Add `modelctl doctor` environment and configuration diagnostics | Merged |
 
 ## Architecture snapshot
 
@@ -129,12 +142,13 @@ Typer command
   -> external CLI or API
 ```
 
+Launcher compatibility currently uses a small native-provider hint rather than a full capability system. This is intentional: real launcher integrations are being stabilized before a broader execution-target abstraction is introduced.
+
 ## Known limitations and deferred refactoring
 
 The following items are intentionally deferred until more working integrations exist:
 
-- Formal launcher capability metadata
-- Provider/model/launcher compatibility validation
+- Strict compatibility enforcement and automatic remediation
 - Plugin-based launcher discovery
 - Typed execution target or launch request value objects
 - Full static type-check enforcement across the repository
@@ -145,11 +159,11 @@ These are not blockers for the current working workflow, but they are candidates
 
 ## Next priorities
 
-1. Add a `modelctl doctor` command that validates configuration, credentials, database access, and launcher installation.
-2. Improve provider/model/launcher compatibility feedback before execution.
-3. Add non-interactive model selection for scripts and CI.
-4. Add cross-platform tests for macOS, Linux, and Windows.
-5. Prepare the first installable development release.
+1. Add non-interactive provider and model selection for scripts and CI.
+2. Add cross-platform tests for macOS, Linux, and Windows.
+3. Prepare the first installable development release.
+4. Add stricter compatibility policies after additional provider integrations exist.
+5. Refactor launcher capabilities and execution requests around proven requirements.
 
 ## Validation commands
 

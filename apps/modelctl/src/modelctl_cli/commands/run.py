@@ -15,10 +15,14 @@ def run(
     ] = None,
 ) -> None:
     """Launch the configured coding agent with the selected model."""
-    console.print("🚀 Starting launcher...")
-
     try:
-        container.launcher_service().run(args or [])
+        service = container.launcher_service()
+        warning = service.compatibility_warning()
+        if warning:
+            console.print(f"[yellow]⚠ Compatibility warning: {warning}[/yellow]")
+
+        console.print("🚀 Starting launcher...")
+        service.run(args or [])
     except Exception as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc

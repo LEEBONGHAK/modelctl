@@ -3,7 +3,19 @@ class LauncherService:
         self.registry = registry
         self.config = config
 
+    def compatibility_warning(self) -> str | None:
+        launcher, model, provider = self._selection()
+        return launcher.compatibility_warning(provider, model)
+
     def run(self, extra_args: list[str] | None = None) -> None:
+        launcher, model, provider = self._selection()
+        launcher.run(
+            model,
+            extra_args,
+            provider=provider,
+        )
+
+    def _selection(self):
         config = self.config.load()
         launcher_name = config.get("launcher", "claude")
         model = config.get("default_model")
@@ -13,12 +25,11 @@ class LauncherService:
             raise RuntimeError("No model selected. Run: modelctl use")
 
         launcher = self.registry.get(launcher_name)
-
         if not launcher:
             raise RuntimeError(f"Unknown launcher: {launcher_name}")
 
-        launcher.run(
+        return (
+            launcher,
             model,
-            extra_args,
-            provider=provider if isinstance(provider, str) else None,
+            provider if isinstance(provider, str) else None,
         )
