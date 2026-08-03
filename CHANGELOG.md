@@ -21,6 +21,7 @@ First development release.
 - Linux, macOS, and Windows test coverage with Python 3.13.
 - Coordinated wheel and source-distribution builds for the CLI, core, and SDK packages.
 - GitHub Release artifact generation with SHA-256 checksums.
+- Trusted merged-PR release validation against the exact `refac` merge commit.
 - English and Korean project documentation.
 
 ### Security
@@ -31,6 +32,7 @@ First development release.
 - Protected local files reject symbolic-link paths.
 - GitHub Actions dependencies are pinned to immutable commit SHAs.
 - Release-tag input is validated before use in shell commands or workflow outputs.
+- Closed but unmerged pull requests cannot publish releases.
 - Locked dependencies are audited in CI.
 
 ### Fixed
@@ -38,6 +40,7 @@ First development release.
 - Unified authentication and model synchronization on one credential service.
 - Repaired model synchronization dependency wiring and credential conversion.
 - Removed duplicate and unused placeholder services.
+- Aligned the repository's `main` branch with `refac` so default-branch workflow events use the current validated release policy.
 
 ### Known limitations
 
