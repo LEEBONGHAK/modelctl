@@ -6,11 +6,18 @@ This document describes coordinated development releases for the `modelctl`, `mo
 
 ## English
 
+### Branch policy
+
+- `refac` is the ongoing development branch.
+- `main` is the canonical completed-version and release branch.
+- A completed version is merged from a reviewed release branch into `main`.
+- Tags and GitHub Releases are created only from validated commits contained in `main`.
+
 ### Current publication policy
 
 - `release.toml` is the machine-readable release decision.
 - A version is eligible for a tag only when its manifest status is `ready`.
-- A trusted push to `refac`, or the merged event of a pull request whose base is `refac`, independently runs dependency audit, lint, tests, package builds, and installed-wheel smoke validation.
+- A trusted push to `main`, or the merged event of a pull request whose base is `main`, independently runs dependency audit, lint, tests, package builds, and installed-wheel smoke validation.
 - Closed but unmerged pull requests do not run release publication.
 - After all checks pass, the workflow creates the coordinated `v*` tag and one GitHub Release.
 - Existing tags and GitHub Release assets are never overwritten.
@@ -65,19 +72,20 @@ An opened, synchronized, or reopened relevant pull request runs the complete rel
 
 To mark a version complete:
 
-1. Update the three package versions.
-2. Add the matching `CHANGELOG.md` entry.
-3. Update `docs/RELEASE_CRITERIA.md` for the version.
-4. Set the matching version and `status = "ready"` in `release.toml`.
-5. Merge the reviewed release-readiness pull request into `refac`.
+1. Finish implementation and validation on `refac` or a release-preparation branch.
+2. Update the three package versions.
+3. Add the matching `CHANGELOG.md` entry.
+4. Update `docs/RELEASE_CRITERIA.md` for the version.
+5. Set the matching version and `status = "ready"` in `release.toml`.
+6. Merge the reviewed release pull request into `main`.
 
-The trusted merged event checks out the exact merge commit and reruns every release gate. If successful and the tag does not exist, it creates `v<version>` at that merge commit and publishes the GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
+The trusted merged event checks out the exact `main` merge commit and reruns every release gate. If successful and the tag does not exist, it creates `v<version>` at that merge commit and publishes the GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
 
-A direct trusted push to `refac` and a manually created matching `v*` tag are also supported. A manual tag must point to a commit contained in `refac` and passes the same full validation before a release is created.
+A direct trusted push to `main` and a manually created matching `v*` tag are also supported. A manual tag must point to a commit contained in `main` and passes the same full validation before a release is created.
 
 ### Trust boundaries
 
-- The merged-event publication condition requires `pull_request.merged == true` and base branch `refac`.
+- The merged-event publication condition requires `pull_request.merged == true` and base branch `main`.
 - The workflow checks out `pull_request.merge_commit_sha`, not an untrusted head branch, for the post-merge release run.
 - Closed but unmerged pull requests are skipped.
 - Pull-request dry runs do not receive content write permission.
@@ -96,11 +104,18 @@ PyPI publication remains intentionally deferred. Enabling it later requires a se
 
 ## 한국어
 
+### 브랜치 정책
+
+- `refac`은 지속적인 개발 브랜치입니다.
+- `main`은 완성 버전과 릴리스의 공식 브랜치입니다.
+- 완성된 버전은 검토된 release branch에서 `main`으로 병합합니다.
+- Tag와 GitHub Release는 `main`에 포함된 검증된 commit에서만 생성합니다.
+
 ### 현재 게시 정책
 
 - `release.toml`을 기계가 판독하는 release 결정 파일로 사용합니다.
 - Manifest status가 `ready`인 버전만 tag 생성 대상이 됩니다.
-- 신뢰된 `refac` push 또는 base가 `refac`인 Pull Request의 실제 병합 이벤트에서 dependency audit, lint, test, package build, 설치된 wheel smoke 검증을 독립적으로 수행합니다.
+- 신뢰된 `main` push 또는 base가 `main`인 Pull Request의 실제 병합 이벤트에서 dependency audit, lint, test, package build, 설치된 wheel smoke 검증을 독립적으로 수행합니다.
 - 닫혔지만 병합되지 않은 Pull Request에서는 release 게시를 실행하지 않습니다.
 - 모든 검증을 통과한 경우 통합 `v*` tag와 하나의 GitHub Release를 생성합니다.
 - 기존 tag와 GitHub Release asset은 절대 덮어쓰지 않습니다.
@@ -155,19 +170,20 @@ python scripts/release_validation.py --tag v0.1.0
 
 버전을 완성 상태로 표시하는 절차는 다음과 같습니다.
 
-1. 세 package version을 변경합니다.
-2. 동일 버전의 `CHANGELOG.md` 항목을 추가합니다.
-3. 해당 버전에 맞게 `docs/RELEASE_CRITERIA.md`를 갱신합니다.
-4. `release.toml`에 같은 version과 `status = "ready"`를 설정합니다.
-5. 검토된 release-readiness Pull Request를 `refac`에 병합합니다.
+1. `refac` 또는 release 준비 branch에서 구현과 검증을 완료합니다.
+2. 세 package version을 변경합니다.
+3. 동일 버전의 `CHANGELOG.md` 항목을 추가합니다.
+4. 해당 버전에 맞게 `docs/RELEASE_CRITERIA.md`를 갱신합니다.
+5. `release.toml`에 같은 version과 `status = "ready"`를 설정합니다.
+6. 검토된 release Pull Request를 `main`에 병합합니다.
 
-신뢰된 병합 이벤트는 정확한 merge commit을 checkout한 뒤 모든 release gate를 다시 실행합니다. 성공하고 tag가 존재하지 않으면 해당 merge commit에 `v<version>`을 생성하고 자동 release note, Python 배포 파일 여섯 개, `SHA256SUMS`를 포함한 GitHub Release를 게시합니다.
+신뢰된 병합 이벤트는 정확한 `main` merge commit을 checkout한 뒤 모든 release gate를 다시 실행합니다. 성공하고 tag가 존재하지 않으면 해당 merge commit에 `v<version>`을 생성하고 자동 release note, Python 배포 파일 여섯 개, `SHA256SUMS`를 포함한 GitHub Release를 게시합니다.
 
-신뢰된 `refac` 직접 push와 동일 형식의 수동 `v*` tag도 지원합니다. 수동 tag는 `refac`에 포함된 commit을 가리켜야 하며 같은 전체 검증을 통과해야 합니다.
+신뢰된 `main` 직접 push와 동일 형식의 수동 `v*` tag도 지원합니다. 수동 tag는 `main`에 포함된 commit을 가리켜야 하며 같은 전체 검증을 통과해야 합니다.
 
 ### 신뢰 경계
 
-- 병합 이벤트 게시 조건은 `pull_request.merged == true`와 base branch `refac`을 모두 요구합니다.
+- 병합 이벤트 게시 조건은 `pull_request.merged == true`와 base branch `main`을 모두 요구합니다.
 - 병합 후 release 실행에서는 신뢰할 수 없는 head branch가 아니라 `pull_request.merge_commit_sha`를 checkout합니다.
 - 닫혔지만 병합되지 않은 Pull Request는 건너뜁니다.
 - Pull Request dry run에는 content write 권한이 없습니다.
