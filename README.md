@@ -18,6 +18,8 @@
 - Non-blocking provider/model/launcher compatibility feedback
 - Ruff validation on Linux
 - pytest validation on Linux, macOS, and Windows with Python 3.13
+- Wheel and source-distribution builds for the CLI, core, and SDK packages
+- Isolated installed-wheel smoke tests for imports and CLI startup
 
 For the detailed implementation history, architecture snapshot, known limitations, and roadmap, see [`docs/PROGRESS.md`](docs/PROGRESS.md).
 
@@ -171,6 +173,25 @@ GitHub Actions runs lint once on Ubuntu and runs the complete pytest suite indep
 - macOS with Python 3.13
 - Windows with Python 3.13
 
+## Package validation
+
+Build the three publishable workspace packages into one artifact directory:
+
+```bash
+uv build packages/core --out-dir dist --no-sources
+uv build packages/sdk --out-dir dist --no-sources
+uv build apps/modelctl --out-dir dist --no-sources
+```
+
+The `Package` GitHub Actions workflow installs the resulting wheels into a fresh environment and verifies:
+
+```bash
+modelctl version
+modelctl --help
+```
+
+It also imports `modelctl_cli`, `modelctl_core`, and `modelctl_sdk` from the installed artifacts rather than from the repository checkout. Successful workflow artifacts are uploaded as `modelctl-distributions`.
+
 ## Project structure
 
 ```text
@@ -183,6 +204,7 @@ docs/                project status and design documentation
 
 ## Near-term roadmap
 
+- Release tag and publishing automation
 - First installable development release
 - Stricter compatibility policies and automatic remediation
 - Launcher capability and execution-request refactoring
