@@ -1,3 +1,4 @@
+from click import unstyle
 from typer.testing import CliRunner
 
 from modelctl_cli.context import container
@@ -43,6 +44,10 @@ def install_stubs(monkeypatch, selection):
     return config
 
 
+def normalized(text):
+    return " ".join(unstyle(text).split())
+
+
 def test_use_accepts_provider_and_model_without_prompting(monkeypatch):
     selection = StubSelection()
     config = install_stubs(monkeypatch, selection)
@@ -75,7 +80,7 @@ def test_use_requires_provider_and_model_together():
     result = runner.invoke(app, ["use", "--provider", "openrouter"])
 
     assert result.exit_code == 2
-    assert "Use --provider and --model together" in result.stderr
+    assert "Use --provider and --model together" in normalized(result.stderr)
 
 
 def test_use_reports_unknown_direct_selection(monkeypatch):
@@ -94,7 +99,7 @@ def test_use_reports_unknown_direct_selection(monkeypatch):
     )
 
     assert result.exit_code == 2
-    assert "Unknown model for openrouter" in result.stderr
+    assert "Unknown model for openrouter" in normalized(result.stderr)
     assert config.updated is None
 
 
