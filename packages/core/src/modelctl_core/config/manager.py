@@ -1,6 +1,11 @@
 import json
 from pathlib import Path
 
+from modelctl_core.security.private_files import (
+    atomic_write_private_text,
+    read_private_text,
+)
+
 
 class ConfigManager:
     def __init__(self, path: Path | None = None):
@@ -10,13 +15,15 @@ class ConfigManager:
         if not self.path.exists():
             return {}
 
-        return json.loads(self.path.read_text(encoding="utf-8"))
+        data = json.loads(read_private_text(self.path))
+        if not isinstance(data, dict):
+            raise ValueError(f"Invalid configuration format: {self.path}")
+        return data
 
     def save(self, data: dict[str, object]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(
-            json.dumps(data, indent=2),
-            encoding="utf-8",
+        atomic_write_private_text(
+            self.path,
+            json.dumps(data, indent=2) + "\n",
         )
 
     def update(self, **values: str) -> None:

@@ -1,24 +1,27 @@
 import typer
-
 from rich.console import Console
 from rich.table import Table
 
 from modelctl_cli.context import container
 
-
-models_app = typer.Typer()
-
+models_app = typer.Typer(help="Synchronize and inspect provider model catalogs.")
 console = Console()
 
 
 @models_app.command()
-def sync():
-    count = container.model_service().sync()
+def sync(provider: str = "openrouter") -> None:
+    """Synchronize models from a configured provider."""
+    try:
+        count = container.model_service().sync(provider)
+    except (ValueError, RuntimeError) as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
     console.print(f"✔ synced {count} models")
 
 
 @models_app.command("list")
-def list_models():
+def list_models() -> None:
     models = container.model_service().list()
 
     table = Table(title="Models")
@@ -39,13 +42,14 @@ def list_models():
 
 
 @models_app.command()
-def favorite(action: str, model_id: str):
+def favorite(action: str, model_id: str) -> None:
     service = container.model_service()
 
     if action == "add":
         service.favorite(model_id, True)
-
     elif action == "remove":
         service.favorite(model_id, False)
+    else:
+        raise typer.BadParameter("Action must be 'add' or 'remove'.")
 
     console.print("updated")

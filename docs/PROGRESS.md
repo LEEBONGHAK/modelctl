@@ -6,15 +6,13 @@ Last updated: 2026-08-03
 
 `modelctl` is a universal command-line control plane for AI models and coding agents. The long-term goal is to become the **uv of AI coding agents**: one small CLI for selecting providers and models, managing credentials and configuration, and launching multiple coding-agent CLIs consistently.
 
-The current development principle is:
+Development principle:
 
 1. Deliver a working end-to-end workflow first.
-2. Add tests and CI gates around that workflow.
-3. Refactor abstractions only after real integrations expose the common requirements.
+2. Add regression, cross-platform, packaging, release, and security gates.
+3. Refactor abstractions only after real integrations expose common requirements.
 
 ## Current end-to-end workflow
-
-The following interactive workflow is implemented on the `refac` branch:
 
 ```bash
 modelctl auth login openrouter
@@ -26,7 +24,7 @@ modelctl doctor
 modelctl run
 ```
 
-Scripts and CI can select a synchronized provider/model pair without an interactive prompt:
+Non-interactive selection:
 
 ```bash
 modelctl use \
@@ -34,15 +32,11 @@ modelctl use \
   --model anthropic/claude-sonnet-4
 ```
 
-The selected provider, model, and launcher are persisted in:
+Local state defaults:
 
 ```text
 ~/.config/modelctl/config.json
-```
-
-The local model database defaults to:
-
-```text
+~/.config/modelctl/credentials.json   # explicit plaintext fallback only
 ~/.local/share/modelctl/modelctl.db
 ```
 
@@ -51,25 +45,23 @@ The local model database defaults to:
 ### Provider and model selection
 
 - Provider discovery and registry
-- OpenRouter model synchronization
-- Persistent model repository
-- Provider-scoped model lookup
-- Interactive provider/model selection through `modelctl use`
-- Non-interactive selection through `modelctl use --provider <id> --model <id>`
-- Validation that direct selections use a registered provider and synchronized model
-- Requirement that `--provider` and `--model` are supplied together
-- Favorite model display handling
-- Persistent `provider` and `default_model` configuration
+- OpenRouter model synchronization with credential validation and bounded HTTP timeouts
+- Persistent model repository and provider-scoped lookup
+- Interactive and non-interactive provider/model selection
+- Validation of registered providers and synchronized models
+- Favorite-model support
 
-### Credentials and configuration
+### Credentials and local configuration
 
-- Credential service with keyring support
-- File-based credential fallback
-- `modelctl auth` commands
-- `modelctl config show`
-- `modelctl config set provider <value>`
-- `modelctl config set model <value>`
-- `modelctl config set launcher <value>`
+- Environment-variable and operating-system keyring lookup
+- Keyring-first credential storage
+- No silent downgrade from keyring failure to plaintext
+- Explicit `--allow-plaintext-fallback` compatibility option
+- Provider-ID and empty-token validation
+- Atomic configuration and fallback-credential writes
+- Symbolic-link rejection for protected files
+- POSIX private directory/file permissions (`0700` / `0600`)
+- Shared credential service used by authentication, diagnostics, and model synchronization
 
 ### Coding-agent launchers
 
@@ -80,130 +72,118 @@ The local model database defaults to:
 | `codex` | Codex CLI | OpenAI | `codex --model <model>` |
 | `aider` | Aider | Multiple providers | `aider --model <model>` |
 
-All launchers support forwarding native arguments after `modelctl run`.
+All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to the required `openrouter/<provider>/<model>` form.
 
-Aider receives provider context. OpenRouter model IDs are translated from:
-
-```text
-anthropic/claude-sonnet-4
-```
-
-to:
-
-```text
-openrouter/anthropic/claude-sonnet-4
-```
-
-### Launcher management
+### Launcher management, diagnostics, and compatibility
 
 - `modelctl launchers list`
-- Rich table showing launcher ID, display name, active state, and local installation state
 - `modelctl launchers use <launcher-id>`
-- Validation for unknown launcher IDs
-
-### Diagnostics and compatibility feedback
-
+- Installation-state and active-launcher display
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
-- Non-zero exit code for required configuration or runtime failures
-- Non-blocking warnings for missing credentials, missing launcher installations, and uncertain compatibility
-- Native-provider metadata for Claude Code, Gemini CLI, and Codex CLI
-- OpenRouter mismatch warning before execution when a native launcher receives a model selected from OpenRouter
-- Aider remains the automatic OpenRouter integration and performs the required model-name translation
+- Non-blocking native-provider mismatch warnings
 
-### Packaging and installed-artifact validation
+### Packaging and release validation
 
-- Hatchling wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
-- Standards-oriented builds with workspace source overrides disabled
-- Shared `dist/` output for coordinated release artifacts
-- Fresh virtual environment installation from built wheels
-- Installed import checks for CLI, core, and SDK packages
-- Installed `modelctl version` and `modelctl --help` smoke tests
-- Distribution artifacts uploaded from GitHub Actions
-- CLI version output read from installed distribution metadata instead of a hardcoded command string
+- Coordinated wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
+- Workspace source overrides disabled for release-oriented builds
+- Fresh-environment installed-wheel import and CLI smoke tests
+- Coordinated package-version and `v*` tag validation
+- Validation that tagged commits belong to `refac`
+- SHA-256 checksum generation
+- New GitHub Release creation for validated completed-version tags
+- Refusal to overwrite an existing GitHub Release
+- PyPI publication intentionally disabled
 
-### Quality gates
+### Documentation
 
-- Locked uv workspace installation in GitHub Actions
-- Ruff correctness checks on Ubuntu with Python 3.13
-- Complete pytest suite on Ubuntu with Python 3.13
-- Complete pytest suite on macOS with Python 3.13
-- Complete pytest suite on Windows with Python 3.13
-- Matrix fail-fast disabled so every platform reports independently
-- Package build and isolated installation smoke workflow on Ubuntu with Python 3.13
-- Regression coverage for interactive and non-interactive selection
-- Repository-level coverage for provider-scoped model queries
-- Regression coverage for installed distribution version lookup
+- English README and complete Korean `README.ko.md`
+- Bilingual release guide and security policy
+- Per-PR English/Korean engineering records under `docs/pull-requests/`
+
+### Quality and security gates
+
+- Locked uv workspace installation
+- Ruff checks and `uv audit --locked` on Ubuntu
+- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
+- Package build and installed-wheel smoke workflow
+- Release dry-run workflow
+- Full commit-SHA pinning for external GitHub Actions
+- Least-privilege workflow permissions
+- Security regression coverage for private files, credential fallback, untrusted release tags, and credential-backed model synchronization
 
 ## Completed pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
-| #1 | Make top-level `use` and `run` commands executable; repair container and configuration wiring | Merged |
+| #1 | Make top-level `use` and `run` executable; repair container and configuration wiring | Merged |
 | #2 | Stabilize workspace installation, lint, and test collection | Merged |
 | #3 | Complete Claude Code execution and native argument forwarding | Merged |
-| #4 | Add Gemini CLI launcher and repair runtime configuration commands | Merged |
+| #4 | Add Gemini CLI and repair runtime configuration | Merged |
 | #5 | Add Codex CLI launcher | Merged |
 | #6 | Add provider-aware Aider launcher | Merged |
-| #7 | Add launcher listing and selection CLI | Merged |
-| #8 | Record project progress and rewrite the current README workflow | Merged |
-| #9 | Add `modelctl doctor` environment and configuration diagnostics | Merged |
+| #7 | Add launcher listing and selection | Merged |
+| #8 | Record project progress and rewrite README | Merged |
+| #9 | Add `modelctl doctor` | Merged |
 | #10 | Add provider/model/launcher compatibility feedback | Merged |
 | #11 | Add non-interactive provider and model selection | Merged |
 | #12 | Add Linux, macOS, and Windows test matrix | Merged |
-| #13 | Build release distributions and smoke-test installed wheels | Merged |
+| #13 | Build distributions and smoke-test installed wheels | Merged |
+| #14 | Add bilingual records for PRs #1–#13 | Merged |
+| #15 | Validate release tags and automate GitHub Release creation | Merged |
 
 ## Architecture snapshot
 
-The repository is organized as a uv workspace:
-
 ```text
 apps/modelctl/       Typer CLI application
-packages/core/       configuration, providers, repositories, services, launchers
+packages/core/       configuration, credentials, providers, repositories, services, launchers
 packages/sdk/        public SDK package foundation
-tests/               integration and regression tests
+scripts/             release and repository validation helpers
+tests/               regression, integration, packaging, and security tests
+docs/                project, release, security, and PR documentation
 ```
-
-The runtime dependency flow is currently:
 
 ```text
 Typer command
   -> application Container
   -> service
-  -> provider / repository / launcher registry
+  -> credential / provider / repository / launcher registry
   -> external CLI or API
 ```
 
-Launcher compatibility currently uses a small native-provider hint rather than a full capability system. This is intentional: real launcher integrations are being stabilized before a broader execution-target abstraction is introduced.
+## Removed obsolete code
 
-## Known limitations and deferred refactoring
+- Duplicate placeholder `doctor()` registration removed after the real diagnostic command became authoritative.
+- Unused, entirely unimplemented `ProfileService` stub removed. Profile support may be reintroduced when its actual requirements are implemented and tested.
 
-The following items are intentionally deferred until more working integrations exist:
+## Known limitations and deferred work
 
-- Automated release tagging and package-index publishing
-- Strict compatibility enforcement and automatic remediation
-- Plugin-based launcher discovery
-- Typed execution target or launch request value objects
-- Full static type-check enforcement across the repository
-- Profile management implementation
-
-These are not blockers for the current working workflow, but they are candidates for later refactoring milestones.
+- No PyPI publication
+- No tagged development release yet
+- Strict compatibility enforcement and automatic remediation are not implemented
+- Plugin-based launcher discovery is deferred
+- Execution-target and launch-request value objects are not yet formalized
+- Full static type-check enforcement is not yet a quality gate
+- Local plaintext credential fallback remains unencrypted and should be used only when explicitly accepted
+- The security review is source- and test-based, not an independent penetration test
 
 ## Next priorities
 
-1. Add release tag validation and publishing automation.
-2. Produce the first installable development release.
-3. Add stricter compatibility policies after additional provider integrations exist.
-4. Refactor launcher capabilities and execution requests around proven requirements.
-5. Implement profile management after the core configuration workflow stabilizes.
+1. Define completion criteria for the first development version and create its validated tag when met.
+2. Add stricter compatibility policies after additional provider integrations exist.
+3. Refactor launcher capabilities and execution requests around proven requirements.
+4. Reintroduce profile management only with a complete user workflow and tests.
+5. Plan a separate reviewed PyPI publication milestone when package ownership and Trusted Publishing are ready.
 
 ## Validation commands
 
 ```bash
 uv sync --all-packages --locked
+uv audit --locked
 uv run ruff check .
 uv run pytest
 uv build packages/core --out-dir dist --no-sources
 uv build packages/sdk --out-dir dist --no-sources
 uv build apps/modelctl --out-dir dist --no-sources
+python scripts/release_validation.py --tag v0.1.0
 ```

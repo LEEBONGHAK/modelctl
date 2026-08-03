@@ -1,25 +1,34 @@
+from __future__ import annotations
+
 import httpx
 
 
 class OpenRouterClient:
     BASE_URL = "https://openrouter.ai/api/v1"
 
-    def __init__(self, credential):
+    def __init__(self, credential) -> None:
+        api_key = credential.api_key
+        if not isinstance(api_key, str) or not api_key.strip():
+            raise ValueError("OpenRouter API credential is missing.")
+        self.api_key = api_key.strip()
 
-        self.client = httpx.Client(
+    def get_models(self) -> list[dict[str, object]]:
+        timeout = httpx.Timeout(30.0, connect=10.0)
+        with httpx.Client(
             base_url=self.BASE_URL,
             headers={
-                "Authorization": f"Bearer {credential.api_key}",
-                "HTTP-Referer": "https://github.com/modelctl/modelctl",
+                "Authorization": f"Bearer {self.api_key}",
+                "HTTP-Referer": "https://github.com/LEEBONGHAK/modelctl",
                 "X-Title": "modelctl",
             },
-            timeout=30,
-        )
+            timeout=timeout,
+            follow_redirects=False,
+        ) as client:
+            response = client.get("/models")
+            response.raise_for_status()
+            payload = response.json()
 
-    def get_models(self):
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            raise ValueError("OpenRouter returned an invalid model response.")
 
-        response = self.client.get("/models")
-
-        response.raise_for_status()
-
-        return response.json()["data"]
+        return [item for item in payload["data"] if isinstance(item, dict)]

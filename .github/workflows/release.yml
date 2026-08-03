@@ -33,36 +33,43 @@ jobs:
       version: ${{ steps.release.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           python-version: "3.13"
 
-      - name: Resolve release version and tag
+      - name: Resolve and validate release version and tag
         id: release
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
+          set -euo pipefail
           version="$(python scripts/release_validation.py --print-version)"
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            tag="${GITHUB_REF_NAME}"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            tag="${{ inputs.tag }}"
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            tag="${REF_NAME}"
+          elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            tag="${INPUT_TAG}"
           else
             tag="v${version}"
           fi
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
 
-      - name: Validate package versions and release tag
-        run: python scripts/release_validation.py --tag "${{ steps.release.outputs.tag }}"
+          python scripts/release_validation.py --tag "${tag}"
+          printf 'version=%s\n' "${version}" >> "${GITHUB_OUTPUT}"
+          printf 'tag=%s\n' "${tag}" >> "${GITHUB_OUTPUT}"
 
       - name: Require tagged commit to belong to refac
         if: github.event_name == 'push'
         shell: bash
         run: |
+          set -euo pipefail
           git fetch origin refac
           git merge-base --is-ancestor "${GITHUB_SHA}" origin/refac
 
@@ -94,7 +101,7 @@ jobs:
         shell: bash
         run: sha256sum dist/* > dist/SHA256SUMS
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: modelctl-release-${{ steps.release.outputs.version }}
           path: dist/*
@@ -110,51 +117,24 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: modelctl-release-${{ needs.validate-and-build.outputs.version }}
           path: dist
 
-      - name: Create or update GitHub Release
+      - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
         shell: bash
         run: |
+          set -euo pipefail
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            gh release upload "${RELEASE_TAG}" dist/* --clobber
-          else
-            gh release create "${RELEASE_TAG}" dist/* \
-              --verify-tag \
-              --generate-notes \
-              --title "${RELEASE_TAG}"
+            echo "Release ${RELEASE_TAG} already exists; refusing to overwrite assets." >&2
+            exit 1
           fi
 
-  publish-pypi:
-    name: Publish packages to PyPI
-    needs:
-      - validate-and-build
-      - github-release
-    if: >-
-      github.event_name == 'push' &&
-      startsWith(github.ref, 'refs/tags/v') &&
-      vars.PUBLISH_TO_PYPI == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.13"
-
-      - uses: actions/download-artifact@v5
-        with:
-          name: modelctl-release-${{ needs.validate-and-build.outputs.version }}
-          path: dist
-
-      - name: Publish with PyPI Trusted Publishing
-        run: uv publish dist/*.whl dist/*.tar.gz
+          gh release create "${RELEASE_TAG}" dist/* \
+            --verify-tag \
+            --generate-notes \
+            --title "${RELEASE_TAG}"

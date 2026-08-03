@@ -45,6 +45,20 @@ def test_validate_tag_rejects_version_mismatch():
         validate_tag("v0.2.0", "0.1.0")
 
 
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "v0.1.0\nmalicious=true",
+        "v0.1.0; touch injected",
+        "$(touch injected)",
+        "v0.1.0 ",
+    ],
+)
+def test_validate_tag_rejects_untrusted_input(tag):
+    with pytest.raises(ReleaseValidationError):
+        validate_tag(tag, "0.1.0")
+
+
 def test_validate_package_versions_rejects_unsupported_version():
     with pytest.raises(ReleaseValidationError, match="Unsupported release version"):
         validate_package_versions(

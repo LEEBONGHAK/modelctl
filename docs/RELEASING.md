@@ -1,20 +1,18 @@
 # Releasing modelctl / modelctl 릴리스
 
-This document describes the coordinated release process for the `modelctl`, `modelctl-core`, and `modelctl-sdk` Python distributions.
+This document describes coordinated GitHub Releases for the `modelctl`, `modelctl-core`, and `modelctl-sdk` Python distributions.
 
-이 문서는 `modelctl`, `modelctl-core`, `modelctl-sdk` Python 배포물의 통합 릴리스 절차를 설명합니다.
+이 문서는 `modelctl`, `modelctl-core`, `modelctl-sdk` Python 배포물의 통합 GitHub Release 절차를 설명합니다.
 
 ## English
 
-### Safety model
+### Current publication policy
 
-A release is split into three gates:
-
-1. Every pull request that changes release configuration runs a dry-run validation and artifact build.
-2. A pushed `v*` tag creates or updates a GitHub Release and attaches the verified distributions and `SHA256SUMS`.
-3. PyPI publication runs only when the repository variable `PUBLISH_TO_PYPI` is exactly `true` and the `pypi` environment is configured for Trusted Publishing.
-
-The workflow never creates a tag. A maintainer must create and push the tag explicitly after reviewing the version change.
+- Completed versions may receive an annotated `v*` tag.
+- A validated tag creates a new GitHub Release with distributions and `SHA256SUMS`.
+- Existing GitHub Release assets are never overwritten by the workflow.
+- **PyPI publication is not configured and no PyPI publishing job exists.**
+- The workflow never creates a tag automatically. A maintainer must explicitly decide that the version is complete.
 
 ### Version requirements
 
@@ -26,31 +24,28 @@ packages/core/pyproject.toml
 packages/sdk/pyproject.toml
 ```
 
-The release tag must be the same version with a `v` prefix. For package version `0.1.0`, the only accepted tag is `v0.1.0`.
-
-Validate locally:
+The tag must equal the coordinated version with a `v` prefix. Package version `0.1.0` accepts only `v0.1.0`.
 
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --tag v0.1.0
 ```
 
-### Dry-run validation
+### Pull-request and manual dry run
 
-The `Release` workflow runs on relevant pull requests and can also be started manually with a tag value. Dry runs perform the following operations without creating a release or publishing packages:
+The `Release` workflow validates relevant pull requests and manual tag proposals without publishing anything. It:
 
-- verify coordinated package versions
-- verify the proposed tag
-- build all wheels and source distributions with workspace source overrides disabled
-- install the wheels in a fresh Python 3.13 environment
-- import all three installed packages
-- execute the installed `modelctl version` and `modelctl --help`
-- generate SHA-256 checksums
-- upload a temporary workflow artifact
+- verifies coordinated package versions and the proposed tag
+- treats the manual tag as untrusted input and validates it before exporting outputs
+- builds wheel and source distributions with workspace overrides disabled
+- installs wheels in a fresh Python 3.13 environment
+- imports all installed packages and starts the installed CLI
+- generates SHA-256 checksums
+- uploads a temporary workflow artifact
 
-### Creating a GitHub Release
+### Tagging a completed version
 
-After the release commit is merged into `refac`:
+After the version is complete, all checks pass, and the release commit is merged into `refac`:
 
 ```bash
 git switch refac
@@ -59,36 +54,28 @@ git tag -a v0.1.0 -m "v0.1.0"
 git push origin v0.1.0
 ```
 
-The workflow rejects a tag when:
+The tag workflow rejects releases when:
 
-- its value does not match the three package versions
+- the tag does not exactly match all package versions
 - the tagged commit is not contained in `refac`
-- artifact build or installed-wheel smoke validation fails
+- build, installation, import, CLI, or checksum validation fails
+- a GitHub Release already exists for the tag
 
-A successful tag run creates a GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
+A successful run creates one immutable GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
 
-### Enabling PyPI publication
+### PyPI
 
-Keep PyPI publication disabled until all of the following are ready:
-
-1. Confirm that the three project names can be registered or are already controlled by the project owner.
-2. Create the GitHub repository environment named `pypi`.
-3. Configure PyPI Trusted Publishers for this repository, workflow file, and environment.
-4. Add the repository Actions variable `PUBLISH_TO_PYPI` with the value `true`.
-
-Removing the variable or setting it to any value other than `true` leaves GitHub Release publication enabled while skipping PyPI.
+PyPI publication is intentionally deferred. Enabling it later requires a separate reviewed pull request, package-name ownership confirmation, a dedicated protected environment, Trusted Publishing configuration, and a dry-run plan. Creating a GitHub tag does not publish anything to PyPI.
 
 ## 한국어
 
-### 안전 구조
+### 현재 게시 정책
 
-릴리스는 세 단계의 gate로 분리됩니다.
-
-1. 릴리스 설정을 변경하는 모든 Pull Request에서 dry-run 검증과 배포물 빌드를 수행합니다.
-2. `v*` 태그가 push되면 검증된 배포물과 `SHA256SUMS`를 첨부한 GitHub Release를 생성하거나 갱신합니다.
-3. Repository variable `PUBLISH_TO_PYPI`가 정확히 `true`이고 `pypi` environment에 Trusted Publishing이 구성된 경우에만 PyPI 게시를 수행합니다.
-
-Workflow는 태그를 자동 생성하지 않습니다. 버전 변경을 검토한 maintainer가 명시적으로 태그를 생성하고 push해야 합니다.
+- 완성된 버전에는 annotated `v*` tag를 생성할 수 있습니다.
+- 검증된 tag는 배포물과 `SHA256SUMS`가 포함된 새로운 GitHub Release를 생성합니다.
+- Workflow는 기존 GitHub Release asset을 덮어쓰지 않습니다.
+- **PyPI 게시는 구성되어 있지 않으며 PyPI 게시 job도 존재하지 않습니다.**
+- Workflow가 tag를 자동으로 만들지 않습니다. Maintainer가 해당 버전의 완성을 명시적으로 판단해야 합니다.
 
 ### 버전 요구사항
 
@@ -100,31 +87,28 @@ packages/core/pyproject.toml
 packages/sdk/pyproject.toml
 ```
 
-Release tag는 패키지 버전 앞에 `v`를 붙인 값이어야 합니다. 패키지 버전이 `0.1.0`이면 허용되는 태그는 `v0.1.0`뿐입니다.
-
-로컬 검증 명령은 다음과 같습니다.
+Tag는 통합 버전 앞에 `v`를 붙인 값과 정확히 같아야 합니다. 패키지 버전이 `0.1.0`이면 `v0.1.0`만 허용됩니다.
 
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --tag v0.1.0
 ```
 
-### Dry-run 검증
+### Pull Request 및 수동 dry run
 
-`Release` workflow는 관련 Pull Request에서 실행되며 tag 값을 입력해 수동 실행할 수도 있습니다. Dry-run에서는 release 생성이나 package 게시 없이 다음을 수행합니다.
+`Release` workflow는 관련 Pull Request와 수동 tag 제안을 외부 게시 없이 검증합니다.
 
-- 세 패키지 버전 일치 검증
-- 제안된 tag 검증
-- Workspace source override를 제외한 wheel·source distribution 빌드
+- 세 패키지 버전과 제안된 tag 검증
+- 수동 tag 입력을 신뢰하지 않고 output으로 내보내기 전에 검증
+- Workspace override를 제외한 wheel·source distribution 빌드
 - 새로운 Python 3.13 환경에 wheel 설치
-- 설치된 세 패키지 import
-- 설치된 `modelctl version`, `modelctl --help` 실행
+- 설치된 모든 패키지 import와 설치된 CLI 시작 검증
 - SHA-256 checksum 생성
 - 임시 workflow artifact 업로드
 
-### GitHub Release 생성
+### 완성 버전 tag 생성
 
-Release commit이 `refac`에 병합된 후 다음과 같이 태그를 생성합니다.
+버전이 완성되고 모든 검사가 통과했으며 release commit이 `refac`에 병합된 후 다음처럼 tag를 생성합니다.
 
 ```bash
 git switch refac
@@ -133,21 +117,15 @@ git tag -a v0.1.0 -m "v0.1.0"
 git push origin v0.1.0
 ```
 
-다음 경우 workflow가 태그를 거부합니다.
+다음 조건에서는 release가 거부됩니다.
 
-- Tag 값과 세 패키지 버전이 일치하지 않는 경우
-- Tag 대상 commit이 `refac`에 포함되지 않은 경우
-- 배포물 빌드 또는 설치된 wheel smoke 검증이 실패한 경우
+- Tag가 세 패키지 버전과 정확히 일치하지 않는 경우
+- Tag commit이 `refac`에 포함되지 않은 경우
+- Build, 설치, import, CLI, checksum 검증이 실패한 경우
+- 해당 tag의 GitHub Release가 이미 존재하는 경우
 
-성공하면 자동 생성 release note, 여섯 개의 Python 배포 파일, `SHA256SUMS`를 포함한 GitHub Release가 생성됩니다.
+성공하면 자동 생성 release note, 여섯 개의 Python 배포 파일, `SHA256SUMS`가 포함된 하나의 불변 GitHub Release가 생성됩니다.
 
-### PyPI 게시 활성화
+### PyPI
 
-다음 준비가 모두 끝날 때까지 PyPI 게시는 비활성 상태로 유지합니다.
-
-1. 세 project name을 등록할 수 있거나 프로젝트 소유자가 이미 관리하고 있는지 확인합니다.
-2. GitHub repository에 `pypi` environment를 생성합니다.
-3. 이 repository, workflow file, environment를 대상으로 PyPI Trusted Publisher를 구성합니다.
-4. Repository Actions variable `PUBLISH_TO_PYPI`를 만들고 값을 `true`로 설정합니다.
-
-Variable을 삭제하거나 `true`가 아닌 값으로 설정하면 GitHub Release 생성은 유지하면서 PyPI 게시만 건너뜁니다.
+PyPI 게시는 의도적으로 연기했습니다. 나중에 활성화하려면 package name 소유권 확인, 보호된 전용 environment, Trusted Publishing 설정, dry-run 계획을 포함한 별도 검토 PR이 필요합니다. GitHub tag를 생성해도 PyPI에는 아무것도 게시되지 않습니다.
