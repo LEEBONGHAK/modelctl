@@ -14,6 +14,7 @@
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers
 - Native launcher argument forwarding
 - Launcher discovery, installation status, and selection
+- Local environment diagnostics with `modelctl doctor`
 - Ruff and pytest GitHub Actions checks
 
 For the detailed implementation history, architecture snapshot, known limitations, and roadmap, see [`docs/PROGRESS.md`](docs/PROGRESS.md).
@@ -23,10 +24,10 @@ For the detailed implementation history, architecture snapshot, known limitation
 The repository is a uv workspace.
 
 ```bash
- git clone https://github.com/LEEBONGHAK/modelctl.git
- cd modelctl
- git switch refac
- uv sync --all-packages
+git clone https://github.com/LEEBONGHAK/modelctl.git
+cd modelctl
+git switch refac
+uv sync --all-packages
 ```
 
 Run the CLI through uv:
@@ -39,30 +40,16 @@ uv run modelctl --help
 
 ### 1. Configure a provider and model
 
-Authenticate and synchronize models when required:
-
 ```bash
 modelctl auth login openrouter
 modelctl models sync openrouter
-```
-
-Select a provider and model interactively:
-
-```bash
 modelctl use
 ```
 
 ### 2. Select a coding-agent launcher
 
-List launchers and check which CLIs are installed locally:
-
 ```bash
 modelctl launchers list
-```
-
-Select one:
-
-```bash
 modelctl launchers use claude
 ```
 
@@ -75,7 +62,23 @@ Supported launcher IDs:
 | `codex` | Codex CLI | `codex --model <model>` |
 | `aider` | Aider | `aider --model <model>` |
 
-### 3. Run the selected launcher
+### 3. Diagnose the local setup
+
+```bash
+modelctl doctor
+```
+
+The command checks:
+
+- configuration file availability
+- selected provider and model
+- provider credential availability
+- selected launcher registration and installation
+- local database connectivity
+
+Warnings do not fail the command, while configuration or runtime errors return a non-zero exit code.
+
+### 4. Run the selected launcher
 
 ```bash
 modelctl run
@@ -108,29 +111,17 @@ aider --model openrouter/anthropic/claude-sonnet-4
 
 ## Configuration
 
-Inspect current settings:
-
 ```bash
 modelctl config show
-```
-
-Set values directly:
-
-```bash
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
 modelctl config set launcher aider
 ```
 
-The default configuration file is:
+Default paths:
 
 ```text
 ~/.config/modelctl/config.json
-```
-
-The default local database is:
-
-```text
 ~/.local/share/modelctl/modelctl.db
 ```
 
@@ -154,7 +145,6 @@ docs/                project status and design documentation
 
 ## Near-term roadmap
 
-- `modelctl doctor` environment and configuration diagnostics
 - Provider/model/launcher compatibility feedback
 - Non-interactive model selection
 - Cross-platform CI
