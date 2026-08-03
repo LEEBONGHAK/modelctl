@@ -14,7 +14,7 @@ The current development principle is:
 
 ## Current end-to-end workflow
 
-The following workflow is implemented on the `refac` branch:
+The following interactive workflow is implemented on the `refac` branch:
 
 ```bash
 modelctl auth login openrouter
@@ -24,6 +24,14 @@ modelctl launchers list
 modelctl launchers use aider
 modelctl doctor
 modelctl run
+```
+
+Scripts and CI can select a synchronized provider/model pair without an interactive prompt:
+
+```bash
+modelctl use \
+  --provider openrouter \
+  --model anthropic/claude-sonnet-4
 ```
 
 The selected provider, model, and launcher are persisted in:
@@ -45,7 +53,11 @@ The local model database defaults to:
 - Provider discovery and registry
 - OpenRouter model synchronization
 - Persistent model repository
+- Provider-scoped model lookup
 - Interactive provider/model selection through `modelctl use`
+- Non-interactive selection through `modelctl use --provider <id> --model <id>`
+- Validation that direct selections use a registered provider and synchronized model
+- Requirement that `--provider` and `--model` are supplied together
 - Favorite model display handling
 - Persistent `provider` and `default_model` configuration
 
@@ -105,7 +117,8 @@ openrouter/anthropic/claude-sonnet-4
 - Ruff correctness checks
 - pytest regression suite
 - Separate `CI` and `Test` workflows
-- Both workflows pass on the latest merged diagnostic changes
+- Regression coverage for interactive and non-interactive selection
+- Repository-level coverage for provider-scoped model queries
 
 ## Completed pull requests
 
@@ -120,6 +133,7 @@ openrouter/anthropic/claude-sonnet-4
 | #7 | Add launcher listing and selection CLI | Merged |
 | #8 | Record project progress and rewrite the current README workflow | Merged |
 | #9 | Add `modelctl doctor` environment and configuration diagnostics | Merged |
+| #10 | Add provider/model/launcher compatibility feedback | Merged |
 
 ## Architecture snapshot
 
@@ -159,11 +173,11 @@ These are not blockers for the current working workflow, but they are candidates
 
 ## Next priorities
 
-1. Add non-interactive provider and model selection for scripts and CI.
-2. Add cross-platform tests for macOS, Linux, and Windows.
-3. Prepare the first installable development release.
-4. Add stricter compatibility policies after additional provider integrations exist.
-5. Refactor launcher capabilities and execution requests around proven requirements.
+1. Add cross-platform tests for macOS, Linux, and Windows.
+2. Prepare the first installable development release.
+3. Add stricter compatibility policies after additional provider integrations exist.
+4. Refactor launcher capabilities and execution requests around proven requirements.
+5. Implement profile management after the core configuration workflow stabilizes.
 
 ## Validation commands
 

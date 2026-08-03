@@ -31,3 +31,17 @@ class SelectionService:
             return None
 
         return selected.removeprefix("★ ")
+
+    def validate(self, provider_id: str, model_id: str) -> tuple[str, str]:
+        provider_ids = {provider.id for provider in self.registry.list()}
+        if provider_id not in provider_ids:
+            raise ValueError(f"Unknown provider: {provider_id}")
+
+        model = self.repository.get_by_provider(provider_id, model_id)
+        if model is None:
+            raise ValueError(
+                f"Unknown model for {provider_id}: {model_id}. "
+                f"Run: modelctl models sync {provider_id}"
+            )
+
+        return provider_id, model.model_id
