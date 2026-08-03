@@ -42,7 +42,8 @@ A development version is complete only when all criteria below are satisfied on 
 - `CHANGELOG.md` contains the exact release version.
 - The tagged commit is contained in `refac`.
 - The release workflow independently runs dependency audit, lint, tests, build, and installed-wheel smoke checks.
-- The release workflow creates the tag only from a successful trusted `refac` push marked `status = "ready"` in `release.toml`.
+- The release workflow creates the tag only after a successful trusted `refac` push or a merged pull request targeting `refac`, with `status = "ready"` in `release.toml`.
+- Closed but unmerged pull requests do not run publication jobs.
 - A GitHub Release attaches all distributions and `SHA256SUMS`.
 - Existing tags or GitHub Release assets are never overwritten.
 
@@ -81,6 +82,7 @@ A development version is complete only when all criteria below are satisfied on 
 - `CHANGELOG.md`에 정확한 release version이 존재해야 합니다.
 - Tag 대상 commit이 `refac`에 포함되어야 합니다.
 - Release workflow가 dependency audit, lint, test, build, 설치된 wheel smoke 검증을 독립적으로 수행해야 합니다.
-- `release.toml`의 `status = "ready"`가 지정된 신뢰된 `refac` push가 모든 검증을 통과한 경우에만 tag를 생성해야 합니다.
+- `release.toml`의 `status = "ready"`가 지정된 상태에서 신뢰된 `refac` push 또는 `refac` 대상 Pull Request 병합이 모든 검증을 통과한 경우에만 tag를 생성해야 합니다.
+- 닫혔지만 병합되지 않은 Pull Request에서는 게시 job이 실행되지 않아야 합니다.
 - GitHub Release에 모든 배포 파일과 `SHA256SUMS`를 첨부해야 합니다.
 - 기존 tag나 GitHub Release asset을 덮어쓰지 않아야 합니다.
