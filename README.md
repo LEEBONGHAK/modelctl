@@ -6,7 +6,7 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing the environment, and launching coding-agent CLIs consistently.
 
-> Current development version: `0.1.0`. The release manifest is marked ready and the validated `refac` release workflow creates the immutable tag and GitHub Release after all gates pass.
+> Current completed development version: `0.1.0`. `main` is the canonical release branch; ongoing development continues on `refac`.
 
 ## What works today
 
@@ -24,17 +24,19 @@
 
 See [`docs/PROGRESS.md`](docs/PROGRESS.md) for project status and [`docs/pull-requests/README.md`](docs/pull-requests/README.md) for bilingual PR history.
 
-## Development installation
+## Installation from the repository
 
-The repository is a Python 3.13+ uv workspace.
+The repository is a Python 3.13+ uv workspace. Use `main` for the completed release state:
 
 ```bash
 git clone https://github.com/LEEBONGHAK/modelctl.git
 cd modelctl
-git switch refac
+git switch main
 uv sync --all-packages --locked
 uv run modelctl --help
 ```
+
+Contributors developing the next version should branch from `refac`.
 
 ## Quick start
 
@@ -157,7 +159,7 @@ python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.1.0
 ```
 
-A trusted `refac` push with `status = "ready"` must independently pass:
+A trusted `main` push or a reviewed pull request merged into `main`, with `status = "ready"`, must independently pass:
 
 - coordinated package, manifest, changelog, and documentation validation
 - locked dependency audit
@@ -165,7 +167,7 @@ A trusted `refac` push with `status = "ready"` must independently pass:
 - distribution builds and installed-wheel smoke tests
 - checksum generation
 
-Only then does the workflow create `v<version>` at that exact commit and publish one immutable GitHub Release. Existing tags and release assets are never overwritten.
+Only then does the workflow create `v<version>` at that exact `main` commit and publish one immutable GitHub Release. Existing tags and release assets are never overwritten.
 
 **PyPI publication is intentionally disabled.** No workflow publishes packages to PyPI. See [`docs/RELEASING.md`](docs/RELEASING.md).
 
