@@ -33,11 +33,15 @@ class FakeProviders:
 class FakeLauncher:
     display_name = "Claude Code"
 
-    def __init__(self, available=True):
+    def __init__(self, available=True, warning=None):
         self._available = available
+        self.warning = warning
 
     def available(self):
         return self._available
+
+    def compatibility_warning(self, provider, model):
+        return self.warning
 
 
 class FakeLaunchers:
@@ -101,3 +105,26 @@ def test_doctor_reports_missing_runtime_selection(monkeypatch):
     assert checks["Provider"].status == "error"
     assert checks["Model"].status == "error"
     assert checks["Credential"].status == "warning"
+    assert checks["Compatibility"].status == "warning"
+
+
+def test_doctor_reports_launcher_compatibility_warning(monkeypatch):
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+    service = DoctorService(
+        FakeConfig(
+            {
+                "provider": "openrouter",
+                "default_model": "anthropic/claude-sonnet-4",
+                "launcher": "claude",
+            }
+        ),
+        FakeCredentials("token"),
+        FakeProviders(),
+        FakeLaunchers(FakeLauncher(warning="Potential mismatch")),
+        FakeEngine(),
+    )
+
+    checks = {check.name: check for check in service.run()}
+
+    assert checks["Compatibility"].status == "warning"
+    assert checks["Compatibility"].detail == "Potential mismatch"
