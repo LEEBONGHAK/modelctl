@@ -2,36 +2,20 @@ from modelctl_core.config.manager import ConfigManager
 
 
 class ConfigService:
-    def __init__(self):
+    def __init__(self, manager: ConfigManager | None = None):
+        self.manager = manager or ConfigManager()
 
-        self.manager = ConfigManager()
-
-    def get(self):
-
+    def get(self) -> dict[str, object]:
         return self.manager.load()
 
-    def save(self, cfg):
+    def save(self, config: dict[str, object]) -> None:
+        self.manager.save(config)
 
-        self.manager.save(cfg)
+    def set_provider(self, provider: str) -> None:
+        self.manager.update(provider=provider)
 
-    def set_provider(
-        self,
-        provider,
-    ):
+    def set_launcher(self, launcher: str) -> None:
+        self.manager.update(launcher=launcher)
 
-        cfg = self.get()
-
-        cfg.default_provider = provider
-
-        self.save(cfg)
-
-    def set_launcher(
-        self,
-        launcher,
-    ):
-
-        cfg = self.get()
-
-        cfg.default_launcher = launcher
-
-        self.save(cfg)
+    def set_model(self, model: str) -> None:
+        self.manager.update(default_model=model)
