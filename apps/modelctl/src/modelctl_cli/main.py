@@ -1,12 +1,12 @@
 import typer
 
-from modelctl_cli.commands.root import register_root_commands
-from modelctl_cli.commands.config import config_app
-from modelctl_cli.commands.plugins import plugins_app
-from modelctl_cli.commands.models import models_app
 from modelctl_cli.commands.auth import auth_app
-from modelctl_cli.commands.use import use_app
-from modelctl_cli.commands.run import run_app
+from modelctl_cli.commands.config import config_app
+from modelctl_cli.commands.models import models_app
+from modelctl_cli.commands.plugins import plugins_app
+from modelctl_cli.commands.root import register_root_commands
+from modelctl_cli.commands.run import run
+from modelctl_cli.commands.use import use
 
 app = typer.Typer(
     name="modelctl",
@@ -15,35 +15,13 @@ app = typer.Typer(
 
 register_root_commands(app)
 
-app.add_typer(
-    config_app,
-    name="config",
-)
+app.add_typer(config_app, name="config")
+app.add_typer(plugins_app, name="plugins")
+app.add_typer(models_app, name="models")
+app.add_typer(auth_app, name="auth")
 
-app.add_typer(
-    plugins_app,
-    name="plugins",
-)
-
-app.add_typer(
-    models_app,
-    name="models",
-)
-
-app.add_typer(
-    auth_app,
-    name="auth",
-)
-
-app.add_typer(
-    use_app,
-    name="use",
-)
-
-app.add_typer(
-    run_app,
-    name="run",
-)
+app.command("use")(use)
+app.command("run")(run)
 
 if __name__ == "__main__":
     app()
