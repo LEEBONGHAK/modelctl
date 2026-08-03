@@ -41,6 +41,10 @@ class Container:
         return registry
 
     @cached_property
+    def launchers(self) -> LauncherRegistry:
+        return LauncherRegistry()
+
+    @cached_property
     def models(self) -> ModelRepository:
         return ModelRepository(self.engine)
 
@@ -60,6 +64,6 @@ class Container:
 
     def launcher_service(self) -> LauncherService:
         return LauncherService(
-            LauncherRegistry(),
+            self.launchers,
             self.config,
         )
