@@ -28,8 +28,32 @@ class ModelRepository:
     def list(self):
         with Session(self.engine) as session:
             return session.exec(
-                select(UniversalModel).order_by(UniversalModel.provider, UniversalModel.model_id)
+                select(UniversalModel).order_by(
+                    UniversalModel.provider,
+                    UniversalModel.model_id,
+                )
             ).all()
+
+    def list_by_provider(self, provider_id: str):
+        with Session(self.engine) as session:
+            return session.exec(
+                select(UniversalModel)
+                .where(UniversalModel.provider == provider_id)
+                .order_by(UniversalModel.model_id)
+            ).all()
+
+    def get_by_provider(
+        self,
+        provider_id: str,
+        model_id: str,
+    ) -> UniversalModel | None:
+        with Session(self.engine) as session:
+            return session.exec(
+                select(UniversalModel).where(
+                    UniversalModel.provider == provider_id,
+                    UniversalModel.model_id == model_id,
+                )
+            ).first()
 
     def search(self, keyword: str):
         with Session(self.engine) as session:
