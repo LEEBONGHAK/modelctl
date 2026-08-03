@@ -4,6 +4,13 @@ on:
   pull_request:
     paths:
       - ".github/workflows/release.yml"
+      - "release.toml"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "README.ko.md"
+      - "SECURITY.md"
+      - "docs/RELEASE_CRITERIA.md"
+      - "docs/RELEASING.md"
       - "scripts/release_validation.py"
       - "tests/test_release_validation.py"
       - "apps/modelctl/pyproject.toml"
@@ -18,19 +25,37 @@ on:
         default: "v0.1.0"
         type: string
   push:
+    branches:
+      - refac
     tags:
       - "v*"
+    paths:
+      - ".github/workflows/release.yml"
+      - "release.toml"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "README.ko.md"
+      - "SECURITY.md"
+      - "docs/RELEASE_CRITERIA.md"
+      - "docs/RELEASING.md"
+      - "scripts/release_validation.py"
+      - "tests/test_release_validation.py"
+      - "apps/modelctl/pyproject.toml"
+      - "packages/core/pyproject.toml"
+      - "packages/sdk/pyproject.toml"
+      - "uv.lock"
 
 permissions:
   contents: read
 
 jobs:
   validate-and-build:
-    name: Validate and build release
+    name: Validate complete release
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       version: ${{ steps.release.outputs.version }}
+      status: ${{ steps.release.outputs.status }}
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -41,8 +66,9 @@ jobs:
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
           python-version: "3.13"
+          enable-cache: true
 
-      - name: Resolve and validate release version and tag
+      - name: Resolve and validate release metadata
         id: release
         shell: bash
         env:
@@ -52,8 +78,9 @@ jobs:
         run: |
           set -euo pipefail
           version="$(python scripts/release_validation.py --print-version)"
+          status="$(python scripts/release_validation.py --print-status)"
 
-          if [[ "${EVENT_NAME}" == "push" ]]; then
+          if [[ "${EVENT_NAME}" == "push" && "${GITHUB_REF}" == refs/tags/v* ]]; then
             tag="${REF_NAME}"
           elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             tag="${INPUT_TAG}"
@@ -63,15 +90,28 @@ jobs:
 
           python scripts/release_validation.py --tag "${tag}"
           printf 'version=%s\n' "${version}" >> "${GITHUB_OUTPUT}"
+          printf 'status=%s\n' "${status}" >> "${GITHUB_OUTPUT}"
           printf 'tag=%s\n' "${tag}" >> "${GITHUB_OUTPUT}"
 
-      - name: Require tagged commit to belong to refac
-        if: github.event_name == 'push'
+      - name: Require manually tagged commit to belong to refac
+        if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin refac
           git merge-base --is-ancestor "${GITHUB_SHA}" origin/refac
+
+      - name: Install locked workspace
+        run: uv sync --all-packages --locked
+
+      - name: Audit locked dependencies
+        run: uv audit --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Run complete test suite
+        run: uv run pytest
 
       - name: Build distributions
         run: |
@@ -108,30 +148,59 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  github-release:
-    name: Publish GitHub Release
+  publish-release:
+    name: Create validated tag and GitHub Release
     needs: validate-and-build
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/refac' &&
+       needs.validate-and-build.outputs.status == 'ready') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
       - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: modelctl-release-${{ needs.validate-and-build.outputs.version }}
           path: dist
 
-      - name: Create GitHub Release
+      - name: Create tag and GitHub Release once
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
+          TARGET_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
+
+          existing_tag_sha="$(
+            gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+              --jq '.object.sha' 2>/dev/null || true
+          )"
+
+          if [[ "${GITHUB_REF}" == "refs/heads/refac" ]]; then
+            if [[ -z "${existing_tag_sha}" ]]; then
+              gh api --method POST "repos/${REPOSITORY}/git/refs" \
+                -f ref="refs/tags/${RELEASE_TAG}" \
+                -f sha="${TARGET_SHA}" >/dev/null
+              existing_tag_sha="${TARGET_SHA}"
+              echo "Created ${RELEASE_TAG} at ${TARGET_SHA}."
+            elif [[ "${existing_tag_sha}" != "${TARGET_SHA}" ]]; then
+              echo "${RELEASE_TAG} already points to ${existing_tag_sha}; no overwrite." >&2
+              exit 0
+            fi
+          fi
+
           if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            echo "Release ${RELEASE_TAG} already exists; refusing to overwrite assets." >&2
-            exit 1
+            echo "GitHub Release ${RELEASE_TAG} already exists; no overwrite."
+            exit 0
           fi
 
           gh release create "${RELEASE_TAG}" dist/* \
