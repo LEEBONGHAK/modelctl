@@ -2,6 +2,7 @@ import typer
 
 from modelctl_cli.commands.auth import auth_app
 from modelctl_cli.commands.config import config_app
+from modelctl_cli.commands.doctor import doctor
 from modelctl_cli.commands.launchers import launchers_app
 from modelctl_cli.commands.models import models_app
 from modelctl_cli.commands.plugins import plugins_app
@@ -24,6 +25,7 @@ app.add_typer(auth_app, name="auth")
 
 app.command("use")(use)
 app.command("run")(run)
+app.command("doctor")(doctor)
 
 if __name__ == "__main__":
     app()
