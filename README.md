@@ -4,32 +4,29 @@
 
 **The universal AI model and coding-agent control plane.**
 
-`modelctl` aims to become the **uv of AI coding agents**: one CLI for selecting AI providers and models, managing local configuration, and launching coding agents consistently.
+`modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing the environment, and launching coding-agent CLIs consistently.
 
-> Development status: active, pre-release. The working implementation currently lives on the `refac` branch.
+> Current development version: `0.1.0`. The release manifest is marked ready and the validated `refac` release workflow creates the immutable tag and GitHub Release after all gates pass.
 
 ## What works today
 
-- OpenRouter credential and model synchronization
-- Interactive and non-interactive provider/model selection with `modelctl use`
-- Persistent provider, model, and launcher configuration
+- OpenRouter credential storage and model synchronization
+- Interactive and non-interactive provider/model selection
+- Persistent provider, model, and launcher defaults
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers
-- Native launcher argument forwarding without shell execution
+- Native argument forwarding without shell execution
 - Launcher discovery, installation status, and selection
-- Local environment diagnostics with `modelctl doctor`
-- Non-blocking provider/model/launcher compatibility feedback
-- Secure credential storage through the operating-system keyring
-- Explicit, user-private plaintext fallback when a keyring is unavailable
-- Ruff and locked-dependency audit validation on Linux
-- pytest validation on Linux, macOS, and Windows with Python 3.13
-- Wheel and source-distribution builds for CLI, core, and SDK packages
-- Installed-wheel smoke tests and validated GitHub Release artifacts
+- `modelctl doctor` diagnostics and compatibility feedback
+- Operating-system keyring storage with explicit plaintext fallback
+- Linux, macOS, and Windows tests on Python 3.13
+- Locked dependency audit, Ruff, package builds, and installed-wheel smoke tests
+- Validated GitHub Release artifacts with SHA-256 checksums
 
-For implementation history and roadmap, see [`docs/PROGRESS.md`](docs/PROGRESS.md). For per-PR bilingual records, see [`docs/pull-requests/README.md`](docs/pull-requests/README.md).
+See [`docs/PROGRESS.md`](docs/PROGRESS.md) for project status and [`docs/pull-requests/README.md`](docs/pull-requests/README.md) for bilingual PR history.
 
 ## Development installation
 
-The repository is a uv workspace and requires Python 3.13 or later.
+The repository is a Python 3.13+ uv workspace.
 
 ```bash
 git clone https://github.com/LEEBONGHAK/modelctl.git
@@ -41,21 +38,19 @@ uv run modelctl --help
 
 ## Quick start
 
-### 1. Store a provider credential
+### 1. Store an OpenRouter credential
 
 ```bash
 modelctl auth login openrouter
 ```
 
-Credentials are stored in the operating-system keyring by default. `modelctl` does not silently downgrade to plaintext storage when the keyring is unavailable.
-
-Only when you explicitly accept the risk may you use the protected local-file fallback:
+The operating-system keyring is the default. `modelctl` does not silently downgrade to plaintext storage. Explicitly accept the local-file risk only when a keyring is unavailable:
 
 ```bash
 modelctl auth login openrouter --allow-plaintext-fallback
 ```
 
-The fallback file is restricted to the current user on POSIX systems, but it is still **unencrypted plaintext**. Prefer the keyring or an environment variable such as `MODELCTL_OPENROUTER`.
+The fallback file is private to the current user on POSIX systems but remains unencrypted plaintext. An environment variable such as `MODELCTL_OPENROUTER` is also supported.
 
 ### 2. Synchronize and select a model
 
@@ -64,7 +59,7 @@ modelctl models sync openrouter
 modelctl use
 ```
 
-Non-interactive selection for scripts and CI:
+For scripts and CI:
 
 ```bash
 modelctl use \
@@ -72,13 +67,13 @@ modelctl use \
   --model anthropic/claude-sonnet-4
 ```
 
-`--provider` and `--model` must be supplied together. Direct selections are validated against the provider registry and synchronized local model catalog.
+Direct selections are validated against the provider registry and synchronized local catalog.
 
-### 3. Select a coding-agent launcher
+### 3. Select a launcher
 
 ```bash
 modelctl launchers list
-modelctl launchers use claude
+modelctl launchers use aider
 ```
 
 | ID | Coding agent | Native provider | Base command |
@@ -95,7 +90,7 @@ modelctl doctor
 modelctl run
 ```
 
-Arguments after `run` are forwarded as an argument list to the native launcher:
+Arguments after `run` are forwarded as an argument list:
 
 ```bash
 modelctl run --continue
@@ -103,11 +98,11 @@ modelctl run --sandbox workspace-write
 modelctl run --no-auto-commits
 ```
 
-## Compatibility feedback
+## OpenRouter compatibility
 
-Claude Code, Gemini CLI, and Codex CLI are native clients for Anthropic, Google, and OpenAI respectively. When a model from another provider is passed to one of those launchers, `modelctl` displays a non-blocking warning before execution and through `modelctl doctor`.
+Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. `modelctl` warns, without blocking, when another provider's model is passed to one of them.
 
-For automatic OpenRouter model-name translation, select Aider:
+Aider is the current automatic OpenRouter integration:
 
 ```bash
 modelctl launchers use aider
@@ -116,7 +111,7 @@ modelctl config set model anthropic/claude-sonnet-4
 modelctl run
 ```
 
-Resulting command:
+Result:
 
 ```bash
 aider --model openrouter/anthropic/claude-sonnet-4
@@ -135,11 +130,11 @@ Default paths:
 
 ```text
 ~/.config/modelctl/config.json
-~/.config/modelctl/credentials.json   # only for explicit fallback
+~/.config/modelctl/credentials.json   # explicit fallback only
 ~/.local/share/modelctl/modelctl.db
 ```
 
-Configuration and fallback credential writes are atomic. On POSIX systems, private directories and files are hardened to `0700` and `0600`. Symbolic-link targets are rejected for protected files.
+Protected local writes are atomic. POSIX directories and files are hardened to `0700` and `0600`, and symbolic-link paths are rejected.
 
 ## Development and security checks
 
@@ -150,45 +145,48 @@ uv run ruff check .
 uv run pytest
 ```
 
-GitHub Actions performs:
+GitHub Actions additionally runs the complete pytest suite on Ubuntu, macOS, and Windows, builds all distributions, installs the wheels in an isolated environment, and verifies the installed CLI.
 
-- Ruff and locked-dependency auditing on Ubuntu
-- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
-- Distribution build and installed-wheel smoke validation
-- Release-tag, artifact, and checksum validation
-- Immutable full-commit pinning for external GitHub Actions
+## Release readiness
 
-## Package and release validation
+Release decisions are declared in [`release.toml`](release.toml), notable changes in [`CHANGELOG.md`](CHANGELOG.md), and the full completion checklist in [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md).
 
 ```bash
-uv build packages/core --out-dir dist --no-sources
-uv build packages/sdk --out-dir dist --no-sources
-uv build apps/modelctl --out-dir dist --no-sources
+python scripts/release_validation.py
+python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.1.0
 ```
 
-A completed version may be tagged manually after all three package versions match and the release commit is contained in `refac`. A valid `v*` tag creates a GitHub Release with verified distributions and `SHA256SUMS`.
+A trusted `refac` push with `status = "ready"` must independently pass:
 
-**PyPI publishing is intentionally disabled.** No workflow job currently publishes packages to PyPI. See [`docs/RELEASING.md`](docs/RELEASING.md).
+- coordinated package, manifest, changelog, and documentation validation
+- locked dependency audit
+- Ruff and the complete pytest suite
+- distribution builds and installed-wheel smoke tests
+- checksum generation
+
+Only then does the workflow create `v<version>` at that exact commit and publish one immutable GitHub Release. Existing tags and release assets are never overwritten.
+
+**PyPI publication is intentionally disabled.** No workflow publishes packages to PyPI. See [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ## Project structure
 
 ```text
 apps/modelctl/       Typer CLI application
-packages/core/       runtime services, providers, repositories, and launchers
-packages/sdk/        SDK package foundation
-scripts/             repository validation and release helpers
-tests/               regression, integration, and security tests
+packages/core/       runtime services, credentials, providers, repositories, launchers
+packages/sdk/        SDK foundation
+scripts/             release validation helpers
+tests/               regression, integration, packaging, and security tests
 docs/                project, release, security, and PR documentation
 ```
 
 ## Security
 
-See [`SECURITY.md`](SECURITY.md) for credential-storage behavior, reporting guidance, supported versions, and known limitations. Security tests and dependency audits reduce known risk but do not replace an independent penetration test or formal security assessment.
+See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, supported versions, and known limitations. Automated checks reduce known risk but do not replace an independent penetration test or formal audit.
 
 ## Near-term roadmap
 
-- Complete and tag the first development release
 - Stricter compatibility policies and automatic remediation
 - Launcher capability and execution-request refactoring
-- Profile management after the core configuration workflow is stable
+- Profile management only after a complete workflow and tests exist
+- A separately reviewed PyPI publication milestone
