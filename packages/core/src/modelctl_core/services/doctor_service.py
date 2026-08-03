@@ -30,6 +30,7 @@ class DoctorService:
         checks.append(self._credential_check(provider_id))
         checks.append(self._model_check(model))
         checks.append(self._launcher_check(launcher_id))
+        checks.append(self._compatibility_check(provider_id, model, launcher_id))
         checks.append(self._database_check())
         return checks
 
@@ -79,6 +80,37 @@ class DoctorService:
             "Launcher",
             "warning",
             f"{launcher.display_name} is selected but not installed",
+        )
+
+    def _compatibility_check(
+        self,
+        provider_id: str | None,
+        model: str | None,
+        launcher_id: str,
+    ) -> DiagnosticCheck:
+        if not provider_id or not model:
+            return DiagnosticCheck(
+                "Compatibility",
+                "warning",
+                "Select a provider and model to evaluate launcher compatibility",
+            )
+
+        launcher = self.launchers.get(launcher_id)
+        if launcher is None:
+            return DiagnosticCheck(
+                "Compatibility",
+                "warning",
+                "Select a known launcher to evaluate compatibility",
+            )
+
+        checker = getattr(launcher, "compatibility_warning", None)
+        warning = checker(provider_id, model) if callable(checker) else None
+        if warning:
+            return DiagnosticCheck("Compatibility", "warning", warning)
+        return DiagnosticCheck(
+            "Compatibility",
+            "ok",
+            "No known provider/model/launcher compatibility issues",
         )
 
     def _database_check(self) -> DiagnosticCheck:
