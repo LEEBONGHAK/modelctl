@@ -1,3 +1,4 @@
+from modelctl_core.launcher.aider import AiderLauncher
 from modelctl_core.launcher.base import Launcher
 from modelctl_core.launcher.claude import ClaudeCodeLauncher
 from modelctl_core.launcher.codex import CodexCliLauncher
@@ -10,6 +11,7 @@ class LauncherRegistry:
             "claude": ClaudeCodeLauncher(),
             "gemini": GeminiCliLauncher(),
             "codex": CodexCliLauncher(),
+            "aider": AiderLauncher(),
         }
 
     def get(self, name: str) -> Launcher | None:

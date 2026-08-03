@@ -7,8 +7,9 @@ class LauncherService:
         config = self.config.load()
         launcher_name = config.get("launcher", "claude")
         model = config.get("default_model")
+        provider = config.get("provider")
 
-        if not model:
+        if not isinstance(model, str) or not model:
             raise RuntimeError("No model selected. Run: modelctl use")
 
         launcher = self.registry.get(launcher_name)
@@ -16,4 +17,8 @@ class LauncherService:
         if not launcher:
             raise RuntimeError(f"Unknown launcher: {launcher_name}")
 
-        launcher.run(model, extra_args)
+        launcher.run(
+            model,
+            extra_args,
+            provider=provider if isinstance(provider, str) else None,
+        )

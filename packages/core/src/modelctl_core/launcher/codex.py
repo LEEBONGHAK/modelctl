@@ -11,7 +11,14 @@ class CodexCliLauncher(Launcher):
     def available(self) -> bool:
         return shutil.which("codex") is not None
 
-    def run(self, model: str, extra_args: list[str] | None = None) -> None:
+    def run(
+        self,
+        model: str,
+        extra_args: list[str] | None = None,
+        provider: str | None = None,
+    ) -> None:
+        del provider
+
         if not self.available():
             raise RuntimeError(
                 "Codex CLI not found. Install it with: npm install -g @openai/codex"
