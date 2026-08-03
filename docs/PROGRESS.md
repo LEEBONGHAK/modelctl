@@ -12,6 +12,18 @@ Development principle:
 2. Add regression, cross-platform, packaging, release, and security gates.
 3. Refactor abstractions only after real integrations expose common requirements.
 
+## Current release state
+
+- Coordinated version: `0.1.0`
+- Manifest: `release.toml`
+- Status: `ready`
+- Channel: development release
+- PyPI: disabled
+- Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
+- Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
+
+A trusted `refac` push creates the tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
+
 ## Current end-to-end workflow
 
 ```bash
@@ -42,7 +54,7 @@ Local state defaults:
 
 ## Implemented features
 
-### Provider and model selection
+### Provider, model, credentials, and configuration
 
 - Provider discovery and registry
 - OpenRouter model synchronization with credential validation and bounded HTTP timeouts
@@ -50,18 +62,14 @@ Local state defaults:
 - Interactive and non-interactive provider/model selection
 - Validation of registered providers and synchronized models
 - Favorite-model support
-
-### Credentials and local configuration
-
 - Environment-variable and operating-system keyring lookup
-- Keyring-first credential storage
-- No silent downgrade from keyring failure to plaintext
-- Explicit `--allow-plaintext-fallback` compatibility option
+- Keyring-first credential storage with no silent plaintext downgrade
+- Explicit `--allow-plaintext-fallback`
 - Provider-ID and empty-token validation
 - Atomic configuration and fallback-credential writes
 - Symbolic-link rejection for protected files
 - POSIX private directory/file permissions (`0700` / `0600`)
-- Shared credential service used by authentication, diagnostics, and model synchronization
+- Shared credential service for authentication, diagnostics, and synchronization
 
 ### Coding-agent launchers
 
@@ -72,9 +80,9 @@ Local state defaults:
 | `codex` | Codex CLI | OpenAI | `codex --model <model>` |
 | `aider` | Aider | Multiple providers | `aider --model <model>` |
 
-All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to the required `openrouter/<provider>/<model>` form.
+All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to `openrouter/<provider>/<model>`.
 
-### Launcher management, diagnostics, and compatibility
+### Management, diagnostics, and compatibility
 
 - `modelctl launchers list`
 - `modelctl launchers use <launcher-id>`
@@ -83,42 +91,39 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
 - Non-blocking native-provider mismatch warnings
 
-### Packaging and release validation
+### Packaging and release
 
 - Coordinated wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
-- Workspace source overrides disabled for release-oriented builds
+- Workspace source overrides disabled for release builds
 - Fresh-environment installed-wheel import and CLI smoke tests
-- Coordinated package-version and `v*` tag validation
-- Validation that tagged commits belong to `refac`
-- SHA-256 checksum generation
-- New GitHub Release creation for validated completed-version tags
-- Refusal to overwrite an existing GitHub Release
+- Coordinated package, manifest, changelog, documentation, and tag validation
+- Machine-readable readiness status in `release.toml`
+- Validation that manually tagged commits belong to `refac`
+- Release workflow-owned dependency audit, lint, complete tests, build, smoke test, and checksum gates
+- Automatic tag creation only from a successful trusted `refac` push marked `ready`
+- Immutable GitHub Release creation with distributions and `SHA256SUMS`
+- Existing tags and release assets are never overwritten
 - PyPI publication intentionally disabled
 
-### Documentation
+### Documentation and security gates
 
 - English README and complete Korean `README.ko.md`
-- Bilingual release guide and security policy
-- Per-PR English/Korean engineering records under `docs/pull-requests/`
-
-### Quality and security gates
-
+- Bilingual release guide, completion criteria, and security policy
+- Per-PR English/Korean engineering records
 - Locked uv workspace installation
-- Ruff checks and `uv audit --locked` on Ubuntu
+- Ruff and `uv audit --locked`
 - Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
-- Package build and installed-wheel smoke workflow
-- Release dry-run workflow
 - Full commit-SHA pinning for external GitHub Actions
 - Least-privilege workflow permissions
-- Security regression coverage for private files, credential fallback, untrusted release tags, and credential-backed model synchronization
+- Security regression coverage for private files, credential fallback, untrusted tags, and model synchronization
 
 ## Completed pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
-| #1 | Make top-level `use` and `run` executable; repair container and configuration wiring | Merged |
+| #1 | Make top-level `use` and `run` executable; repair wiring | Merged |
 | #2 | Stabilize workspace installation, lint, and test collection | Merged |
-| #3 | Complete Claude Code execution and native argument forwarding | Merged |
+| #3 | Complete Claude Code execution and argument forwarding | Merged |
 | #4 | Add Gemini CLI and repair runtime configuration | Merged |
 | #5 | Add Codex CLI launcher | Merged |
 | #6 | Add provider-aware Aider launcher | Merged |
@@ -131,6 +136,7 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #13 | Build distributions and smoke-test installed wheels | Merged |
 | #14 | Add bilingual records for PRs #1–#13 | Merged |
 | #15 | Validate release tags and automate GitHub Release creation | Merged |
+| #16 | Harden credentials, local state, workflows, and Korean documentation | Merged |
 
 ## Architecture snapshot
 
@@ -138,7 +144,7 @@ All launchers forward native arguments as subprocess argument lists without shel
 apps/modelctl/       Typer CLI application
 packages/core/       configuration, credentials, providers, repositories, services, launchers
 packages/sdk/        public SDK package foundation
-scripts/             release and repository validation helpers
+scripts/             release validation helpers
 tests/               regression, integration, packaging, and security tests
 docs/                project, release, security, and PR documentation
 ```
@@ -151,15 +157,9 @@ Typer command
   -> external CLI or API
 ```
 
-## Removed obsolete code
-
-- Duplicate placeholder `doctor()` registration removed after the real diagnostic command became authoritative.
-- Unused, entirely unimplemented `ProfileService` stub removed. Profile support may be reintroduced when its actual requirements are implemented and tested.
-
 ## Known limitations and deferred work
 
 - No PyPI publication
-- No tagged development release yet
 - Strict compatibility enforcement and automatic remediation are not implemented
 - Plugin-based launcher discovery is deferred
 - Execution-target and launch-request value objects are not yet formalized
@@ -169,11 +169,10 @@ Typer command
 
 ## Next priorities
 
-1. Define completion criteria for the first development version and create its validated tag when met.
-2. Add stricter compatibility policies after additional provider integrations exist.
-3. Refactor launcher capabilities and execution requests around proven requirements.
-4. Reintroduce profile management only with a complete user workflow and tests.
-5. Plan a separate reviewed PyPI publication milestone when package ownership and Trusted Publishing are ready.
+1. Add stricter compatibility policies after additional provider integrations exist.
+2. Refactor launcher capabilities and execution requests around proven requirements.
+3. Reintroduce profile management only with a complete user workflow and tests.
+4. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
 
 ## Validation commands
 
@@ -185,5 +184,7 @@ uv run pytest
 uv build packages/core --out-dir dist --no-sources
 uv build packages/sdk --out-dir dist --no-sources
 uv build apps/modelctl --out-dir dist --no-sources
+python scripts/release_validation.py
+python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.1.0
 ```
