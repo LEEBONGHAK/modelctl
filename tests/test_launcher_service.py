@@ -22,3 +22,24 @@ def test_launcher_service_forwards_provider_context():
         ["--no-auto-commits"],
         provider="openrouter",
     )
+
+
+def test_launcher_service_returns_compatibility_warning():
+    launcher = Mock()
+    launcher.compatibility_warning.return_value = "Potential mismatch"
+    registry = Mock()
+    registry.get.return_value = launcher
+    config = Mock()
+    config.load.return_value = {
+        "launcher": "claude",
+        "provider": "openrouter",
+        "default_model": "anthropic/claude-sonnet-4",
+    }
+
+    warning = LauncherService(registry, config).compatibility_warning()
+
+    assert warning == "Potential mismatch"
+    launcher.compatibility_warning.assert_called_once_with(
+        "openrouter",
+        "anthropic/claude-sonnet-4",
+    )
