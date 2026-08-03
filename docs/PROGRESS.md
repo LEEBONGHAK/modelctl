@@ -111,6 +111,17 @@ openrouter/anthropic/claude-sonnet-4
 - OpenRouter mismatch warning before execution when a native launcher receives a model selected from OpenRouter
 - Aider remains the automatic OpenRouter integration and performs the required model-name translation
 
+### Packaging and installed-artifact validation
+
+- Hatchling wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
+- Standards-oriented builds with workspace source overrides disabled
+- Shared `dist/` output for coordinated release artifacts
+- Fresh virtual environment installation from built wheels
+- Installed import checks for CLI, core, and SDK packages
+- Installed `modelctl version` and `modelctl --help` smoke tests
+- Distribution artifacts uploaded from GitHub Actions
+- CLI version output read from installed distribution metadata instead of a hardcoded command string
+
 ### Quality gates
 
 - Locked uv workspace installation in GitHub Actions
@@ -119,8 +130,10 @@ openrouter/anthropic/claude-sonnet-4
 - Complete pytest suite on macOS with Python 3.13
 - Complete pytest suite on Windows with Python 3.13
 - Matrix fail-fast disabled so every platform reports independently
+- Package build and isolated installation smoke workflow on Ubuntu with Python 3.13
 - Regression coverage for interactive and non-interactive selection
 - Repository-level coverage for provider-scoped model queries
+- Regression coverage for installed distribution version lookup
 
 ## Completed pull requests
 
@@ -138,6 +151,7 @@ openrouter/anthropic/claude-sonnet-4
 | #10 | Add provider/model/launcher compatibility feedback | Merged |
 | #11 | Add non-interactive provider and model selection | Merged |
 | #12 | Add Linux, macOS, and Windows test matrix | Merged |
+| #13 | Build release distributions and smoke-test installed wheels | Merged |
 
 ## Architecture snapshot
 
@@ -166,19 +180,19 @@ Launcher compatibility currently uses a small native-provider hint rather than a
 
 The following items are intentionally deferred until more working integrations exist:
 
+- Automated release tagging and package-index publishing
 - Strict compatibility enforcement and automatic remediation
 - Plugin-based launcher discovery
 - Typed execution target or launch request value objects
 - Full static type-check enforcement across the repository
 - Profile management implementation
-- Release packaging and installed-artifact smoke validation
 
 These are not blockers for the current working workflow, but they are candidates for later refactoring milestones.
 
 ## Next priorities
 
-1. Prepare the first installable development release.
-2. Add package-build and installed-wheel smoke tests.
+1. Add release tag validation and publishing automation.
+2. Produce the first installable development release.
 3. Add stricter compatibility policies after additional provider integrations exist.
 4. Refactor launcher capabilities and execution requests around proven requirements.
 5. Implement profile management after the core configuration workflow stabilizes.
@@ -189,4 +203,7 @@ These are not blockers for the current working workflow, but they are candidates
 uv sync --all-packages --locked
 uv run ruff check .
 uv run pytest
+uv build packages/core --out-dir dist --no-sources
+uv build packages/sdk --out-dir dist --no-sources
+uv build apps/modelctl --out-dir dist --no-sources
 ```

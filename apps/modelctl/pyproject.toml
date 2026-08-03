@@ -7,6 +7,7 @@ build-backend = "hatchling.build"
 [project]
 name = "modelctl"
 version = "0.1.0"
+description = "Universal AI model and coding-agent control plane"
 requires-python = ">=3.13"
 dependencies = [
     "modelctl-core",
@@ -18,11 +19,12 @@ dependencies = [
 [project.scripts]
 modelctl = "modelctl_cli.main:app"
 
+[project.urls]
+Repository = "https://github.com/LEEBONGHAK/modelctl"
 
 [tool.uv.sources]
 modelctl-core = { workspace = true }
 modelctl-sdk = { workspace = true }
-
 
 [tool.hatch.build.targets.wheel]
 packages = [

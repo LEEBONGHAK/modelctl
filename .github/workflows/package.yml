@@ -1,0 +1,52 @@
+name: Package
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build distributions
+        run: |
+          uv build packages/core --out-dir dist --no-sources
+          uv build packages/sdk --out-dir dist --no-sources
+          uv build apps/modelctl --out-dir dist --no-sources
+
+      - name: Create isolated environment
+        run: uv venv .package-smoke --python 3.13
+
+      - name: Install built wheels
+        run: >-
+          uv pip install
+          --python .package-smoke/bin/python
+          dist/modelctl_core-*.whl
+          dist/modelctl_sdk-*.whl
+          dist/modelctl-*.whl
+
+      - name: Verify installed packages
+        run: >-
+          .package-smoke/bin/python -c
+          "import modelctl_cli, modelctl_core, modelctl_sdk"
+
+      - name: Verify installed CLI
+        run: |
+          .package-smoke/bin/modelctl version
+          .package-smoke/bin/modelctl --help
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modelctl-distributions
+          path: dist/*
+          if-no-files-found: error
