@@ -6,7 +6,7 @@
 
 `modelctl`은 AI provider와 모델 선택, credential 및 기본 설정 관리, 로컬 환경 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 개발 버전은 `0.1.0`입니다. Release manifest가 ready 상태이며, 검증된 `refac` release workflow가 모든 gate를 통과한 후 불변 tag와 GitHub Release를 생성합니다.
+> 현재 완성된 개발 버전은 `0.1.0`입니다. `main`은 공식 릴리스 브랜치이며 다음 버전 개발은 `refac`에서 계속합니다.
 
 ## 현재 동작하는 기능
 
@@ -24,17 +24,19 @@
 
 프로젝트 상태는 [`docs/PROGRESS.md`](docs/PROGRESS.md), PR별 영문·한국어 기록은 [`docs/pull-requests/README.md`](docs/pull-requests/README.md)를 참고하세요.
 
-## 개발 환경 설치
+## 저장소에서 설치
 
-이 저장소는 Python 3.13 이상을 사용하는 uv workspace입니다.
+이 저장소는 Python 3.13 이상을 사용하는 uv workspace입니다. 완성된 릴리스 상태는 `main`을 사용합니다.
 
 ```bash
 git clone https://github.com/LEEBONGHAK/modelctl.git
 cd modelctl
-git switch refac
+git switch main
 uv sync --all-packages --locked
 uv run modelctl --help
 ```
+
+다음 버전을 개발하는 기여자는 `refac`에서 branch를 생성합니다.
 
 ## 빠른 시작
 
@@ -157,7 +159,7 @@ python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.1.0
 ```
 
-`status = "ready"`인 신뢰된 `refac` push는 다음 검증을 독립적으로 통과해야 합니다.
+`status = "ready"`인 신뢰된 `main` push 또는 검토된 `main` 대상 Pull Request 병합은 다음 검증을 독립적으로 통과해야 합니다.
 
 - Package version, manifest, changelog, 문서 일치
 - Lockfile dependency audit
@@ -165,7 +167,7 @@ python scripts/release_validation.py --tag v0.1.0
 - 배포물 빌드 및 설치된 wheel smoke test
 - Checksum 생성
 
-모든 검증이 성공한 경우에만 정확히 해당 commit에 `v<version>` tag를 만들고 하나의 불변 GitHub Release를 게시합니다. 기존 tag와 release asset은 덮어쓰지 않습니다.
+모든 검증이 성공한 경우에만 정확히 해당 `main` commit에 `v<version>` tag를 만들고 하나의 불변 GitHub Release를 게시합니다. 기존 tag와 release asset은 덮어쓰지 않습니다.
 
 **PyPI 게시는 의도적으로 비활성화되어 있습니다.** 어떤 workflow도 PyPI에 package를 게시하지 않습니다. 자세한 내용은 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
 

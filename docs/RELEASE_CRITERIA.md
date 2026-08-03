@@ -5,11 +5,13 @@
 - Version: `0.1.0`
 - Status: **Ready**
 - Channel: development release / 개발 버전
+- Release branch: `main`
+- Development branch: `refac`
 - PyPI publication: disabled / 비활성화
 
 ## English
 
-A development version is complete only when all criteria below are satisfied on the commit that receives the tag.
+A development version is complete only when all criteria below are satisfied on the exact `main` commit that receives the tag.
 
 ### Functional criteria
 
@@ -40,16 +42,16 @@ A development version is complete only when all criteria below are satisfied on 
 ### Release criteria
 
 - `CHANGELOG.md` contains the exact release version.
-- The tagged commit is contained in `refac`.
+- The tagged commit is contained in `main`.
 - The release workflow independently runs dependency audit, lint, tests, build, and installed-wheel smoke checks.
-- The release workflow creates the tag only after a successful trusted `refac` push or a merged pull request targeting `refac`, with `status = "ready"` in `release.toml`.
+- The release workflow creates the tag only after a successful trusted `main` push or a merged pull request targeting `main`, with `status = "ready"` in `release.toml`.
 - Closed but unmerged pull requests do not run publication jobs.
 - A GitHub Release attaches all distributions and `SHA256SUMS`.
 - Existing tags or GitHub Release assets are never overwritten.
 
 ## 한국어
 
-개발 버전은 tag가 지정되는 commit에서 아래 기준을 모두 충족해야 완료된 것으로 판단합니다.
+개발 버전은 tag가 지정되는 정확한 `main` commit에서 아래 기준을 모두 충족해야 완료된 것으로 판단합니다.
 
 ### 기능 기준
 
@@ -80,9 +82,9 @@ A development version is complete only when all criteria below are satisfied on 
 ### 릴리스 기준
 
 - `CHANGELOG.md`에 정확한 release version이 존재해야 합니다.
-- Tag 대상 commit이 `refac`에 포함되어야 합니다.
+- Tag 대상 commit이 `main`에 포함되어야 합니다.
 - Release workflow가 dependency audit, lint, test, build, 설치된 wheel smoke 검증을 독립적으로 수행해야 합니다.
-- `release.toml`의 `status = "ready"`가 지정된 상태에서 신뢰된 `refac` push 또는 `refac` 대상 Pull Request 병합이 모든 검증을 통과한 경우에만 tag를 생성해야 합니다.
+- `release.toml`의 `status = "ready"`가 지정된 상태에서 신뢰된 `main` push 또는 `main` 대상 Pull Request 병합이 모든 검증을 통과한 경우에만 tag를 생성해야 합니다.
 - 닫혔지만 병합되지 않은 Pull Request에서는 게시 job이 실행되지 않아야 합니다.
 - GitHub Release에 모든 배포 파일과 `SHA256SUMS`를 첨부해야 합니다.
 - 기존 tag나 GitHub Release asset을 덮어쓰지 않아야 합니다.

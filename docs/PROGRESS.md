@@ -12,8 +12,10 @@ Development principle:
 2. Add regression, cross-platform, packaging, release, and security gates.
 3. Refactor abstractions only after real integrations expose common requirements.
 
-## Current release state
+## Branch and release state
 
+- Release branch: `main`
+- Ongoing development branch: `refac`
 - Coordinated version: `0.1.0`
 - Manifest: `release.toml`
 - Status: `ready`
@@ -22,7 +24,7 @@ Development principle:
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 - Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
 
-A trusted `refac` push creates the tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
+A reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
 
 ## Current end-to-end workflow
 
@@ -98,9 +100,10 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Fresh-environment installed-wheel import and CLI smoke tests
 - Coordinated package, manifest, changelog, documentation, and tag validation
 - Machine-readable readiness status in `release.toml`
-- Validation that manually tagged commits belong to `refac`
+- Validation that manually tagged commits belong to `main`
 - Release workflow-owned dependency audit, lint, complete tests, build, smoke test, and checksum gates
-- Automatic tag creation only from a successful trusted `refac` push marked `ready`
+- Automatic tag creation only from successful trusted `main` changes marked `ready`
+- Trusted merged-PR validation against the exact `main` merge commit
 - Immutable GitHub Release creation with distributions and `SHA256SUMS`
 - Existing tags and release assets are never overwritten
 - PyPI publication intentionally disabled
@@ -115,7 +118,7 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
 - Full commit-SHA pinning for external GitHub Actions
 - Least-privilege workflow permissions
-- Security regression coverage for private files, credential fallback, untrusted tags, and model synchronization
+- Security regression coverage for private files, credential fallback, untrusted tags, merged-event trust boundaries, and model synchronization
 
 ## Completed pull requests
 
@@ -137,6 +140,8 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #14 | Add bilingual records for PRs #1–#13 | Merged |
 | #15 | Validate release tags and automate GitHub Release creation | Merged |
 | #16 | Harden credentials, local state, workflows, and Korean documentation | Merged |
+| #17 | Define v0.1.0 readiness and complete release gates | Merged |
+| #18 | Add trusted merged-PR release publication path | Merged |
 
 ## Architecture snapshot
 

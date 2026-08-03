@@ -32,7 +32,7 @@ on:
         type: string
   push:
     branches:
-      - refac
+      - main
     tags:
       - "v*"
     paths:
@@ -105,13 +105,13 @@ jobs:
           printf 'status=%s\n' "${status}" >> "${GITHUB_OUTPUT}"
           printf 'tag=%s\n' "${tag}" >> "${GITHUB_OUTPUT}"
 
-      - name: Require manually tagged commit to belong to refac
+      - name: Require manually tagged commit to belong to main
         if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin refac
-          git merge-base --is-ancestor "${GITHUB_SHA}" origin/refac
+          git fetch origin main
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
 
       - name: Install locked workspace
         run: uv sync --all-packages --locked
@@ -164,12 +164,12 @@ jobs:
     name: Create validated tag and GitHub Release
     needs: validate-and-build
     if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/refac' &&
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
        needs.validate-and-build.outputs.status == 'ready') ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'pull_request' && github.event.action == 'closed' &&
        github.event.pull_request.merged == true &&
-       github.event.pull_request.base.ref == 'refac' &&
+       github.event.pull_request.base.ref == 'main' &&
        needs.validate-and-build.outputs.status == 'ready')
     runs-on: ubuntu-latest
     permissions:
@@ -192,7 +192,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
           TARGET_SHA: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged && github.event.pull_request.merge_commit_sha || github.sha }}
-          AUTO_CREATE_TAG: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/refac') || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'refac') }}
+          AUTO_CREATE_TAG: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main') }}
           REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
