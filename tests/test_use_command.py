@@ -1,4 +1,5 @@
-from click import unstyle
+import re
+
 from typer.testing import CliRunner
 
 from modelctl_cli.context import container
@@ -6,6 +7,7 @@ from modelctl_cli.main import app
 
 
 runner = CliRunner()
+ansi_escape = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 class StubConfig:
@@ -45,7 +47,7 @@ def install_stubs(monkeypatch, selection):
 
 
 def normalized(text):
-    return " ".join(unstyle(text).split())
+    return " ".join(ansi_escape.sub("", text).split())
 
 
 def test_use_accepts_provider_and_model_without_prompting(monkeypatch):
