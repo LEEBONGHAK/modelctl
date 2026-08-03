@@ -19,6 +19,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #11 | [PR-011.md](PR-011.md) | Non-interactive provider and model selection / 비대화형 provider·model 선택 |
 | #12 | [PR-012.md](PR-012.md) | Linux, macOS, and Windows CI / Linux·macOS·Windows CI |
 | #13 | [PR-013.md](PR-013.md) | Installable distribution smoke tests / 설치 가능한 배포물 smoke test |
+| #14 | [PR-014.md](PR-014.md) | Bilingual per-PR engineering history / PR별 bilingual 개발 이력 |
 
 ## Document format / 문서 형식
 
