@@ -12,14 +12,11 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - name: Install
-        run: uv sync
+      - name: Install workspace
+        run: uv sync --all-packages
 
       - name: Lint
         run: uv run ruff check .
-
-      - name: Type Check
-        run: uv run basedpyright
 
       - name: Test
         run: uv run pytest

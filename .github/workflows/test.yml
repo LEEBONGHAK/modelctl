@@ -13,8 +13,8 @@ jobs:
 
       - uses: astral-sh/setup-uv@v5
 
-      - name: Install
-        run: uv sync
+      - name: Install workspace
+        run: uv sync --all-packages
 
       - name: Test
         run: uv run pytest
