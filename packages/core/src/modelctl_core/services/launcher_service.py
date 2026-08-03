@@ -3,7 +3,7 @@ class LauncherService:
         self.registry = registry
         self.config = config
 
-    def run(self):
+    def run(self, extra_args: list[str] | None = None) -> None:
         config = self.config.load()
         launcher_name = config.get("launcher", "claude")
         model = config.get("default_model")
@@ -16,4 +16,4 @@ class LauncherService:
         if not launcher:
             raise RuntimeError(f"Unknown launcher: {launcher_name}")
 
-        launcher.run(model)
+        launcher.run(model, extra_args)
