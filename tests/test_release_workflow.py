@@ -29,18 +29,19 @@ def test_release_workflow_runs_all_quality_gates_before_publication():
         assert command in content
 
 
-def test_release_workflow_only_auto_tags_trusted_ready_refac_changes():
+def test_release_workflow_only_auto_tags_trusted_ready_main_changes():
     content = workflow_text()
 
-    assert "github.ref == 'refs/heads/refac'" in content
+    assert "github.ref == 'refs/heads/main'" in content
     assert "github.event.action == 'closed'" in content
     assert "github.event.pull_request.merged == true" in content
-    assert "github.event.pull_request.base.ref == 'refac'" in content
+    assert "github.event.pull_request.base.ref == 'main'" in content
     assert "github.event.pull_request.merge_commit_sha" in content
     assert "needs.validate-and-build.outputs.status == 'ready'" in content
     assert "AUTO_CREATE_TAG" in content
     assert 'ref="refs/tags/${RELEASE_TAG}"' in content
     assert 'sha="${TARGET_SHA}"' in content
+    assert "git fetch origin main" in content
     assert "already points" in content
     assert "no overwrite" in content
 
