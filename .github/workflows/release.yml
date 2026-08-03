@@ -9,6 +9,7 @@ on:
       - closed
     paths:
       - ".github/workflows/release.yml"
+      - ".github/workflows/release-command.yml"
       - "release.toml"
       - "CHANGELOG.md"
       - "README.md"
@@ -19,6 +20,7 @@ on:
       - "scripts/release_validation.py"
       - "tests/test_release_validation.py"
       - "tests/test_release_workflow.py"
+      - "tests/test_release_command_workflow.py"
       - "apps/modelctl/pyproject.toml"
       - "packages/core/pyproject.toml"
       - "packages/sdk/pyproject.toml"
@@ -37,6 +39,7 @@ on:
       - "v*"
     paths:
       - ".github/workflows/release.yml"
+      - ".github/workflows/release-command.yml"
       - "release.toml"
       - "CHANGELOG.md"
       - "README.md"
@@ -47,6 +50,7 @@ on:
       - "scripts/release_validation.py"
       - "tests/test_release_validation.py"
       - "tests/test_release_workflow.py"
+      - "tests/test_release_command_workflow.py"
       - "apps/modelctl/pyproject.toml"
       - "packages/core/pyproject.toml"
       - "packages/sdk/pyproject.toml"
