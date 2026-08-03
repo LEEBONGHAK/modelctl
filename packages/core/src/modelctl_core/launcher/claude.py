@@ -7,6 +7,7 @@ from modelctl_core.launcher.base import Launcher
 class ClaudeCodeLauncher(Launcher):
     name = "claude"
     display_name = "Claude Code"
+    native_provider = "anthropic"
 
     def available(self) -> bool:
         return shutil.which("claude") is not None
