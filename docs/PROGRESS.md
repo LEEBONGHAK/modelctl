@@ -151,6 +151,7 @@ openrouter/anthropic/claude-sonnet-4
 | #10 | Add provider/model/launcher compatibility feedback | Merged |
 | #11 | Add non-interactive provider and model selection | Merged |
 | #12 | Add Linux, macOS, and Windows test matrix | Merged |
+| #13 | Build release distributions and smoke-test installed wheels | Merged |
 
 ## Architecture snapshot
 
