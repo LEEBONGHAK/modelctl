@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "scripts/release_validation.py"
+      - "tests/test_release_validation.py"
+      - "apps/modelctl/pyproject.toml"
+      - "packages/core/pyproject.toml"
+      - "packages/sdk/pyproject.toml"
+      - "uv.lock"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to validate, for example v0.1.0"
+        required: true
+        default: "v0.1.0"
+        type: string
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    name: Validate and build release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Resolve release version and tag
+        id: release
+        shell: bash
+        run: |
+          version="$(python scripts/release_validation.py --print-version)"
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            tag="${GITHUB_REF_NAME}"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="v${version}"
+          fi
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Validate package versions and release tag
+        run: python scripts/release_validation.py --tag "${{ steps.release.outputs.tag }}"
+
+      - name: Require tagged commit to belong to refac
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch origin refac
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/refac
+
+      - name: Build distributions
+        run: |
+          uv build packages/core --out-dir dist --no-sources
+          uv build packages/sdk --out-dir dist --no-sources
+          uv build apps/modelctl --out-dir dist --no-sources
+
+      - name: Create isolated environment
+        run: uv venv .release-smoke --python 3.13
+
+      - name: Install built wheels
+        run: >-
+          uv pip install
+          --python .release-smoke/bin/python
+          dist/modelctl_core-*.whl
+          dist/modelctl_sdk-*.whl
+          dist/modelctl-*.whl
+
+      - name: Verify installed packages and CLI
+        shell: bash
+        run: |
+          .release-smoke/bin/python -c "import modelctl_cli, modelctl_core, modelctl_sdk"
+          .release-smoke/bin/modelctl version
+          .release-smoke/bin/modelctl --help
+
+      - name: Generate checksums
+        shell: bash
+        run: sha256sum dist/* > dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modelctl-release-${{ steps.release.outputs.version }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  github-release:
+    name: Publish GitHub Release
+    needs: validate-and-build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: modelctl-release-${{ needs.validate-and-build.outputs.version }}
+          path: dist
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
+        shell: bash
+        run: |
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" dist/* --clobber
+          else
+            gh release create "${RELEASE_TAG}" dist/* \
+              --verify-tag \
+              --generate-notes \
+              --title "${RELEASE_TAG}"
+          fi
+
+  publish-pypi:
+    name: Publish packages to PyPI
+    needs:
+      - validate-and-build
+      - github-release
+    if: >-
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v') &&
+      vars.PUBLISH_TO_PYPI == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: modelctl-release-${{ needs.validate-and-build.outputs.version }}
+          path: dist
+
+      - name: Publish with PyPI Trusted Publishing
+        run: uv publish dist/*.whl dist/*.tar.gz
