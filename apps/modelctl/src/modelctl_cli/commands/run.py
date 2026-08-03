@@ -1,3 +1,5 @@
+from typing import Annotated
+
 import typer
 from rich.console import Console
 
@@ -7,10 +9,10 @@ console = Console()
 
 
 def run(
-    args: list[str] | None = typer.Argument(
-        None,
-        help="Arguments forwarded to the configured launcher.",
-    ),
+    args: Annotated[
+        list[str] | None,
+        typer.Argument(help="Arguments forwarded to the configured launcher."),
+    ] = None,
 ) -> None:
     """Launch the configured coding agent with the selected model."""
     console.print("🚀 Starting launcher...")
