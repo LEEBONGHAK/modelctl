@@ -75,7 +75,7 @@ def test_use_requires_provider_and_model_together():
     result = runner.invoke(app, ["use", "--provider", "openrouter"])
 
     assert result.exit_code == 2
-    assert "Use --provider and --model together" in result.stdout
+    assert "Use --provider and --model together" in result.stderr
 
 
 def test_use_reports_unknown_direct_selection(monkeypatch):
@@ -94,7 +94,7 @@ def test_use_reports_unknown_direct_selection(monkeypatch):
     )
 
     assert result.exit_code == 2
-    assert "Unknown model for openrouter" in result.stdout
+    assert "Unknown model for openrouter" in result.stderr
     assert config.updated is None
 
 
