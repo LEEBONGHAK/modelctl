@@ -1,0 +1,192 @@
+name: Release Command
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    name: Validate owner release command
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.author_association == 'OWNER' &&
+      startsWith(github.event.comment.body, '/release ')
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      target_sha: ${{ steps.target.outputs.sha }}
+      version: ${{ steps.release.outputs.version }}
+      status: ${{ steps.release.outputs.status }}
+
+    steps:
+      - name: Resolve trusted merged pull request
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_json="$(gh api "repos/${REPOSITORY}/pulls/${ISSUE_NUMBER}")"
+          merged_at="$(jq -r '.merged_at // empty' <<<"${pr_json}")"
+          base_ref="$(jq -r '.base.ref // empty' <<<"${pr_json}")"
+          target_sha="$(jq -r '.merge_commit_sha // empty' <<<"${pr_json}")"
+
+          if [[ -z "${merged_at}" ]]; then
+            echo "Pull request #${ISSUE_NUMBER} is not merged." >&2
+            exit 1
+          fi
+          if [[ "${base_ref}" != "main" ]]; then
+            echo "Pull request #${ISSUE_NUMBER} does not target main." >&2
+            exit 1
+          fi
+          if [[ ! "${target_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid merge commit SHA." >&2
+            exit 1
+          fi
+
+          printf 'sha=%s\n' "${target_sha}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ steps.target.outputs.sha }}
+
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Validate release request and main ancestry
+        id: release
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${COMMENT_BODY#'/release '}"
+          version="$(python scripts/release_validation.py --print-version)"
+          status="$(python scripts/release_validation.py --print-status)"
+          python scripts/release_validation.py --tag "${tag}"
+
+          git fetch origin main
+          git merge-base --is-ancestor "${TARGET_SHA}" origin/main
+
+          printf 'tag=%s\n' "${tag}" >> "${GITHUB_OUTPUT}"
+          printf 'version=%s\n' "${version}" >> "${GITHUB_OUTPUT}"
+          printf 'status=%s\n' "${status}" >> "${GITHUB_OUTPUT}"
+
+      - name: Require ready release status
+        env:
+          RELEASE_STATUS: ${{ steps.release.outputs.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${RELEASE_STATUS}" != "ready" ]]; then
+            echo "Release status is ${RELEASE_STATUS}, not ready." >&2
+            exit 1
+          fi
+
+      - name: Install locked workspace
+        run: uv sync --all-packages --locked
+
+      - name: Audit locked dependencies
+        run: uv audit --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Run complete test suite
+        run: uv run pytest
+
+      - name: Build distributions
+        run: |
+          uv build packages/core --out-dir dist --no-sources
+          uv build packages/sdk --out-dir dist --no-sources
+          uv build apps/modelctl --out-dir dist --no-sources
+
+      - name: Create isolated environment
+        run: uv venv .release-smoke --python 3.13
+
+      - name: Install built wheels
+        run: >-
+          uv pip install
+          --python .release-smoke/bin/python
+          dist/modelctl_core-*.whl
+          dist/modelctl_sdk-*.whl
+          dist/modelctl-*.whl
+
+      - name: Verify installed packages and CLI
+        shell: bash
+        run: |
+          .release-smoke/bin/python -c "import modelctl_cli, modelctl_core, modelctl_sdk"
+          .release-smoke/bin/modelctl version
+          .release-smoke/bin/modelctl --help
+
+      - name: Generate checksums
+        shell: bash
+        run: sha256sum dist/* > dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: modelctl-command-release-${{ steps.release.outputs.version }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish owner-approved GitHub Release
+    needs: validate-and-build
+    if: needs.validate-and-build.outputs.status == 'ready'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: modelctl-command-release-${{ needs.validate-and-build.outputs.version }}
+          path: dist
+
+      - name: Create immutable tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
+          TARGET_SHA: ${{ needs.validate-and-build.outputs.target_sha }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing_tag_sha="$(
+            gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
+              --jq '.object.sha' 2>/dev/null || true
+          )"
+
+          if [[ -z "${existing_tag_sha}" ]]; then
+            gh api --method POST "repos/${REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${RELEASE_TAG}" \
+              -f sha="${TARGET_SHA}" >/dev/null
+            existing_tag_sha="${TARGET_SHA}"
+          fi
+
+          if [[ "${existing_tag_sha}" != "${TARGET_SHA}" ]]; then
+            echo "${RELEASE_TAG} already points to ${existing_tag_sha}; refusing to move it." >&2
+            exit 1
+          fi
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "GitHub Release ${RELEASE_TAG} already exists; no overwrite."
+            exit 0
+          fi
+
+          gh release create "${RELEASE_TAG}" dist/* \
+            --verify-tag \
+            --generate-notes \
+            --title "${RELEASE_TAG}"
