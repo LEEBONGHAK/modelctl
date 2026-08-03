@@ -1,0 +1,4 @@
+version = "0.1.0"
+status = "ready"
+channel = "development"
+publish_pypi = false
