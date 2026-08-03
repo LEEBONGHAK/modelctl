@@ -14,15 +14,10 @@ def installed_version() -> str:
 
 
 def register_root_commands(app: typer.Typer):
-
     @app.command()
-    def version():
+    def version() -> None:
         console.print(f"modelctl {installed_version()}")
 
     @app.command()
-    def init():
+    def init() -> None:
         console.print("🚀 modelctl initialized")
-
-    @app.command()
-    def doctor():
-        console.print("Checking environment...")
