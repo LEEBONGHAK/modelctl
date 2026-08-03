@@ -8,6 +8,7 @@ from modelctl_core.launcher.registry import LauncherRegistry
 from modelctl_core.provider.registry import ProviderRegistry
 from modelctl_core.repository.model_repository import ModelRepository
 from modelctl_core.selector.fzf_selector import FzfSelector
+from modelctl_core.services.doctor_service import DoctorService
 from modelctl_core.services.launcher_service import LauncherService
 from modelctl_core.services.model_service import ModelService
 from modelctl_core.services.selection_service import SelectionService
@@ -66,4 +67,13 @@ class Container:
         return LauncherService(
             self.launchers,
             self.config,
+        )
+
+    def doctor_service(self) -> DoctorService:
+        return DoctorService(
+            self.config,
+            self.credentials,
+            self.providers,
+            self.launchers,
+            self.engine,
         )
