@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from modelctl_cli.main import app
@@ -33,5 +34,6 @@ def test_config_set_reports_invalid_compatibility_policy():
             ["config", "set", "compatibility-policy", "automatic"],
         )
 
+    output = " ".join(strip_ansi(result.output).split())
     assert result.exit_code != 0
-    assert "Expected one of: strict, warn" in result.output
+    assert "Expected one of: strict, warn" in output
