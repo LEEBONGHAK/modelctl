@@ -16,7 +16,7 @@ def launcher(name: str, display_name: str, installed: bool):
     )
 
 
-def recommendation(active: bool = False):
+def recommendation(active: bool = False, changed: bool = False):
     return SimpleNamespace(
         name="aider",
         display_name="Aider",
@@ -25,6 +25,7 @@ def recommendation(active: bool = False):
         reason="Aider translates OpenRouter model identifiers automatically.",
         installed=True,
         active=active,
+        changed=changed,
     )
 
 
@@ -62,9 +63,9 @@ def test_launchers_recommend_shows_provider_aware_choice():
     service.recommend.assert_called_once_with()
 
 
-def test_launchers_recommend_apply_uses_safe_service_path():
+def test_launchers_recommend_apply_reports_selected_launcher():
     service = Mock()
-    service.apply_recommendation.return_value = recommendation()
+    service.apply_recommendation.return_value = recommendation(active=True, changed=True)
     fake_container = Mock()
     fake_container.launcher_service.return_value = service
 
@@ -73,7 +74,22 @@ def test_launchers_recommend_apply_uses_safe_service_path():
 
     assert result.exit_code == 0
     assert "Selected recommended launcher" in result.stdout
+    assert "already selected" not in result.stdout
     service.apply_recommendation.assert_called_once_with()
+
+
+def test_launchers_recommend_apply_reports_already_active_launcher():
+    service = Mock()
+    service.apply_recommendation.return_value = recommendation(active=True)
+    fake_container = Mock()
+    fake_container.launcher_service.return_value = service
+
+    with patch("modelctl_cli.commands.launchers.container", fake_container):
+        result = runner.invoke(app, ["launchers", "recommend", "--apply"])
+
+    assert result.exit_code == 0
+    assert "already selected" in result.stdout
+    assert "Selected recommended launcher" not in result.stdout
 
 
 def test_launchers_recommend_reports_missing_recommendation():
