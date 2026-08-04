@@ -48,6 +48,11 @@ Draft development release.
 - Prevented provider pagination request snapshots from being corrupted by reuse of one mutable query dictionary.
 - Added provider API contract tests to the primary CI workflow so provider regressions cannot leave CI green while the OS test matrix and release dry-run fail.
 
+### Security
+
+- Upgraded the locked `cryptography` dependency from 49.0.0 to patched version 50.0.0 for `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247`.
+- Dependency audit runs without retaining an exception for the patched advisory.
+
 ### Compatibility
 
 - Existing launcher execution still supports configurations without provider context; recommendations require an explicit provider and model selection.
