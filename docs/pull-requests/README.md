@@ -25,6 +25,17 @@ This directory records the implementation history of `modelctl` one pull request
 | #17 | [PR-017.md](PR-017.md) | v0.1.0 readiness manifest and complete release gates / v0.1.0 완료 선언·통합 release gate |
 | #18 | [PR-018.md](PR-018.md) | Trusted merged-PR release path / 신뢰된 병합 PR 릴리스 경로 |
 | #19 | [PR-019.md](PR-019.md) | Promote completed v0.1.0 to main / 완성된 v0.1.0 main 승격 |
+| #20 | [PR-020.md](PR-020.md) | Owner-only validated release command / 소유자 전용 검증 릴리스 명령 |
+| #21 | [PR-021.md](PR-021.md) | Begin v0.2.0 with launcher recommendations / launcher 추천으로 v0.2.0 시작 |
+| #23 | [PR-023.md](PR-023.md) | Strict compatibility execution and native option forwarding / strict 호환성 실행·native 옵션 전달 |
+| #24 | [PR-024.md](PR-024.md) | Persisted warn/strict compatibility policy / 영속화된 warn·strict 호환성 정책 |
+| #25 | [PR-025.md](PR-025.md) | Capability-driven immutable launcher execution contract / capability 기반 불변 launcher 실행 계약 |
+| #26 | [PR-026.md](PR-026.md) | Preview-first compatibility remediation with explicit apply / 미리보기 우선 호환성 remediation·명시적 적용 |
+| #27 | [PR-027.md](PR-027.md) | Anthropic native model catalog and Claude Code routing / Anthropic native 모델 catalog·Claude Code 연결 |
+| #28 | [PR-028.md](PR-028.md) | Google Gemini native model catalog and Gemini CLI routing / Google Gemini native 모델 catalog·Gemini CLI 연결 |
+| #29 | [PR-029.md](PR-029.md) | OpenAI native catalog, Codex routing, and provider CI hardening / OpenAI native catalog·Codex 연결·provider CI 강화 |
+| #30 | [PR-030.md](PR-030.md) | Patched cryptography lock and security-issue closure / cryptography 패치 lock·보안 이슈 종료 |
+| #31 | [PR-031.md](PR-031.md) | Declare v0.2.0 ready and promote the validated lineage to main / v0.2.0 ready 선언·검증 계보 main 승격 |
 
 ## Document format / 문서 형식
 
@@ -38,6 +49,6 @@ Every PR record includes:
 - Validation and outcome / 검증 및 결과
 - Deferred work or architectural impact when relevant / 관련 후속 작업과 아키텍처 영향
 
-New pull requests should add the next numbered document and update this index in the same PR.
+New pull requests should add the next numbered document and update this index in the same PR. Issue numbers may create gaps in the PR sequence.
 
-새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 인덱스를 갱신하는 것을 원칙으로 합니다.
+새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 index를 갱신하는 것을 원칙으로 합니다. Issue 번호 사용으로 PR 번호가 연속되지 않을 수 있습니다.

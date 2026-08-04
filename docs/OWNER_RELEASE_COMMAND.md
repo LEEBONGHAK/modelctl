@@ -11,7 +11,7 @@ GitHub App 또는 connector가 검증된 release Pull Request를 병합했지만
 The repository owner comments on the already merged release pull request:
 
 ```text
-/release v0.1.0
+/release v0.2.0
 ```
 
 The command is not a shortcut around validation. It starts a separate workflow that repeats the complete release process against the pull request's exact merge commit.
@@ -62,7 +62,7 @@ It then installs all wheels in an isolated Python 3.13 environment, verifies imp
 저장소 소유자가 이미 병합된 release Pull Request에 다음 댓글을 작성합니다.
 
 ```text
-/release v0.1.0
+/release v0.2.0
 ```
 
 이 명령은 검증을 우회하는 단축 경로가 아닙니다. 별도 workflow가 Pull Request의 정확한 merge commit을 대상으로 전체 release 절차를 다시 수행합니다.

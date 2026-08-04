@@ -1,6 +1,6 @@
 # modelctl Project Progress
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Project goal
 
@@ -14,170 +14,157 @@ Development principle:
 
 ## Branch and release state
 
-- Release branch: `main`
+- Canonical release branch: `main`
 - Ongoing development branch: `refac`
-- Coordinated version: `0.1.0`
-- Manifest: `release.toml`
-- Status: `ready`
+- Completed release on `main`: `0.1.0`
+- Ready version: `0.2.0`
+- Readiness branch: `release/v0.2.0-readiness`
+- Manifest status: `ready`
 - Channel: development release
-- PyPI: disabled
+- PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
-- Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
+- Release procedure: [`RELEASING.md`](RELEASING.md)
 
-A reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
+The planned v0.2.0 feature and security scope is complete. The readiness branch is based on exact `refac` merge commit `1fb85812b5aca2232ac2fb479e35f38d837bb229`, which includes the patched dependency update from PR #30.
 
-## Current end-to-end workflow
+## End-to-end workflows
+
+### OpenRouter through Aider
 
 ```bash
 modelctl auth login openrouter
 modelctl models sync openrouter
-modelctl use
-modelctl launchers list
-modelctl launchers use aider
+modelctl use --provider openrouter --model anthropic/claude-sonnet-4
+modelctl launchers remediate
+modelctl launchers remediate --apply
+modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
 ```
 
-Non-interactive selection:
+### Anthropic through Claude Code
 
 ```bash
-modelctl use \
-  --provider openrouter \
-  --model anthropic/claude-sonnet-4
+modelctl auth login anthropic
+modelctl models sync anthropic
+modelctl use --provider anthropic --model claude-opus-4-6
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
 ```
 
-Local state defaults:
+### Google Gemini through Gemini CLI
 
-```text
-~/.config/modelctl/config.json
-~/.config/modelctl/credentials.json   # explicit plaintext fallback only
-~/.local/share/modelctl/modelctl.db
+```bash
+modelctl auth login google
+modelctl models sync google
+modelctl use --provider google --model gemini-3.5-flash
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
 ```
 
-## Implemented features
+### OpenAI through Codex CLI
 
-### Provider, model, credentials, and configuration
+```bash
+modelctl auth login openai
+modelctl models sync openai
+modelctl use --provider openai --model gpt-5.6
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
+```
 
-- Provider discovery and registry
-- OpenRouter model synchronization with credential validation and bounded HTTP timeouts
-- Persistent model repository and provider-scoped lookup
+Provider catalog credentials remain separate from launcher authentication and are not injected from keyring storage into subprocess environments.
+
+## Completed v0.2.0 scope
+
+### Providers and models
+
+- OpenRouter synchronization and Aider translation
+- Anthropic native synchronization and Claude Code routing
+- Google Gemini native synchronization and Gemini CLI routing
+- OpenAI native synchronization and Codex CLI routing
+- Official provider environment aliases with modelctl-specific precedence
+- Bounded HTTP timeouts and pagination guards
+- Explicit malformed-response handling
+- Conservative mapping when catalog APIs omit context, price, capability, or modality fields
 - Interactive and non-interactive provider/model selection
-- Validation of registered providers and synchronized models
-- Favorite-model support
-- Environment-variable and operating-system keyring lookup
-- Keyring-first credential storage with no silent plaintext downgrade
-- Explicit `--allow-plaintext-fallback`
-- Provider-ID and empty-token validation
-- Atomic configuration and fallback-credential writes
-- Symbolic-link rejection for protected files
-- POSIX private directory/file permissions (`0700` / `0600`)
-- Shared credential service for authentication, diagnostics, and synchronization
 
-### Coding-agent launchers
+### Launchers and compatibility
 
-| Launcher ID | CLI | Native provider | Model invocation |
-| --- | --- | --- | --- |
-| `claude` | Claude Code | Anthropic | `claude --model <model>` |
-| `gemini` | Gemini CLI | Google | `gemini --model <model>` |
-| `codex` | Codex CLI | OpenAI | `codex --model <model>` |
-| `aider` | Aider | Multiple providers | `aider --model <model>` |
+- Immutable `LaunchRequest`
+- Explicit `LauncherCapabilities`
+- Capability-driven recommendation
+- Preview-first remediation with explicit safe apply
+- Refusal before mutation when a recommendation is unavailable
+- Persisted `warn` and `strict` policies
+- Per-run compatibility overrides
+- Native argument forwarding without shell execution
+- Shared semantics across execution, doctor, recommendation, and remediation
 
-All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to `openrouter/<provider>/<model>`.
+### Security
 
-### Management, diagnostics, and compatibility
+- Keyring-first credentials and no silent plaintext downgrade
+- Explicit fallback approval, private permissions, atomic writes, and symlink rejection
+- Provider credentials separated from coding-agent authentication
+- `cryptography 50.0.0` locked for `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247`
+- Issue #22 closed after complete validation
+- Dependency audit without a retained advisory exclusion
+- Pinned external GitHub Actions and least-privilege workflow permissions
+- PyPI publishing and OIDC write permission absent
 
-- `modelctl launchers list`
-- `modelctl launchers use <launcher-id>`
-- Installation-state and active-launcher display
-- `modelctl doctor`
-- Configuration, provider, credential, model, launcher, compatibility, and database checks
-- Non-blocking native-provider mismatch warnings
+### Quality and release gates
 
-### Packaging and release
+- Primary CI audit, Ruff, and provider contract suites
+- Complete 137-test suite on Ubuntu, macOS, and Windows with Python 3.13
+- All wheel and source-distribution builds
+- Isolated installed-wheel import and CLI smoke tests
+- Package, manifest, changelog, documentation, and tag validation
+- Independent release-workflow verification
+- SHA-256 checksums and immutable GitHub Release behavior
 
-- Coordinated wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
-- Workspace source overrides disabled for release builds
-- Fresh-environment installed-wheel import and CLI smoke tests
-- Coordinated package, manifest, changelog, documentation, and tag validation
-- Machine-readable readiness status in `release.toml`
-- Validation that manually tagged commits belong to `main`
-- Release workflow-owned dependency audit, lint, complete tests, build, smoke test, and checksum gates
-- Automatic tag creation only from successful trusted `main` changes marked `ready`
-- Trusted merged-PR validation against the exact `main` merge commit
-- Immutable GitHub Release creation with distributions and `SHA256SUMS`
-- Existing tags and release assets are never overwritten
-- PyPI publication intentionally disabled
+## CI failure resolution
 
-### Documentation and security gates
+PR #28 exposed mutable pagination parameters that changed a recorded first request after a second-page token was added. The defect reproduced on every operating system and in the release dry-run.
 
-- English README and complete Korean `README.ko.md`
-- Bilingual release guide, completion criteria, and security policy
-- Per-PR English/Korean engineering records
-- Locked uv workspace installation
-- Ruff and `uv audit --locked`
-- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
-- Full commit-SHA pinning for external GitHub Actions
-- Least-privilege workflow permissions
-- Security regression coverage for private files, credential fallback, untrusted tags, merged-event trust boundaries, and model synchronization
+PR #28 switched to fresh per-request dictionaries. PR #29 added focused native-provider contract suites to primary CI so similar HTTP-client regressions are detected earlier while the full matrix and release workflow remain independent gates.
 
-## Completed pull requests
+## v0.2.0 pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
-| #1 | Make top-level `use` and `run` executable; repair wiring | Merged |
-| #2 | Stabilize workspace installation, lint, and test collection | Merged |
-| #3 | Complete Claude Code execution and argument forwarding | Merged |
-| #4 | Add Gemini CLI and repair runtime configuration | Merged |
-| #5 | Add Codex CLI launcher | Merged |
-| #6 | Add provider-aware Aider launcher | Merged |
-| #7 | Add launcher listing and selection | Merged |
-| #8 | Record project progress and rewrite README | Merged |
-| #9 | Add `modelctl doctor` | Merged |
-| #10 | Add provider/model/launcher compatibility feedback | Merged |
-| #11 | Add non-interactive provider and model selection | Merged |
-| #12 | Add Linux, macOS, and Windows test matrix | Merged |
-| #13 | Build distributions and smoke-test installed wheels | Merged |
-| #14 | Add bilingual records for PRs #1–#13 | Merged |
-| #15 | Validate release tags and automate GitHub Release creation | Merged |
-| #16 | Harden credentials, local state, workflows, and Korean documentation | Merged |
-| #17 | Define v0.1.0 readiness and complete release gates | Merged |
-| #18 | Add trusted merged-PR release publication path | Merged |
+| #21 | Provider-aware launcher recommendations | Merged |
+| #23 | Strict compatibility and native option forwarding | Merged |
+| #24 | Persisted warn/strict policy | Merged |
+| #25 | Immutable execution contract and launcher capabilities | Merged |
+| #26 | Preview-first compatibility remediation | Merged |
+| #27 | Anthropic catalog and Claude Code routing | Merged |
+| #28 | Google Gemini catalog and Gemini CLI routing | Merged |
+| #29 | OpenAI catalog, Codex routing, and provider CI | Merged |
+| #30 | Patched cryptography lock and issue #22 closure | Merged |
+| #31 | v0.2.0 readiness declaration and `main` promotion | Active |
 
-## Architecture snapshot
+## Remaining completion steps
 
-```text
-apps/modelctl/       Typer CLI application
-packages/core/       configuration, credentials, providers, repositories, services, launchers
-packages/sdk/        public SDK package foundation
-scripts/             release validation helpers
-tests/               regression, integration, packaging, and security tests
-docs/                project, release, security, and PR documentation
-```
+1. Require all pull-request checks on PR #31 to pass against `main`.
+2. Merge the exact checked readiness head into `main`.
+3. Require the post-merge release workflow to repeat audit, Ruff, all tests, builds, installed-wheel smoke checks, metadata validation, and checksum generation on the exact merge commit.
+4. Confirm immutable tag `v0.2.0` and the GitHub Release containing six Python distributions plus `SHA256SUMS`.
+5. Use the owner-only `/release v0.2.0` fallback only if the platform does not emit the expected merged-pull-request publication event.
 
-```text
-Typer command
-  -> application Container
-  -> service
-  -> credential / provider / repository / launcher registry
-  -> external CLI or API
-```
+PyPI remains disabled throughout this process.
 
-## Known limitations and deferred work
+## Deferred after v0.2.0
 
-- No PyPI publication
-- Strict compatibility enforcement and automatic remediation are not implemented
-- Plugin-based launcher discovery is deferred
-- Execution-target and launch-request value objects are not yet formalized
-- Full static type-check enforcement is not yet a quality gate
-- Local plaintext credential fallback remains unencrypted and should be used only when explicitly accepted
-- The security review is source- and test-based, not an independent penetration test
-
-## Next priorities
-
-1. Add stricter compatibility policies after additional provider integrations exist.
-2. Refactor launcher capabilities and execution requests around proven requirements.
-3. Reintroduce profile management only with a complete user workflow and tests.
-4. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
+- Shared provider HTTP helpers only for proven identical behavior
+- Additional safe, reversible, previewable remediation actions
+- Tested profile management and plugin-based launcher discovery
+- Static type-check enforcement as a separate quality milestone
+- Separately reviewed PyPI Trusted Publishing
 
 ## Validation commands
 
@@ -186,10 +173,7 @@ uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
 uv run pytest
-uv build packages/core --out-dir dist --no-sources
-uv build packages/sdk --out-dir dist --no-sources
-uv build apps/modelctl --out-dir dist --no-sources
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```
