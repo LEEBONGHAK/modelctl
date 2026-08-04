@@ -20,7 +20,8 @@ def test_native_launchers_warn_for_openrouter_models():
 
         assert warning is not None
         assert launcher.display_name in warning
-        assert "modelctl launchers use aider" in warning
+        assert "modelctl launchers remediate" in warning
+        assert "modelctl launchers remediate --apply" in warning
 
 
 def test_native_launcher_accepts_matching_provider():
