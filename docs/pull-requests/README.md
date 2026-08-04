@@ -34,6 +34,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #27 | [PR-027.md](PR-027.md) | Anthropic native model catalog and Claude Code routing / Anthropic native 모델 catalog·Claude Code 연결 |
 | #28 | [PR-028.md](PR-028.md) | Google Gemini native model catalog and Gemini CLI routing / Google Gemini native 모델 catalog·Gemini CLI 연결 |
 | #29 | [PR-029.md](PR-029.md) | OpenAI native model catalog, Codex routing, and provider CI hardening / OpenAI native 모델 catalog·Codex 연결·provider CI 강화 |
+| #30 | [PR-030.md](PR-030.md) | Patched cryptography lock and security-issue closure / cryptography 패치 lock·보안 이슈 종료 |
 
 ## Document format / 문서 형식
 
