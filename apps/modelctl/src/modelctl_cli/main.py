@@ -24,7 +24,13 @@ app.add_typer(models_app, name="models")
 app.add_typer(auth_app, name="auth")
 
 app.command("use")(use)
-app.command("run")(run)
+app.command(
+    "run",
+    context_settings={
+        "allow_extra_args": True,
+        "ignore_unknown_options": True,
+    },
+)(run)
 app.command("doctor")(doctor)
 
 if __name__ == "__main__":
