@@ -33,8 +33,9 @@ This directory records the implementation history of `modelctl` one pull request
 | #26 | [PR-026.md](PR-026.md) | Preview-first compatibility remediation with explicit apply / 미리보기 우선 호환성 remediation·명시적 적용 |
 | #27 | [PR-027.md](PR-027.md) | Anthropic native model catalog and Claude Code routing / Anthropic native 모델 catalog·Claude Code 연결 |
 | #28 | [PR-028.md](PR-028.md) | Google Gemini native model catalog and Gemini CLI routing / Google Gemini native 모델 catalog·Gemini CLI 연결 |
-| #29 | [PR-029.md](PR-029.md) | OpenAI native model catalog, Codex routing, and provider CI hardening / OpenAI native 모델 catalog·Codex 연결·provider CI 강화 |
+| #29 | [PR-029.md](PR-029.md) | OpenAI native catalog, Codex routing, and provider CI hardening / OpenAI native catalog·Codex 연결·provider CI 강화 |
 | #30 | [PR-030.md](PR-030.md) | Patched cryptography lock and security-issue closure / cryptography 패치 lock·보안 이슈 종료 |
+| #31 | [PR-031.md](PR-031.md) | Declare v0.2.0 ready and promote the validated lineage to main / v0.2.0 ready 선언·검증 계보 main 승격 |
 
 ## Document format / 문서 형식
 
@@ -50,4 +51,4 @@ Every PR record includes:
 
 New pull requests should add the next numbered document and update this index in the same PR. Issue numbers may create gaps in the PR sequence.
 
-새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 인덱스를 갱신하는 것을 원칙으로 합니다. Issue 번호 사용으로 PR 번호가 연속되지 않을 수 있습니다.
+새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 index를 갱신하는 것을 원칙으로 합니다. Issue 번호 사용으로 PR 번호가 연속되지 않을 수 있습니다.
