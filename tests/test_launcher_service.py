@@ -81,6 +81,27 @@ def test_launcher_service_returns_compatibility_warning():
     )
 
 
+def test_compatibility_check_keeps_warning_non_blocking_by_default():
+    launcher = Mock()
+    launcher.compatibility_warning.return_value = "Potential mismatch"
+    registry = Mock()
+    registry.get.return_value = launcher
+
+    warning = LauncherService(registry, configured()).check_compatibility()
+
+    assert warning == "Potential mismatch"
+
+
+def test_compatibility_check_blocks_warning_in_strict_mode():
+    launcher = Mock()
+    launcher.compatibility_warning.return_value = "Potential mismatch"
+    registry = Mock()
+    registry.get.return_value = launcher
+
+    with pytest.raises(RuntimeError, match="Strict compatibility check failed"):
+        LauncherService(registry, configured()).check_compatibility(strict=True)
+
+
 def test_recommendation_uses_aider_for_openrouter():
     registry = Mock()
     registry.list.return_value = [
