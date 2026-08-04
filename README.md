@@ -19,6 +19,7 @@
 - Provider-aware launcher recommendations with an explicit safe apply step
 - Configurable `warn` or `strict` compatibility enforcement before launcher execution
 - Per-run strict and warning overrides
+- Read-only compatibility remediation plans with explicit safe application
 - `modelctl doctor` diagnostics and compatibility feedback
 - Operating-system keyring storage with explicit plaintext fallback
 - Linux, macOS, and Windows tests on Python 3.13
@@ -74,16 +75,20 @@ modelctl use \
 
 Direct selections are validated against the provider registry and synchronized local catalog.
 
-### 3. Select a launcher
+### 3. Select, recommend, or remediate a launcher
 
 ```bash
 modelctl launchers list
 modelctl launchers recommend
 modelctl launchers recommend --apply
+modelctl launchers remediate
+modelctl launchers remediate --apply
 modelctl launchers use aider
 ```
 
-`recommend` uses the selected provider and model to propose the safest supported launcher. It does not change configuration unless `--apply` is supplied, and apply refuses a launcher that is unavailable on `PATH`.
+`recommend` proposes the safest supported launcher for the selected provider and model, whether or not the current launcher is incompatible. `remediate` evaluates the active launcher and creates a change plan only when a known compatibility mismatch exists.
+
+Both commands are read-only by default. Their `--apply` variants change configuration only when the recommended launcher is installed and available on `PATH`. Remediation never installs software, changes the provider or model, or starts a launcher.
 
 | ID | Coding agent | Native provider | Base command |
 | --- | --- | --- | --- |
@@ -115,7 +120,7 @@ modelctl run --strict-compatibility
 modelctl run --warn-compatibility
 ```
 
-Strict execution exits before subprocess creation when the selected provider and launcher are known to be mismatched. Warning execution displays the compatibility warning and continues.
+Strict execution exits before subprocess creation when the selected provider and launcher are known to be mismatched. Warning execution displays the compatibility warning and continues. Compatibility warnings point to `modelctl launchers remediate` so the proposed launcher change can be reviewed before it is applied.
 
 Arguments after `run` that are not modelctl options are forwarded unchanged to the launcher:
 
@@ -132,17 +137,18 @@ Use `--` when a launcher must receive an argument whose name conflicts with a mo
 
 Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. With the default `warn` policy, `modelctl` warns without blocking when another provider's model is passed to one of them. Set the persisted policy to `strict`, or add `--strict-compatibility`, to refuse that execution path.
 
-Aider is the current automatic OpenRouter integration:
+Aider is the current automatic OpenRouter integration. Preview and apply the capability-driven remediation instead of changing the launcher blindly:
 
 ```bash
-modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
+modelctl launchers remediate
+modelctl launchers remediate --apply
 modelctl config set compatibility-policy strict
 modelctl run
 ```
 
-Result:
+Result after applying the plan:
 
 ```bash
 aider --model openrouter/anthropic/claude-sonnet-4
@@ -220,7 +226,7 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, su
 
 ## Near-term roadmap
 
-- Add capability-aware compatibility guidance and automatic remediation
-- Refactor launcher capabilities and execution requests around proven policy behavior
+- Extend remediation beyond launcher selection only after additional safe actions are proven
+- Add native-provider integrations so capabilities are validated beyond OpenRouter
 - Profile management only after a complete workflow and tests exist
 - A separately reviewed PyPI publication milestone
