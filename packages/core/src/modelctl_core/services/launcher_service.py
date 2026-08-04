@@ -25,6 +25,21 @@ class LauncherRecommendation:
     changed: bool = False
 
 
+@dataclass(frozen=True)
+class CompatibilityRemediation:
+    provider: str | None
+    model: str
+    current_name: str
+    current_display_name: str
+    warning: str | None
+    recommended_name: str
+    recommended_display_name: str
+    recommended_installed: bool
+    reason: str
+    action_required: bool
+    changed: bool = False
+
+
 class LauncherService:
     def __init__(self, registry, config):
         self.registry = registry
@@ -56,23 +71,12 @@ class LauncherService:
         if launcher is None:
             return None
 
-        if launcher.capabilities.translates(provider):
-            reason = (
-                f"{launcher.display_name} translates {provider} model identifiers "
-                "automatically and uses the selected provider context."
-            )
-        else:
-            reason = (
-                f"{launcher.display_name} is the native launcher for provider "
-                f"'{provider}'."
-            )
-
         return LauncherRecommendation(
             name=launcher.name,
             display_name=launcher.display_name,
             provider=provider,
             model=model,
-            reason=reason,
+            reason=self._recommendation_reason(launcher, provider),
             installed=launcher.available(),
             active=launcher.name == active_name,
         )
@@ -98,6 +102,70 @@ class LauncherService:
         self.config.update(launcher=recommendation.name)
         return replace(recommendation, active=True, changed=True)
 
+    def plan_remediation(self) -> CompatibilityRemediation:
+        launcher, request = self._execution_request()
+        warning = launcher.compatibility_warning(request)
+        if warning is None:
+            return CompatibilityRemediation(
+                provider=request.provider,
+                model=request.model,
+                current_name=launcher.name,
+                current_display_name=launcher.display_name,
+                warning=None,
+                recommended_name=launcher.name,
+                recommended_display_name=launcher.display_name,
+                recommended_installed=launcher.available(),
+                reason=(
+                    "No known provider/model/launcher compatibility issue requires "
+                    "remediation."
+                ),
+                action_required=False,
+            )
+
+        provider = request.provider
+        if provider is None:
+            raise RuntimeError(
+                "Compatibility remediation requires a selected provider. Run: modelctl use"
+            )
+
+        recommended = self._recommended_launcher(provider)
+        if recommended is None:
+            raise RuntimeError(
+                f"No automatic compatibility remediation is available for provider "
+                f"'{provider}'. Select a launcher explicitly with `modelctl launchers use`."
+            )
+        if recommended.name == launcher.name:
+            raise RuntimeError(
+                f"Launcher '{launcher.name}' is already selected but still reports a "
+                "compatibility warning. Select another launcher explicitly."
+            )
+
+        return CompatibilityRemediation(
+            provider=provider,
+            model=request.model,
+            current_name=launcher.name,
+            current_display_name=launcher.display_name,
+            warning=warning,
+            recommended_name=recommended.name,
+            recommended_display_name=recommended.display_name,
+            recommended_installed=recommended.available(),
+            reason=self._recommendation_reason(recommended, provider),
+            action_required=True,
+        )
+
+    def apply_remediation(self) -> CompatibilityRemediation:
+        remediation = self.plan_remediation()
+        if not remediation.action_required:
+            return remediation
+        if not remediation.recommended_installed:
+            raise RuntimeError(
+                f"Recommended launcher '{remediation.recommended_name}' is not installed or "
+                "not available on PATH. Install it before applying remediation."
+            )
+
+        self.config.update(launcher=remediation.recommended_name)
+        return replace(remediation, changed=True)
+
     def run(self, extra_args: list[str] | None = None) -> None:
         launcher, request = self._execution_request(extra_args)
         launcher.run(request)
@@ -122,6 +190,19 @@ class LauncherService:
                 if item.capabilities.native_provider == provider
             ),
             None,
+        )
+
+    @staticmethod
+    def _recommendation_reason(launcher, provider: str) -> str:
+        if launcher.capabilities.translates(provider):
+            return (
+                f"{launcher.display_name} translates {provider} model identifiers "
+                "automatically and uses the selected provider context."
+            )
+
+        return (
+            f"{launcher.display_name} is the native launcher for provider "
+            f"'{provider}'."
         )
 
     def _configured_values(self) -> tuple[str, str, str]:
