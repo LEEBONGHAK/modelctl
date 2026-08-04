@@ -19,7 +19,7 @@
 - Shell 없이 native launcher 인자 전달
 - Keyring 우선 credential 저장과 명시적 평문 fallback
 - Provider credential과 launcher 인증 분리
-- Provider API contract 테스트, 137개 cross-platform 테스트, package build, 설치 wheel smoke test
+- Provider API contract 테스트, 138개 cross-platform 테스트, package build, 설치 wheel smoke test
 - 패치된 `cryptography 50.0.0`과 advisory 예외 없는 dependency audit
 - SHA-256 checksum을 포함한 불변 GitHub Release artifact
 
