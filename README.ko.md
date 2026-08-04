@@ -19,6 +19,7 @@
 - Provider-aware launcher 추천과 명시적인 안전 적용 단계
 - Launcher 실행 전에 적용하는 `warn` 또는 `strict` 호환성 정책
 - 실행 1회에만 적용하는 strict/warn override
+- 읽기 전용 호환성 remediation 계획과 명시적 안전 적용
 - `modelctl doctor` 진단 및 호환성 안내
 - 운영체제 keyring과 명시적 평문 fallback
 - Python 3.13 기반 Linux, macOS, Windows 테스트
@@ -74,16 +75,20 @@ modelctl use \
 
 직접 지정한 값은 provider registry와 동기화된 로컬 catalog를 기준으로 검증됩니다.
 
-### 3. Launcher 선택
+### 3. Launcher 선택·추천·remediation
 
 ```bash
 modelctl launchers list
 modelctl launchers recommend
 modelctl launchers recommend --apply
+modelctl launchers remediate
+modelctl launchers remediate --apply
 modelctl launchers use aider
 ```
 
-`recommend`는 선택한 provider와 model을 기준으로 가장 안전한 지원 launcher를 제안합니다. `--apply`를 지정하지 않으면 설정을 변경하지 않으며, 적용 시에는 `PATH`에서 사용할 수 없는 launcher를 거부합니다.
+`recommend`는 현재 launcher의 호환 여부와 관계없이 선택한 provider와 model에 적합한 launcher를 제안합니다. `remediate`는 현재 active launcher를 평가하고 알려진 호환성 불일치가 있을 때만 변경 계획을 만듭니다.
+
+두 명령 모두 기본적으로 읽기 전용입니다. `--apply`를 지정한 경우에만 권장 launcher가 `PATH`에 설치되어 있을 때 설정을 변경합니다. Remediation은 소프트웨어를 설치하거나 provider·model을 바꾸거나 launcher를 실행하지 않습니다.
 
 | ID | 코딩 에이전트 | Native provider | 기본 명령 |
 | --- | --- | --- | --- |
@@ -115,7 +120,7 @@ modelctl run --strict-compatibility
 modelctl run --warn-compatibility
 ```
 
-Strict 실행은 알려진 비호환 조합에서 subprocess를 생성하기 전에 종료합니다. Warn 실행은 호환성 경고를 표시한 뒤 계속 진행합니다.
+Strict 실행은 알려진 비호환 조합에서 subprocess를 생성하기 전에 종료합니다. Warn 실행은 호환성 경고를 표시한 뒤 계속 진행합니다. 호환성 경고는 `modelctl launchers remediate`를 안내하므로 실제 변경 전에 권장 launcher와 변경 계획을 검토할 수 있습니다.
 
 `run` 뒤에서 modelctl 옵션이 아닌 값은 launcher에 그대로 전달됩니다.
 
@@ -132,17 +137,18 @@ Launcher에 전달하려는 인자 이름이 modelctl 옵션과 충돌하는 경
 
 Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 기본 `warn` 정책에서는 다른 provider의 모델을 전달해도 실행을 차단하지 않고 경고를 표시합니다. 저장 정책을 `strict`로 바꾸거나 `--strict-compatibility`를 추가하면 해당 실행을 거부합니다.
 
-현재 OpenRouter 자동 연동은 Aider를 사용합니다.
+현재 OpenRouter 자동 연동은 Aider를 사용합니다. Launcher를 임의로 변경하기보다 capability 기반 remediation 계획을 먼저 확인하고 적용할 수 있습니다.
 
 ```bash
-modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
+modelctl launchers remediate
+modelctl launchers remediate --apply
 modelctl config set compatibility-policy strict
 modelctl run
 ```
 
-실행 결과는 다음과 같습니다.
+계획 적용 후 실행 결과는 다음과 같습니다.
 
 ```bash
 aider --model openrouter/anthropic/claude-sonnet-4
@@ -220,7 +226,7 @@ Credential 동작, 취약점 제보 방법, 지원 버전, 알려진 한계는 [
 
 ## 단기 로드맵
 
-- Capability-aware 호환성 안내와 자동 조치 추가
-- 검증된 정책 동작을 기반으로 launcher capability와 execution request 리팩터링
+- 추가로 안전성이 검증된 조치가 생긴 뒤 launcher 선택 외 remediation으로 확장
+- OpenRouter 외 capability를 검증할 native provider 연동 추가
 - 완성된 사용자 흐름과 테스트를 전제로 한 profile 관리
 - 별도 검토를 거치는 PyPI 게시 milestone
