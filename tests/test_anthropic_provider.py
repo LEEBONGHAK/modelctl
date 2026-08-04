@@ -115,7 +115,7 @@ def test_anthropic_mapper_preserves_catalog_capabilities():
     assert model.completion_price == 0
 
 
-def test_provider_registry_discovers_anthropic():
+def test_provider_registry_discovers_native_providers():
     registry = ProviderRegistry()
     registry.discover()
 
@@ -125,6 +125,7 @@ def test_provider_registry_discovers_anthropic():
         "openrouter": "OpenRouter",
         "anthropic": "Anthropic",
         "google": "Google Gemini",
+        "openai": "OpenAI",
     }
 
 
