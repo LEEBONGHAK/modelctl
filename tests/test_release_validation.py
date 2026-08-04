@@ -30,6 +30,7 @@ def write_release_files(
     status: str = "ready",
     publish_pypi: bool = False,
 ) -> None:
+    write_project(root / "pyproject.toml", "modelctl-workspace", version)
     write_project(root / "apps/modelctl/pyproject.toml", "modelctl", version)
     write_project(root / "packages/core/pyproject.toml", "modelctl-core", version)
     write_project(root / "packages/sdk/pyproject.toml", "modelctl-sdk", version)
@@ -104,6 +105,18 @@ def test_validate_release_manifest_rejects_pypi_publication():
             },
             "0.1.0",
         )
+
+
+def test_validate_release_rejects_ready_audit_exclusions(tmp_path):
+    write_release_files(tmp_path)
+    tmp_path.joinpath("pyproject.toml").write_text(
+        '[project]\nname = "modelctl-workspace"\nversion = "0.1.0"\n\n'
+        '[tool.uv.audit]\nignore = ["GHSA-example"]\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ReleaseValidationError, match="audit exclusions"):
+        validate_release(tmp_path)
 
 
 def test_validate_release_rejects_missing_changelog_version(tmp_path):

@@ -30,9 +30,9 @@ Version 0.2.0 is ready for promotion to `main`. Completion is final only on the 
 ### Quality criteria — satisfied
 
 - All three package versions and the release manifest are `0.2.0`.
-- `uv audit --locked` passes with `cryptography 50.0.0` and no advisory exclusion.
+- `uv audit --locked` passes with `cryptography 50.0.0` and no advisory exclusion or ignore warning.
 - Ruff passes.
-- The complete 137-test suite passes on Ubuntu, macOS, and Windows with Python 3.13.
+- The complete 138-test suite passes on Ubuntu, macOS, and Windows with Python 3.13.
 - Focused Anthropic, Google, and OpenAI provider-contract tests run in primary CI.
 - Wheels and source distributions build without workspace source overrides.
 - Built wheels install together in an isolated Python 3.13 environment.
@@ -47,6 +47,7 @@ Version 0.2.0 is ready for promotion to `main`. Completion is final only on the 
 - External GitHub Actions are pinned to immutable commit SHAs.
 - Release inputs are validated before shell use.
 - Locked dependencies are audited without a retained exception for `GHSA-g6cj-pr64-35w5`.
+- Ready-release validation rejects any non-empty dependency audit ignore list.
 - PyPI publication code and OIDC write permission remain absent.
 
 ### Release criteria
@@ -80,9 +81,9 @@ Version 0.2.0 is ready for promotion to `main`. Completion is final only on the 
 ### 품질 기준 — 충족
 
 - 세 package와 release manifest의 버전이 모두 `0.2.0`입니다.
-- `cryptography 50.0.0`이 잠긴 상태에서 별도 advisory 예외 없이 `uv audit --locked`가 통과합니다.
+- `cryptography 50.0.0`이 잠긴 상태에서 advisory 예외나 ignore 경고 없이 `uv audit --locked`가 통과합니다.
 - Ruff가 통과합니다.
-- Python 3.13 기반 Ubuntu·macOS·Windows에서 전체 137개 테스트가 통과합니다.
+- Python 3.13 기반 Ubuntu·macOS·Windows에서 전체 138개 테스트가 통과합니다.
 - Primary CI에서 Anthropic, Google, OpenAI provider contract 테스트를 실행합니다.
 - Workspace source override 없이 wheel과 source distribution을 빌드합니다.
 - 격리된 Python 3.13 환경에 생성한 wheel을 함께 설치합니다.
@@ -97,6 +98,7 @@ Version 0.2.0 is ready for promotion to `main`. Completion is final only on the 
 - 외부 GitHub Actions는 변경 불가능한 commit SHA로 고정합니다.
 - Release 입력은 shell 사용 전에 검증합니다.
 - `GHSA-g6cj-pr64-35w5` 예외를 유지하지 않고 잠긴 dependency를 audit합니다.
+- Ready release 검증은 비어 있지 않은 dependency audit ignore 목록을 거부합니다.
 - PyPI 게시 코드와 OIDC write 권한은 존재하지 않습니다.
 
 ### 릴리스 기준

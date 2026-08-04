@@ -36,6 +36,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #29 | [PR-029.md](PR-029.md) | OpenAI native catalog, Codex routing, and provider CI hardening / OpenAI native catalog·Codex 연결·provider CI 강화 |
 | #30 | [PR-030.md](PR-030.md) | Patched cryptography lock and security-issue closure / cryptography 패치 lock·보안 이슈 종료 |
 | #31 | [PR-031.md](PR-031.md) | Declare v0.2.0 ready and promote the validated lineage to main / v0.2.0 ready 선언·검증 계보 main 승격 |
+| #33 | [PR-033.md](PR-033.md) | Remove stale audit exclusion and enforce clean ready releases / 오래된 audit 예외 제거·clean ready release 강제 |
 
 ## Document format / 문서 형식
 
