@@ -12,12 +12,13 @@
 
 - OpenRouter credential 저장과 모델 동기화
 - 대화형·비대화형 provider/model 선택
-- Provider, model, launcher 기본값 영속화
+- Provider, model, launcher, compatibility policy 기본값 영속화
 - Claude Code, Gemini CLI, Codex CLI, Aider launcher
 - Shell 실행 없이 네이티브 인자 전달
 - Launcher 목록, 설치 상태 확인, 선택
 - Provider-aware launcher 추천과 명시적인 안전 적용 단계
-- Launcher 실행 전 선택적으로 적용하는 strict compatibility 검사
+- Launcher 실행 전에 적용하는 `warn` 또는 `strict` 호환성 정책
+- 실행 1회에만 적용하는 strict/warn override
 - `modelctl doctor` 진단 및 호환성 안내
 - 운영체제 keyring과 명시적 평문 fallback
 - Python 3.13 기반 Linux, macOS, Windows 테스트
@@ -91,15 +92,30 @@ modelctl launchers use aider
 | `codex` | Codex CLI | OpenAI | `codex --model <model>` |
 | `aider` | Aider | 여러 provider | `aider --model <model>` |
 
-### 4. 진단 및 실행
+### 4. 호환성 정책 설정 및 실행
+
+저장된 정책의 기본값은 기존 동작을 유지하는 `warn`입니다. 자동화나 안전이 중요한 실행에서 알려진 provider/launcher 불일치를 거부해야 한다면 `strict`를 기본값으로 설정할 수 있습니다.
+
+```bash
+modelctl config set compatibility-policy warn
+modelctl config set compatibility-policy strict
+```
+
+저장된 정책으로 실행합니다.
 
 ```bash
 modelctl doctor
 modelctl run
-modelctl run --strict-compatibility
 ```
 
-기본 실행은 호환성 경고를 표시한 뒤 계속 진행합니다. `--strict-compatibility`를 지정하면 선택된 provider와 launcher가 알려진 비호환 조합일 때 subprocess를 시작하기 전에 종료합니다.
+설정을 바꾸지 않고 이번 실행에만 정책을 덮어쓸 수 있습니다.
+
+```bash
+modelctl run --strict-compatibility
+modelctl run --warn-compatibility
+```
+
+Strict 실행은 알려진 비호환 조합에서 subprocess를 생성하기 전에 종료합니다. Warn 실행은 호환성 경고를 표시한 뒤 계속 진행합니다.
 
 `run` 뒤에서 modelctl 옵션이 아닌 값은 launcher에 그대로 전달됩니다.
 
@@ -114,7 +130,7 @@ Launcher에 전달하려는 인자 이름이 modelctl 옵션과 충돌하는 경
 
 ## OpenRouter 호환성
 
-Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 다른 provider의 모델을 전달하면 `modelctl`은 기본적으로 실행을 차단하지 않고 경고를 표시합니다. 해당 실행을 거부하려면 `--strict-compatibility`를 추가하세요.
+Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 기본 `warn` 정책에서는 다른 provider의 모델을 전달해도 실행을 차단하지 않고 경고를 표시합니다. 저장 정책을 `strict`로 바꾸거나 `--strict-compatibility`를 추가하면 해당 실행을 거부합니다.
 
 현재 OpenRouter 자동 연동은 Aider를 사용합니다.
 
@@ -122,7 +138,8 @@ Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 cli
 modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
-modelctl run --strict-compatibility
+modelctl config set compatibility-policy strict
+modelctl run
 ```
 
 실행 결과는 다음과 같습니다.
@@ -138,7 +155,10 @@ modelctl config show
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
 modelctl config set launcher aider
+modelctl config set compatibility-policy strict
 ```
+
+지원되는 호환성 정책은 정확히 `warn`과 `strict` 두 가지입니다. 잘못 저장된 값은 실행 강도를 임의로 낮추거나 높이지 않고 명시적으로 오류 처리합니다.
 
 기본 경로는 다음과 같습니다.
 
@@ -200,7 +220,7 @@ Credential 동작, 취약점 제보 방법, 지원 버전, 알려진 한계는 [
 
 ## 단기 로드맵
 
-- Strict compatibility를 설정 가능한 정책과 자동 조치로 확장
-- Launcher capability와 execution request 리팩터링
+- Capability-aware 호환성 안내와 자동 조치 추가
+- 검증된 정책 동작을 기반으로 launcher capability와 execution request 리팩터링
 - 완성된 사용자 흐름과 테스트를 전제로 한 profile 관리
 - 별도 검토를 거치는 PyPI 게시 milestone

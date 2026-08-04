@@ -28,6 +28,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #20 | [PR-020.md](PR-020.md) | Owner-only validated release command / 소유자 전용 검증 릴리스 명령 |
 | #21 | [PR-021.md](PR-021.md) | Begin v0.2.0 with launcher recommendations / launcher 추천으로 v0.2.0 시작 |
 | #23 | [PR-023.md](PR-023.md) | Strict compatibility execution and native option forwarding / strict 호환성 실행·native 옵션 전달 |
+| #24 | [PR-024.md](PR-024.md) | Persisted warn/strict compatibility policy / 영속화된 warn·strict 호환성 정책 |
 
 ## Document format / 문서 형식
 

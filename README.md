@@ -12,12 +12,13 @@
 
 - OpenRouter credential storage and model synchronization
 - Interactive and non-interactive provider/model selection
-- Persistent provider, model, and launcher defaults
+- Persistent provider, model, launcher, and compatibility-policy defaults
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers
 - Native argument forwarding without shell execution
 - Launcher discovery, installation status, and selection
 - Provider-aware launcher recommendations with an explicit safe apply step
-- Optional strict compatibility enforcement before launcher execution
+- Configurable `warn` or `strict` compatibility enforcement before launcher execution
+- Per-run strict and warning overrides
 - `modelctl doctor` diagnostics and compatibility feedback
 - Operating-system keyring storage with explicit plaintext fallback
 - Linux, macOS, and Windows tests on Python 3.13
@@ -91,15 +92,30 @@ modelctl launchers use aider
 | `codex` | Codex CLI | OpenAI | `codex --model <model>` |
 | `aider` | Aider | Multiple providers | `aider --model <model>` |
 
-### 4. Diagnose and run
+### 4. Configure compatibility and run
+
+The persisted policy defaults to `warn`, preserving the existing non-blocking behavior. Select a strict default when automated or safety-sensitive runs must refuse known provider/launcher mismatches:
+
+```bash
+modelctl config set compatibility-policy warn
+modelctl config set compatibility-policy strict
+```
+
+Run with the persisted policy:
 
 ```bash
 modelctl doctor
 modelctl run
-modelctl run --strict-compatibility
 ```
 
-Normal runs display compatibility warnings and continue. `--strict-compatibility` exits before subprocess execution when the selected provider and launcher are known to be mismatched.
+Override the policy for one execution without changing configuration:
+
+```bash
+modelctl run --strict-compatibility
+modelctl run --warn-compatibility
+```
+
+Strict execution exits before subprocess creation when the selected provider and launcher are known to be mismatched. Warning execution displays the compatibility warning and continues.
 
 Arguments after `run` that are not modelctl options are forwarded unchanged to the launcher:
 
@@ -114,7 +130,7 @@ Use `--` when a launcher must receive an argument whose name conflicts with a mo
 
 ## OpenRouter compatibility
 
-Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. `modelctl` warns, without blocking, when another provider's model is passed to one of them. Add `--strict-compatibility` to refuse that execution path.
+Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. With the default `warn` policy, `modelctl` warns without blocking when another provider's model is passed to one of them. Set the persisted policy to `strict`, or add `--strict-compatibility`, to refuse that execution path.
 
 Aider is the current automatic OpenRouter integration:
 
@@ -122,7 +138,8 @@ Aider is the current automatic OpenRouter integration:
 modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
-modelctl run --strict-compatibility
+modelctl config set compatibility-policy strict
+modelctl run
 ```
 
 Result:
@@ -138,7 +155,10 @@ modelctl config show
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
 modelctl config set launcher aider
+modelctl config set compatibility-policy strict
 ```
+
+Supported compatibility policies are exactly `warn` and `strict`. Invalid persisted values fail explicitly instead of silently weakening or strengthening execution behavior.
 
 Default paths:
 
@@ -200,7 +220,7 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, su
 
 ## Near-term roadmap
 
-- Expand strict compatibility into configurable policies and automatic remediation
-- Launcher capability and execution-request refactoring
+- Add capability-aware compatibility guidance and automatic remediation
+- Refactor launcher capabilities and execution requests around proven policy behavior
 - Profile management only after a complete workflow and tests exist
 - A separately reviewed PyPI publication milestone

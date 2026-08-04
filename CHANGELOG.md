@@ -13,16 +13,21 @@ Draft development release.
 - Provider-aware launcher recommendations through `modelctl launchers recommend`.
 - Explicit `--apply` support that selects only an installed recommended launcher.
 - Opt-in strict compatibility enforcement through `modelctl run --strict-compatibility`.
+- Persisted compatibility policy configuration through `modelctl config set compatibility-policy <warn|strict>`.
+- Per-run warning override through `modelctl run --warn-compatibility`.
 
 ### Changed
 
 - Began the v0.2.0 development cycle with coordinated package version `0.2.0` and release status `draft`.
 - Preserved unknown native launcher options after `modelctl run` instead of treating them as modelctl parsing errors.
+- `modelctl run` now resolves the persisted compatibility policy when no command-line override is supplied.
 
 ### Compatibility
 
 - Existing launcher execution still supports configurations without provider context; recommendations require an explicit provider and model selection.
-- Default runs continue to warn without blocking, while strict runs stop before subprocess execution on known provider/launcher mismatches.
+- Configurations without `compatibility_policy` continue to use the backward-compatible `warn` behavior.
+- Strict policies stop before subprocess execution on known provider/launcher mismatches, while `--warn-compatibility` can override a persisted strict policy for one run.
+- Invalid persisted compatibility policies fail explicitly instead of silently changing execution behavior.
 
 ## [0.1.0] - 2026-08-03
 

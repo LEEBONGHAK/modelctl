@@ -10,12 +10,15 @@ console = Console()
 
 def run(
     strict_compatibility: Annotated[
-        bool,
+        bool | None,
         typer.Option(
-            "--strict-compatibility",
-            help="Stop instead of warning when the provider and launcher may be incompatible.",
+            "--strict-compatibility/--warn-compatibility",
+            help=(
+                "Override the configured compatibility policy for this run. "
+                "Without either flag, the persisted policy is used."
+            ),
         ),
-    ] = False,
+    ] = None,
     args: Annotated[
         list[str] | None,
         typer.Argument(help="Arguments forwarded to the configured launcher."),
@@ -24,7 +27,11 @@ def run(
     """Launch the configured coding agent with the selected model."""
     try:
         service = container.launcher_service()
-        warning = service.check_compatibility(strict=strict_compatibility)
+        policy = None
+        if strict_compatibility is not None:
+            policy = "strict" if strict_compatibility else "warn"
+
+        warning = service.check_compatibility(policy=policy)
         if warning:
             console.print(f"[yellow]⚠ Compatibility warning: {warning}[/yellow]")
 

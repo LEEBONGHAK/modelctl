@@ -1,6 +1,16 @@
 from dataclasses import dataclass, replace
 
 
+COMPATIBILITY_POLICY_WARN = "warn"
+COMPATIBILITY_POLICY_STRICT = "strict"
+COMPATIBILITY_POLICIES = frozenset(
+    {
+        COMPATIBILITY_POLICY_WARN,
+        COMPATIBILITY_POLICY_STRICT,
+    }
+)
+
+
 @dataclass(frozen=True)
 class LauncherRecommendation:
     name: str
@@ -22,9 +32,19 @@ class LauncherService:
         launcher, model, provider = self._selection()
         return launcher.compatibility_warning(provider, model)
 
-    def check_compatibility(self, *, strict: bool = False) -> str | None:
+    def compatibility_policy(self) -> str:
+        config = self.config.load()
+        policy = config.get("compatibility_policy", COMPATIBILITY_POLICY_WARN)
+        return self._validate_compatibility_policy(policy)
+
+    def check_compatibility(self, *, policy: str | None = None) -> str | None:
+        resolved_policy = (
+            self.compatibility_policy()
+            if policy is None
+            else self._validate_compatibility_policy(policy)
+        )
         warning = self.compatibility_warning()
-        if strict and warning:
+        if resolved_policy == COMPATIBILITY_POLICY_STRICT and warning:
             raise RuntimeError(f"Strict compatibility check failed: {warning}")
         return warning
 
@@ -128,4 +148,15 @@ class LauncherService:
             launcher,
             model,
             provider if isinstance(provider, str) and provider else None,
+        )
+
+    @staticmethod
+    def _validate_compatibility_policy(policy: object) -> str:
+        if isinstance(policy, str) and policy in COMPATIBILITY_POLICIES:
+            return policy
+
+        expected = ", ".join(sorted(COMPATIBILITY_POLICIES))
+        raise RuntimeError(
+            f"Invalid compatibility policy '{policy}'. Expected one of: {expected}. "
+            "Run: modelctl config set compatibility-policy warn"
         )

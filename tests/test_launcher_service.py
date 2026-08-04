@@ -6,13 +6,20 @@ import pytest
 from modelctl_core.services.launcher_service import LauncherService
 
 
-def configured(provider="openrouter", launcher="claude"):
+def configured(
+    provider="openrouter",
+    launcher="claude",
+    compatibility_policy: str | None = None,
+):
     config = Mock()
-    config.load.return_value = {
+    values = {
         "launcher": launcher,
         "provider": provider,
         "default_model": "anthropic/claude-sonnet-4",
     }
+    if compatibility_policy is not None:
+        values["compatibility_policy"] = compatibility_policy
+    config.load.return_value = values
     return config
 
 
@@ -28,6 +35,14 @@ def recommendation_launcher(
         native_provider=native_provider,
         available=lambda: installed,
     )
+
+
+def mismatched_service(config=None):
+    launcher = Mock()
+    launcher.compatibility_warning.return_value = "Potential mismatch"
+    registry = Mock()
+    registry.get.return_value = launcher
+    return LauncherService(registry, config or configured()), launcher
 
 
 def test_launcher_service_forwards_provider_context():
@@ -66,13 +81,9 @@ def test_launcher_service_preserves_execution_without_provider_context():
 
 
 def test_launcher_service_returns_compatibility_warning():
-    launcher = Mock()
-    launcher.compatibility_warning.return_value = "Potential mismatch"
-    registry = Mock()
-    registry.get.return_value = launcher
-    config = configured()
+    service, launcher = mismatched_service()
 
-    warning = LauncherService(registry, config).compatibility_warning()
+    warning = service.compatibility_warning()
 
     assert warning == "Potential mismatch"
     launcher.compatibility_warning.assert_called_once_with(
@@ -81,25 +92,42 @@ def test_launcher_service_returns_compatibility_warning():
     )
 
 
-def test_compatibility_check_keeps_warning_non_blocking_by_default():
-    launcher = Mock()
-    launcher.compatibility_warning.return_value = "Potential mismatch"
-    registry = Mock()
-    registry.get.return_value = launcher
+def test_compatibility_check_defaults_to_warn_policy():
+    service, _ = mismatched_service()
 
-    warning = LauncherService(registry, configured()).check_compatibility()
+    warning = service.check_compatibility()
+
+    assert warning == "Potential mismatch"
+    assert service.compatibility_policy() == "warn"
+
+
+def test_compatibility_check_uses_persisted_strict_policy():
+    service, _ = mismatched_service(configured(compatibility_policy="strict"))
+
+    with pytest.raises(RuntimeError, match="Strict compatibility check failed"):
+        service.check_compatibility()
+
+
+def test_explicit_warn_policy_overrides_persisted_strict_policy():
+    service, _ = mismatched_service(configured(compatibility_policy="strict"))
+
+    warning = service.check_compatibility(policy="warn")
 
     assert warning == "Potential mismatch"
 
 
-def test_compatibility_check_blocks_warning_in_strict_mode():
-    launcher = Mock()
-    launcher.compatibility_warning.return_value = "Potential mismatch"
-    registry = Mock()
-    registry.get.return_value = launcher
+def test_explicit_strict_policy_overrides_persisted_warn_policy():
+    service, _ = mismatched_service(configured(compatibility_policy="warn"))
 
     with pytest.raises(RuntimeError, match="Strict compatibility check failed"):
-        LauncherService(registry, configured()).check_compatibility(strict=True)
+        service.check_compatibility(policy="strict")
+
+
+def test_compatibility_check_rejects_invalid_persisted_policy():
+    service, _ = mismatched_service(configured(compatibility_policy="automatic"))
+
+    with pytest.raises(RuntimeError, match="Invalid compatibility policy"):
+        service.check_compatibility()
 
 
 def test_recommendation_uses_aider_for_openrouter():

@@ -37,9 +37,10 @@ modelctl launchers list
 modelctl launchers recommend
 modelctl launchers recommend --apply
 modelctl launchers use aider
+modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
-modelctl run --strict-compatibility
+modelctl run --warn-compatibility
 ```
 
 Non-interactive selection:
@@ -50,10 +51,11 @@ modelctl use \
   --model anthropic/claude-sonnet-4
 ```
 
-Strict execution with native launcher arguments:
+One-run policy override with native launcher arguments:
 
 ```bash
 modelctl run --strict-compatibility --sandbox workspace-write
+modelctl run --warn-compatibility --continue
 ```
 
 Local state defaults:
@@ -74,6 +76,8 @@ Local state defaults:
 - Interactive and non-interactive provider/model selection
 - Validation of registered providers and synchronized models
 - Favorite-model support
+- Persistent provider, model, launcher, and compatibility-policy defaults
+- Validated `warn` and `strict` compatibility policy values
 - Environment-variable and operating-system keyring lookup
 - Keyring-first credential storage with no silent plaintext downgrade
 - Explicit `--allow-plaintext-fallback`
@@ -104,8 +108,11 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Read-only recommendation inspection and explicit apply that refuses unavailable launchers
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
-- Non-blocking native-provider mismatch warnings by default
-- Opt-in `modelctl run --strict-compatibility` that stops before subprocess execution on known mismatches
+- Backward-compatible `warn` policy when no compatibility setting exists
+- Persisted `warn` or `strict` policy through `modelctl config set compatibility-policy`
+- Strict policy stops before subprocess execution on known mismatches
+- `--strict-compatibility` and `--warn-compatibility` per-run overrides
+- Explicit failure for invalid persisted policy values
 - Native launcher options preserved even when they begin with `--`
 
 ### Packaging and release
@@ -161,13 +168,15 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #19 | Promote completed v0.1.0 to `main` | Merged |
 | #20 | Add an owner-only fully validated release command | Merged |
 | #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
+| #23 | Add strict compatibility execution and native option forwarding | Merged |
 
 ## Active v0.2.0 development
 
 - Completed first increment: provider-aware launcher recommendation and explicit safe apply in PR #21
-- Active second increment: strict compatibility execution and reliable native option forwarding in PR #23
+- Completed second increment: strict compatibility execution and reliable native option forwarding in PR #23
+- Active third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Compatibility guarantee: default execution remains warning-only; strict blocking is explicit and opt-in
+- Compatibility guarantee: configurations without a policy remain warning-only; strict behavior is selected explicitly through configuration or a run override
 
 ## Architecture snapshot
 
@@ -191,8 +200,8 @@ Typer command
 ## Known limitations and deferred work
 
 - No PyPI publication
-- Strict compatibility is command-scoped rather than a persisted global policy
 - Automatic compatibility remediation is not implemented
+- Compatibility decisions still use launcher-native-provider matching rather than a full capability matrix
 - Plugin-based launcher discovery is deferred
 - Execution-target and launch-request value objects are not yet formalized
 - Full static type-check enforcement is not yet a quality gate
@@ -201,9 +210,9 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the strict compatibility execution workflow.
-2. Add persisted compatibility policy only after the command-scoped behavior proves stable.
-3. Refactor launcher capabilities and execution requests around proven requirements.
+1. Validate and merge the persisted compatibility-policy workflow.
+2. Refactor launcher capabilities and execution requests around the proven recommendation and policy behavior.
+3. Add capability-aware compatibility guidance and automatic remediation only after the refactoring stabilizes.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
 
