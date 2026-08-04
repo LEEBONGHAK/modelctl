@@ -14,20 +14,20 @@ Development principle:
 
 ## Branch and release state
 
-- Release branch: `main`
+- Canonical release branch: `main`
 - Ongoing development branch: `refac`
-- Completed release: `0.1.0` on `main`
-- Coordinated development version: `0.2.0` on `refac`
-- Manifest: `release.toml`
-- Current status: `draft`
+- Completed release on `main`: `0.1.0`
+- Ready version: `0.2.0`
+- Readiness branch: `release/v0.2.0-readiness`
+- Manifest status: `ready`
 - Channel: development release
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
-- Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
+- Release procedure: [`RELEASING.md`](RELEASING.md)
 
-The feature scope planned for v0.2.0 is implemented. The remaining work is release hardening and promotion: merge the patched dependency update, complete a readiness review, mark the manifest `ready`, and promote the exact validated commit to `main` for final release publication.
+The planned v0.2.0 feature and security scope is complete. The readiness branch is based on exact `refac` merge commit `1fb85812b5aca2232ac2fb479e35f38d837bb229`, which includes the patched dependency update from PR #30.
 
-## Current end-to-end workflows
+## End-to-end workflows
 
 ### OpenRouter through Aider
 
@@ -35,7 +35,6 @@ The feature scope planned for v0.2.0 is implemented. The remaining work is relea
 modelctl auth login openrouter
 modelctl models sync openrouter
 modelctl use --provider openrouter --model anthropic/claude-sonnet-4
-modelctl launchers recommend
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl config set compatibility-policy strict
@@ -50,13 +49,10 @@ modelctl auth login anthropic
 modelctl models sync anthropic
 modelctl use --provider anthropic --model claude-opus-4-6
 modelctl launchers recommend
-modelctl launchers remediate
 modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
 ```
-
-`ANTHROPIC_API_KEY` can replace stored modelctl credentials for catalog synchronization. Claude Code owns launcher authentication.
 
 ### Google Gemini through Gemini CLI
 
@@ -65,13 +61,10 @@ modelctl auth login google
 modelctl models sync google
 modelctl use --provider google --model gemini-3.5-flash
 modelctl launchers recommend
-modelctl launchers remediate
 modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
 ```
-
-Environment precedence is `MODELCTL_GOOGLE`, `GOOGLE_API_KEY`, then `GEMINI_API_KEY`. Gemini CLI owns launcher authentication.
 
 ### OpenAI through Codex CLI
 
@@ -80,111 +73,98 @@ modelctl auth login openai
 modelctl models sync openai
 modelctl use --provider openai --model gpt-5.6
 modelctl launchers recommend
-modelctl launchers remediate
 modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
 ```
 
-`OPENAI_API_KEY` can replace stored modelctl credentials for catalog synchronization. Codex CLI owns launcher authentication.
+Provider catalog credentials remain separate from launcher authentication and are not injected from keyring storage into subprocess environments.
 
-Provider credentials stored by modelctl are not injected into launcher subprocess environments.
+## Completed v0.2.0 scope
 
-## Implemented v0.2.0 scope
+### Providers and models
 
-### Provider and model workflows
-
-- OpenRouter catalog synchronization and Aider model translation
-- Anthropic native catalog synchronization and Claude Code routing
-- Google Gemini native catalog synchronization and Gemini CLI routing
-- OpenAI native catalog synchronization and Codex CLI routing
-- Official provider environment-variable aliases with modelctl-specific precedence
+- OpenRouter synchronization and Aider translation
+- Anthropic native synchronization and Claude Code routing
+- Google Gemini native synchronization and Gemini CLI routing
+- OpenAI native synchronization and Codex CLI routing
+- Official provider environment aliases with modelctl-specific precedence
 - Bounded HTTP timeouts and pagination guards
-- Explicit malformed-response failures
-- Conservative mapping when provider catalog APIs omit capability, pricing, or modality data
+- Explicit malformed-response handling
+- Conservative mapping when catalog APIs omit context, price, capability, or modality fields
 - Interactive and non-interactive provider/model selection
-- Persistent provider-scoped model repository
 
-### Launcher and compatibility workflows
+### Launchers and compatibility
 
-- Immutable `LaunchRequest` values
+- Immutable `LaunchRequest`
 - Explicit `LauncherCapabilities`
-- Capability-driven launcher recommendations
-- Read-only recommendation and remediation previews
-- Explicit safe apply that refuses unavailable launchers
-- Persisted `warn` and `strict` compatibility policies
-- Per-run warn/strict overrides
-- Native launcher argument forwarding without shell execution
-- Shared compatibility semantics across execution, diagnostics, recommendation, and remediation
+- Capability-driven recommendation
+- Preview-first remediation with explicit safe apply
+- Refusal before mutation when a recommendation is unavailable
+- Persisted `warn` and `strict` policies
+- Per-run compatibility overrides
+- Native argument forwarding without shell execution
+- Shared semantics across execution, doctor, recommendation, and remediation
 
-### Credential and local-state security
+### Security
 
-- Operating-system keyring by default
-- No silent plaintext downgrade
-- Explicit plaintext fallback approval
-- Private POSIX permissions
-- Atomic protected-file writes
-- Symbolic-link path rejection
-- Credentials separated from launcher subprocess authentication
+- Keyring-first credentials and no silent plaintext downgrade
+- Explicit fallback approval, private permissions, atomic writes, and symlink rejection
+- Provider credentials separated from coding-agent authentication
+- `cryptography 50.0.0` locked for `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247`
+- Issue #22 closed after complete validation
+- Dependency audit without a retained advisory exclusion
+- Pinned external GitHub Actions and least-privilege workflow permissions
+- PyPI publishing and OIDC write permission absent
 
-### CI, packaging, and release
+### Quality and release gates
 
-- Locked dependency audit and Ruff
-- Focused native-provider API contract tests in primary CI
-- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
-- Wheel and source-distribution builds for all packages
-- Isolated installed-wheel package and CLI smoke tests
-- Coordinated package, manifest, changelog, documentation, and tag validation
-- Independent release workflow gates and SHA-256 checksum generation
-- Immutable GitHub Release behavior
-- PyPI publication intentionally disabled
+- Primary CI audit, Ruff, and provider contract suites
+- Complete 137-test suite on Ubuntu, macOS, and Windows with Python 3.13
+- All wheel and source-distribution builds
+- Isolated installed-wheel import and CLI smoke tests
+- Package, manifest, changelog, documentation, and tag validation
+- Independent release-workflow verification
+- SHA-256 checksums and immutable GitHub Release behavior
 
-## CI failure history
+## CI failure resolution
 
-PR #28 exposed a mutable pagination-parameter defect. The Google client reused one dictionary across page requests, so the recorded first request appeared mutated after the second page token was inserted. Ubuntu, macOS, Windows, and the release dry-run failed consistently.
+PR #28 exposed mutable pagination parameters that changed a recorded first request after a second-page token was added. The defect reproduced on every operating system and in the release dry-run.
 
-PR #28 fixed the request construction by creating a fresh query dictionary for every page. PR #29 added focused Anthropic, Google, and OpenAI provider contract tests to primary CI so similar HTTP-client regressions are detected before the complete OS matrix and release workflow.
-
-## Security readiness
-
-Issue #22 tracked `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247` in `cryptography 49.0.0`. Upstream released patched version 50.0.0 on 2026-07-31.
-
-PR #30 updates `uv.lock` to `cryptography 50.0.0`. The issue can be closed after the dependency audit, complete tests, packaging, and release dry-run pass and the PR is merged.
-
-No audit exclusion is retained for this advisory.
+PR #28 switched to fresh per-request dictionaries. PR #29 added focused native-provider contract suites to primary CI so similar HTTP-client regressions are detected earlier while the full matrix and release workflow remain independent gates.
 
 ## v0.2.0 pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
-| #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
-| #23 | Add strict compatibility execution and native option forwarding | Merged |
-| #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
-| #25 | Formalize launcher capabilities and immutable execution requests | Merged |
-| #26 | Add preview-first compatibility remediation and explicit apply | Merged |
-| #27 | Add Anthropic native model catalog and Claude Code routing | Merged |
-| #28 | Add Google Gemini native model catalog and Gemini CLI routing | Merged |
-| #29 | Add OpenAI native model catalog, Codex routing, and provider CI hardening | Merged |
-| #30 | Upgrade `cryptography` to patched 50.0.0 and close issue #22 | Active |
+| #21 | Provider-aware launcher recommendations | Merged |
+| #23 | Strict compatibility and native option forwarding | Merged |
+| #24 | Persisted warn/strict policy | Merged |
+| #25 | Immutable execution contract and launcher capabilities | Merged |
+| #26 | Preview-first compatibility remediation | Merged |
+| #27 | Anthropic catalog and Claude Code routing | Merged |
+| #28 | Google Gemini catalog and Gemini CLI routing | Merged |
+| #29 | OpenAI catalog, Codex routing, and provider CI | Merged |
+| #30 | Patched cryptography lock and issue #22 closure | Merged |
+| #31 | v0.2.0 readiness declaration and `main` promotion | Active |
 
-## Remaining steps to complete v0.2.0
+## Remaining completion steps
 
-1. Merge PR #30 after all security and release-dry-run checks pass.
-2. Close issue #22 with the merged commit and validation evidence.
-3. Run a release-readiness audit against the exact latest `refac` commit.
-4. Finalize PR #30 history, release criteria, README status, changelog release wording, and progress documentation.
-5. Change `release.toml` from `status = "draft"` to `status = "ready"` in a dedicated readiness PR.
-6. Merge the reviewed readiness change into `main` and require the release workflow to independently pass audit, lint, 137+ tests, builds, installed-wheel smoke checks, metadata validation, and checksum generation.
-7. Confirm immutable tag `v0.2.0` and the GitHub Release assets. PyPI remains disabled.
+1. Require all pull-request checks on PR #31 to pass against `main`.
+2. Merge the exact checked readiness head into `main`.
+3. Require the post-merge release workflow to repeat audit, Ruff, all tests, builds, installed-wheel smoke checks, metadata validation, and checksum generation on the exact merge commit.
+4. Confirm immutable tag `v0.2.0` and the GitHub Release containing six Python distributions plus `SHA256SUMS`.
+5. Use the owner-only `/release v0.2.0` fallback only if the platform does not emit the expected merged-pull-request publication event.
 
-## Deferred work after v0.2.0
+PyPI remains disabled throughout this process.
 
-- Shared provider HTTP helpers only where four integrations demonstrate genuinely identical behavior
-- Additional remediation actions only when they are safe, reversible, and previewable
-- Profile management with a complete tested workflow
-- Plugin-based launcher discovery
-- Full static type-check enforcement
-- Separately reviewed PyPI Trusted Publishing milestone
+## Deferred after v0.2.0
+
+- Shared provider HTTP helpers only for proven identical behavior
+- Additional safe, reversible, previewable remediation actions
+- Tested profile management and plugin-based launcher discovery
+- Static type-check enforcement as a separate quality milestone
+- Separately reviewed PyPI Trusted Publishing
 
 ## Validation commands
 
@@ -193,9 +173,6 @@ uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
 uv run pytest
-uv build packages/core --out-dir dist --no-sources
-uv build packages/sdk --out-dir dist --no-sources
-uv build apps/modelctl --out-dir dist --no-sources
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.2.0
