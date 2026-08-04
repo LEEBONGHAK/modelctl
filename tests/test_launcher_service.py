@@ -95,6 +95,7 @@ def test_recommendation_uses_aider_for_openrouter():
     assert recommendation.provider == "openrouter"
     assert recommendation.installed is True
     assert recommendation.active is False
+    assert recommendation.changed is False
     assert "translates OpenRouter" in recommendation.reason
 
 
@@ -131,7 +132,7 @@ def test_recommendation_returns_none_for_unknown_provider():
     assert recommendation is None
 
 
-def test_apply_recommendation_persists_installed_launcher():
+def test_apply_recommendation_persists_and_reports_active_launcher():
     registry = Mock()
     registry.list.return_value = [
         recommendation_launcher("aider", "Aider", None, installed=True),
@@ -141,6 +142,8 @@ def test_apply_recommendation_persists_installed_launcher():
     recommendation = LauncherService(registry, config).apply_recommendation()
 
     assert recommendation.name == "aider"
+    assert recommendation.active is True
+    assert recommendation.changed is True
     config.update.assert_called_once_with(launcher="aider")
 
 
@@ -154,6 +157,7 @@ def test_apply_recommendation_keeps_already_active_launcher_unchanged():
     recommendation = LauncherService(registry, config).apply_recommendation()
 
     assert recommendation.active is True
+    assert recommendation.changed is False
     config.update.assert_not_called()
 
 
