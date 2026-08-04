@@ -18,7 +18,7 @@ class AnthropicClient:
     def get_models(self) -> list[dict[str, object]]:
         timeout = httpx.Timeout(30.0, connect=10.0)
         models: list[dict[str, object]] = []
-        params: dict[str, str | int] = {"limit": self.PAGE_LIMIT}
+        after_id: str | None = None
         seen_cursors: set[str] = set()
 
         with httpx.Client(
@@ -31,6 +31,10 @@ class AnthropicClient:
             follow_redirects=False,
         ) as client:
             for _ in range(self.MAX_PAGES):
+                params: dict[str, str | int] = {"limit": self.PAGE_LIMIT}
+                if after_id is not None:
+                    params["after_id"] = after_id
+
                 response = client.get("/models", params=params)
                 response.raise_for_status()
                 payload = response.json()
@@ -57,6 +61,6 @@ class AnthropicClient:
                     raise ValueError("Anthropic repeated a model pagination cursor.")
 
                 seen_cursors.add(last_id)
-                params["after_id"] = last_id
+                after_id = last_id
 
         raise ValueError("Anthropic model pagination exceeded the safety limit.")
