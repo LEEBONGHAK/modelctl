@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -10,6 +10,7 @@ class LauncherRecommendation:
     reason: str
     installed: bool
     active: bool
+    changed: bool = False
 
 
 class LauncherService:
@@ -63,10 +64,11 @@ class LauncherService:
                 f"`modelctl launchers use {recommendation.name}`."
             )
 
-        if not recommendation.active:
-            self.config.update(launcher=recommendation.name)
+        if recommendation.active:
+            return recommendation
 
-        return recommendation
+        self.config.update(launcher=recommendation.name)
+        return replace(recommendation, active=True, changed=True)
 
     def run(self, extra_args: list[str] | None = None) -> None:
         launcher, model, provider = self._selection()
