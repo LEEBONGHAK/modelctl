@@ -1,3 +1,4 @@
+from modelctl_core.provider.anthropic.provider import AnthropicProvider
 from modelctl_core.provider.openrouter.provider import OpenRouterProvider
 
 
@@ -7,6 +8,7 @@ class ProviderRegistry:
 
     def discover(self):
         self.register(OpenRouterProvider())
+        self.register(AnthropicProvider())
 
     def register(self, provider):
         self._providers[provider.id] = provider
