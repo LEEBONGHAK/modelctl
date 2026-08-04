@@ -5,6 +5,7 @@ import re
 import tomllib
 from pathlib import Path
 
+WORKSPACE_PROJECT_FILE = Path("pyproject.toml")
 PACKAGE_PROJECT_FILES = (
     Path("apps/modelctl/pyproject.toml"),
     Path("packages/core/pyproject.toml"),
@@ -134,6 +135,25 @@ def validate_release_documents(root: Path, version: str, status: str) -> None:
         )
 
 
+def validate_audit_policy(root: Path, status: str) -> None:
+    if status != "ready":
+        return
+
+    path = root / WORKSPACE_PROJECT_FILE
+    with path.open("rb") as file:
+        workspace = tomllib.load(file)
+
+    tool = workspace.get("tool", {})
+    uv = tool.get("uv", {}) if isinstance(tool, dict) else {}
+    audit = uv.get("audit", {}) if isinstance(uv, dict) else {}
+    ignored = audit.get("ignore", []) if isinstance(audit, dict) else []
+
+    if ignored:
+        raise ReleaseValidationError(
+            "Ready releases must not retain dependency audit exclusions"
+        )
+
+
 def validate_tag(tag: str, version: str) -> None:
     expected = f"v{version}"
     if tag != expected:
@@ -149,6 +169,7 @@ def validate_release(root: Path, tag: str | None = None) -> str:
     manifest = read_release_manifest(root)
     status = validate_release_manifest(manifest, version)
     validate_release_documents(root, version, status)
+    validate_audit_policy(root, status)
     if tag is not None:
         validate_tag(tag, version)
     return version
