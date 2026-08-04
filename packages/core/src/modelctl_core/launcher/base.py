@@ -54,19 +54,21 @@ class Launcher(ABC):
         if self.capabilities.accepts(provider):
             return None
 
+        remediation = (
+            "Run `modelctl launchers remediate` to inspect a compatible launcher, or "
+            "`modelctl launchers remediate --apply` to select an installed recommendation."
+        )
         if provider == "openrouter":
             return (
                 f"{self.display_name} will receive OpenRouter model '{request.model}' "
                 "unchanged. The native CLI may not recognize that model name or use the "
-                "OpenRouter credential automatically. Use `modelctl launchers use aider` "
-                "for automatic OpenRouter translation, or configure a model supported by "
-                "the selected CLI."
+                f"OpenRouter credential automatically. {remediation}"
             )
 
         return (
             f"{self.display_name} is designed for provider "
             f"'{self.capabilities.native_provider}', but the selected provider is "
-            f"'{provider}'. The model will be forwarded unchanged."
+            f"'{provider}'. The model will be forwarded unchanged. {remediation}"
         )
 
     @abstractmethod
