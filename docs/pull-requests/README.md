@@ -25,6 +25,8 @@ This directory records the implementation history of `modelctl` one pull request
 | #17 | [PR-017.md](PR-017.md) | v0.1.0 readiness manifest and complete release gates / v0.1.0 완료 선언·통합 release gate |
 | #18 | [PR-018.md](PR-018.md) | Trusted merged-PR release path / 신뢰된 병합 PR 릴리스 경로 |
 | #19 | [PR-019.md](PR-019.md) | Promote completed v0.1.0 to main / 완성된 v0.1.0 main 승격 |
+| #20 | [PR-020.md](PR-020.md) | Owner-only validated release command / 소유자 전용 검증 릴리스 명령 |
+| #21 | [PR-021.md](PR-021.md) | Begin v0.2.0 with launcher recommendations / launcher 추천으로 v0.2.0 시작 |
 
 ## Document format / 문서 형식
 

@@ -1,6 +1,6 @@
 [project]
 name = "modelctl-workspace"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">=3.13"
 
 [dependency-groups]
@@ -22,6 +22,11 @@ members = [
 [tool.uv.sources]
 modelctl-core = { workspace = true }
 modelctl-sdk = { workspace = true }
+
+# Temporary, advisory-specific exception tracked by GitHub issue #22.
+# cryptography 50.0.0 is the declared fix but is not published yet.
+[tool.uv.audit]
+ignore = ["GHSA-g6cj-pr64-35w5"]
 
 [tool.ruff]
 line-length = 100

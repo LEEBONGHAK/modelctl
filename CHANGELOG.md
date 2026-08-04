@@ -4,6 +4,23 @@ All notable changes to `modelctl` are documented in this file.
 
 The project follows Semantic Versioning. Until a stable `1.0.0` release, minor versions may include breaking changes with migration notes.
 
+## [0.2.0]
+
+Draft development release.
+
+### Added
+
+- Provider-aware launcher recommendations through `modelctl launchers recommend`.
+- Explicit `--apply` support that selects only an installed recommended launcher.
+
+### Changed
+
+- Began the v0.2.0 development cycle with coordinated package version `0.2.0` and release status `draft`.
+
+### Compatibility
+
+- Existing launcher execution still supports configurations without provider context; recommendations require an explicit provider and model selection.
+
 ## [0.1.0] - 2026-08-03
 
 First development release.

@@ -2,8 +2,8 @@
 
 ## Version / 버전
 
-- Version: `0.1.0`
-- Status: **Ready**
+- Version: `0.2.0`
+- Status: **Draft**
 - Channel: development release / 개발 버전
 - Release branch: `main`
 - Development branch: `refac`
@@ -19,6 +19,8 @@ A development version is complete only when all criteria below are satisfied on 
 - Interactive and non-interactive provider/model selection are both covered by regression tests.
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers remain installable and invokable through the shared launcher service.
 - Aider translates OpenRouter model identifiers without changing non-OpenRouter identifiers.
+- `modelctl launchers recommend` proposes Aider for OpenRouter and a native launcher for supported native providers.
+- Recommendation inspection is read-only, while `--apply` changes configuration only when the recommended launcher is available on `PATH`.
 
 ### Quality criteria
 
@@ -59,6 +61,8 @@ A development version is complete only when all criteria below are satisfied on 
 - 대화형 및 비대화형 provider·model 선택이 모두 회귀 테스트로 검증되어야 합니다.
 - Claude Code, Gemini CLI, Codex CLI, Aider를 공통 launcher service로 실행할 수 있어야 합니다.
 - Aider는 OpenRouter model ID만 변환하고 다른 provider의 model ID는 변경하지 않아야 합니다.
+- `modelctl launchers recommend`는 OpenRouter에 Aider를, 지원되는 native provider에는 해당 native launcher를 제안해야 합니다.
+- 추천 조회는 설정을 변경하지 않아야 하며 `--apply`는 추천 launcher가 `PATH`에서 사용 가능한 경우에만 설정을 변경해야 합니다.
 
 ### 품질 기준
 

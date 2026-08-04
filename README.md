@@ -6,7 +6,7 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing the environment, and launching coding-agent CLIs consistently.
 
-> Current completed development version: `0.1.0`. `main` is the canonical release branch; ongoing development continues on `refac`.
+> Current completed development version: `0.1.0`. Version `0.2.0` is now in draft development on `refac`; `main` remains the canonical release branch.
 
 ## What works today
 
@@ -16,6 +16,7 @@
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers
 - Native argument forwarding without shell execution
 - Launcher discovery, installation status, and selection
+- Provider-aware launcher recommendations with an explicit safe apply step
 - `modelctl doctor` diagnostics and compatibility feedback
 - Operating-system keyring storage with explicit plaintext fallback
 - Linux, macOS, and Windows tests on Python 3.13
@@ -75,8 +76,12 @@ Direct selections are validated against the provider registry and synchronized l
 
 ```bash
 modelctl launchers list
+modelctl launchers recommend
+modelctl launchers recommend --apply
 modelctl launchers use aider
 ```
+
+`recommend` uses the selected provider and model to propose the safest supported launcher. It does not change configuration unless `--apply` is supplied, and apply refuses a launcher that is unavailable on `PATH`.
 
 | ID | Coding agent | Native provider | Base command |
 | --- | --- | --- | --- |
@@ -156,10 +161,10 @@ Release decisions are declared in [`release.toml`](release.toml), notable change
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```
 
-A trusted `main` push or a reviewed pull request merged into `main`, with `status = "ready"`, must independently pass:
+The current `0.2.0` manifest is `draft`, so it cannot publish a release. Once it is explicitly marked `ready`, a trusted `main` push or a reviewed pull request merged into `main` must independently pass:
 
 - coordinated package, manifest, changelog, and documentation validation
 - locked dependency audit
@@ -188,7 +193,7 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, su
 
 ## Near-term roadmap
 
-- Stricter compatibility policies and automatic remediation
+- Expand provider-aware recommendations into stricter compatibility policies and automatic remediation
 - Launcher capability and execution-request refactoring
 - Profile management only after a complete workflow and tests exist
 - A separately reviewed PyPI publication milestone

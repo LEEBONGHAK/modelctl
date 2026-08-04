@@ -27,11 +27,11 @@ This document describes coordinated development releases for the `modelctl`, `mo
 
 The complete functional, quality, security, and publication criteria are maintained in [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md).
 
-The release manifest must match all package versions:
+The current draft manifest must match all package versions:
 
 ```toml
-version = "0.1.0"
-status = "ready"
+version = "0.2.0"
+status = "draft"
 channel = "development"
 publish_pypi = false
 ```
@@ -49,7 +49,7 @@ Validate locally:
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```
 
 Validation also requires the matching changelog entry, English and Korean READMEs, security policy, release criteria, and this release guide.
@@ -125,11 +125,11 @@ PyPI publication remains intentionally deferred. Enabling it later requires a se
 
 전체 기능·품질·보안·게시 기준은 [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)에서 관리합니다.
 
-Release manifest는 모든 package version과 일치해야 합니다.
+현재 draft release manifest는 모든 package version과 일치해야 합니다.
 
 ```toml
-version = "0.1.0"
-status = "ready"
+version = "0.2.0"
+status = "draft"
 channel = "development"
 publish_pypi = false
 ```
@@ -147,7 +147,7 @@ packages/sdk/pyproject.toml
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```
 
 검증에는 동일 버전의 changelog, 영문·한국어 README, 보안 정책, 완료 기준, 이 릴리스 가이드도 필요합니다.

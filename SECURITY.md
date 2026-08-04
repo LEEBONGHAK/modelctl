@@ -44,6 +44,12 @@ Coding-agent commands are constructed as argument lists and executed without a s
 
 코딩 에이전트 명령은 인자 목록으로 구성되며 shell 없이 실행됩니다. 네이티브 launcher 인자는 사용자 입력으로 선택된 외부 CLI에 의도적으로 전달됩니다. 파일시스템, 네트워크, 도구, 승인 권한을 부여하기 전에 해당 에이전트의 보안 모델을 확인하세요.
 
+## Temporary dependency audit exception / 임시 dependency audit 예외
+
+`GHSA-g6cj-pr64-35w5` is temporarily excluded from `uv audit` because its declared fixed version, `cryptography 50.0.0`, has not been published. The dependency is transitive through the Linux keyring stack, and modelctl does not use the affected PKCS#7 EnvelopedData decryption API. GitHub issue #22 tracks removal of this exact exception as soon as the fixed release is available. Every other vulnerability continues to fail CI.
+
+`GHSA-g6cj-pr64-35w5`는 수정 버전으로 명시된 `cryptography 50.0.0`이 아직 배포되지 않아 `uv audit`에서 임시로 제외합니다. 해당 dependency는 Linux keyring stack을 통해 간접적으로 포함되며 modelctl은 영향받는 PKCS#7 EnvelopedData 복호화 API를 사용하지 않습니다. 수정 버전이 배포되는 즉시 이 정확한 예외를 제거하도록 GitHub issue #22에서 추적합니다. 다른 모든 취약점은 계속 CI를 실패시킵니다.
+
 ## Release and supply chain / 릴리스와 공급망
 
 - External GitHub Actions are pinned to full commit SHAs. / 외부 GitHub Actions는 전체 commit SHA로 고정합니다.

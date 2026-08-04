@@ -16,15 +16,16 @@ Development principle:
 
 - Release branch: `main`
 - Ongoing development branch: `refac`
-- Coordinated version: `0.1.0`
+- Completed release: `0.1.0` on `main`
+- Coordinated development version: `0.2.0` on `refac`
 - Manifest: `release.toml`
-- Status: `ready`
+- Status: `draft`
 - Channel: development release
 - PyPI: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 - Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
 
-A reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
+Draft status prevents publication while v0.2.0 is under development. After an explicit readiness review, a reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
 
 ## Current end-to-end workflow
 
@@ -33,6 +34,8 @@ modelctl auth login openrouter
 modelctl models sync openrouter
 modelctl use
 modelctl launchers list
+modelctl launchers recommend
+modelctl launchers recommend --apply
 modelctl launchers use aider
 modelctl doctor
 modelctl run
@@ -87,8 +90,11 @@ All launchers forward native arguments as subprocess argument lists without shel
 ### Management, diagnostics, and compatibility
 
 - `modelctl launchers list`
+- `modelctl launchers recommend [--apply]`
 - `modelctl launchers use <launcher-id>`
 - Installation-state and active-launcher display
+- Provider-aware recommendation of Aider for OpenRouter and native launchers for supported native providers
+- Read-only recommendation inspection and explicit apply that refuses unavailable launchers
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
 - Non-blocking native-provider mismatch warnings
@@ -142,6 +148,15 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #16 | Harden credentials, local state, workflows, and Korean documentation | Merged |
 | #17 | Define v0.1.0 readiness and complete release gates | Merged |
 | #18 | Add trusted merged-PR release publication path | Merged |
+| #19 | Promote completed v0.1.0 to `main` | Merged |
+| #20 | Add an owner-only fully validated release command | Merged |
+
+## Active v0.2.0 development
+
+- First feature branch: `feat/v0.2.0-launcher-recommendation`
+- First workflow: inspect a provider-aware recommendation, then opt in with `--apply`
+- Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
+- Compatibility guarantee: existing launcher execution remains valid without provider context; recommendations require a selected provider and model
 
 ## Architecture snapshot
 
@@ -174,10 +189,11 @@ Typer command
 
 ## Next priorities
 
-1. Add stricter compatibility policies after additional provider integrations exist.
-2. Refactor launcher capabilities and execution requests around proven requirements.
-3. Reintroduce profile management only with a complete user workflow and tests.
-4. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
+1. Validate and merge the provider-aware launcher recommendation workflow.
+2. Add stricter compatibility policies after additional provider integrations exist.
+3. Refactor launcher capabilities and execution requests around proven requirements.
+4. Reintroduce profile management only with a complete user workflow and tests.
+5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
 
 ## Validation commands
 
@@ -191,5 +207,5 @@ uv build packages/sdk --out-dir dist --no-sources
 uv build apps/modelctl --out-dir dist --no-sources
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.1.0
+python scripts/release_validation.py --tag v0.2.0
 ```

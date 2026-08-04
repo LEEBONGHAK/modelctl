@@ -165,7 +165,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Validate coordinated modelctl package versions and release readiness."
     )
-    parser.add_argument("--tag", help="Release tag to validate, for example v0.1.0")
+    parser.add_argument("--tag", help="Release tag to validate, for example v0.2.0")
     output = parser.add_mutually_exclusive_group()
     output.add_argument(
         "--print-version",
