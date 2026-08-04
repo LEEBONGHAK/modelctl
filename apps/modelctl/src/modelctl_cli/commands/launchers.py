@@ -80,13 +80,13 @@ def recommend_launcher(
     console.print("[bold]Reason:[/bold]", Text(recommendation.reason))
 
     if apply:
-        if recommendation.active:
-            console.print("[green]The recommended launcher is already selected.[/green]")
-        else:
+        if recommendation.changed:
             console.print(
                 "[green]Selected recommended launcher:[/green]",
                 recommendation.display_name,
             )
+        else:
+            console.print("[green]The recommended launcher is already selected.[/green]")
 
 
 @launchers_app.command("use")
