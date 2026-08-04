@@ -17,6 +17,8 @@ Draft development release.
 - Per-run warning override through `modelctl run --warn-compatibility`.
 - Immutable launcher execution requests that carry model, provider, and native arguments together.
 - Explicit launcher capabilities for native-provider support and provider model translation.
+- Read-only compatibility remediation plans through `modelctl launchers remediate`.
+- Explicit remediation application through `modelctl launchers remediate --apply`.
 
 ### Changed
 
@@ -25,6 +27,7 @@ Draft development release.
 - `modelctl run` now resolves the persisted compatibility policy when no command-line override is supplied.
 - Launcher recommendation, compatibility diagnosis, and execution now share one capability-driven request contract.
 - OpenRouter launcher recommendation no longer depends on a hard-coded launcher ID.
+- Compatibility warnings now direct users to preview or explicitly apply a capability-driven remediation plan.
 
 ### Compatibility
 
@@ -33,6 +36,7 @@ Draft development release.
 - Strict policies stop before subprocess execution on known provider/launcher mismatches, while `--warn-compatibility` can override a persisted strict policy for one run.
 - Invalid persisted compatibility policies fail explicitly instead of silently changing execution behavior.
 - The launcher execution-contract refactor does not change CLI commands, configuration keys, subprocess argument order, or Aider OpenRouter model translation.
+- Remediation preview never changes configuration; apply changes only the selected launcher and refuses unavailable recommendations.
 
 ## [0.1.0] - 2026-08-03
 
