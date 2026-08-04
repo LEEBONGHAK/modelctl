@@ -15,19 +15,23 @@ def show() -> None:
 
 @config_app.command("set")
 def set_value(key: str, value: str) -> None:
-    """Set provider, launcher, or model defaults."""
+    """Set provider, launcher, model, or compatibility defaults."""
     service = ConfigService()
     setters = {
         "provider": service.set_provider,
         "launcher": service.set_launcher,
         "model": service.set_model,
+        "compatibility-policy": service.set_compatibility_policy,
     }
 
     setter = setters.get(key)
     if setter is None:
-        raise typer.BadParameter(
-            f"Unknown key '{key}'. Expected one of: provider, launcher, model"
-        )
+        expected = ", ".join(setters)
+        raise typer.BadParameter(f"Unknown key '{key}'. Expected one of: {expected}")
 
-    setter(value)
+    try:
+        setter(value)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
     typer.echo(f"Set {key} to {value}")
