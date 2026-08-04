@@ -124,6 +124,7 @@ def test_provider_registry_discovers_anthropic():
     assert providers == {
         "openrouter": "OpenRouter",
         "anthropic": "Anthropic",
+        "google": "Google Gemini",
     }
 
 

@@ -22,6 +22,9 @@ Draft development release.
 - Anthropic native provider discovery and official model-catalog synchronization.
 - Official `ANTHROPIC_API_KEY` environment-variable support.
 - Bounded Anthropic Models API pagination with malformed-response and cursor guards.
+- Google Gemini native provider discovery and official model-catalog synchronization.
+- Official `GOOGLE_API_KEY` and `GEMINI_API_KEY` environment-variable support.
+- Bounded Gemini Models API pagination with malformed-response and repeated-token guards.
 
 ### Changed
 
@@ -32,6 +35,8 @@ Draft development release.
 - OpenRouter launcher recommendation no longer depends on a hard-coded launcher ID.
 - Compatibility warnings now direct users to preview or explicitly apply a capability-driven remediation plan.
 - Anthropic provider selection now resolves to the existing native Claude Code launcher for recommendation and remediation.
+- Google provider selection now resolves to the existing native Gemini CLI launcher for recommendation and remediation.
+- Google catalog synchronization excludes models that do not support `generateContent`.
 
 ### Compatibility
 
@@ -42,7 +47,8 @@ Draft development release.
 - The launcher execution-contract refactor does not change CLI commands, configuration keys, subprocess argument order, or Aider OpenRouter model translation.
 - Remediation preview never changes configuration; apply changes only the selected launcher and refuses unavailable recommendations.
 - `MODELCTL_ANTHROPIC` keeps precedence over the official `ANTHROPIC_API_KEY` alias.
-- Anthropic credentials managed by modelctl are used for catalog synchronization and are not injected into launcher subprocess environments.
+- `MODELCTL_GOOGLE` keeps precedence over official aliases; `GOOGLE_API_KEY` takes precedence over `GEMINI_API_KEY`.
+- Provider credentials managed by modelctl are used for catalog synchronization and are not injected into launcher subprocess environments.
 
 ## [0.1.0] - 2026-08-03
 

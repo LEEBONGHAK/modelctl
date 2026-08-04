@@ -5,6 +5,7 @@ from modelctl_core.auth.base import CredentialStore
 
 _PROVIDER_ENV_ALIASES = {
     "anthropic": ("ANTHROPIC_API_KEY",),
+    "google": ("GOOGLE_API_KEY", "GEMINI_API_KEY"),
 }
 
 
