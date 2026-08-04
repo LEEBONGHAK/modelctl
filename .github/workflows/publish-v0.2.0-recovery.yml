@@ -1,6 +1,11 @@
 name: Publish v0.2.0 recovery
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/publish-v0.2.0-recovery.yml
   push:
     branches:
       - release/publish-v0.2.0
@@ -144,34 +149,17 @@ jobs:
           [[ "${sdist_count}" == "3" ]]
           grep -qx 'SHA256SUMS' <<<"${asset_names}"
 
-          {
-            printf 'url=%s\n' "${release_url}"
-            printf 'assets<<EOF\n%s\nEOF\n' "${asset_names}"
-          } >> "${GITHUB_OUTPUT}"
+          printf 'url=%s\n' "${release_url}" >> "${GITHUB_OUTPUT}"
 
       - name: Record successful publication
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_URL: ${{ steps.release.outputs.url }}
-          ASSET_NAMES: ${{ steps.release.outputs.assets }}
         shell: bash
         run: |
           set -euo pipefail
-          body="$(cat <<EOF
-          v0.2.0 publication completed successfully.
-
-          - Target main commit: \`${TARGET_SHA}\`
-          - Release: ${RELEASE_URL}
-          - Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-          - Validation: dependency audit, Ruff, 137 tests, package builds, isolated wheel smoke tests, metadata, and checksums passed
-
-          Assets:
-          \`\`\`
-          ${ASSET_NAMES}
-          \`\`\`
-          EOF
-          )"
+          body="v0.2.0 publication completed successfully. Target main commit: ${TARGET_SHA}. Release: ${RELEASE_URL}. Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Validation passed: dependency audit, Ruff, 137 tests, package builds, isolated wheel smoke tests, release metadata, seven release assets, and checksums."
           gh api --method POST "repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="${body}" >/dev/null
 
       - name: Record publication failure
