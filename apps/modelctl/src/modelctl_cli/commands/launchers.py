@@ -128,7 +128,10 @@ def remediate_launcher(
     console.print(table)
 
     if remediation.warning:
-        console.print("[bold yellow]Compatibility warning:[/bold yellow]", Text(remediation.warning))
+        console.print(
+            "[bold yellow]Compatibility warning:[/bold yellow]",
+            Text(remediation.warning),
+        )
     console.print("[bold]Reason:[/bold]", Text(remediation.reason))
 
     if not remediation.action_required:
