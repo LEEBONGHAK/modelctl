@@ -19,13 +19,13 @@ Development principle:
 - Completed release: `0.1.0` on `main`
 - Coordinated development version: `0.2.0` on `refac`
 - Manifest: `release.toml`
-- Status: `draft`
+- Current status: `draft`
 - Channel: development release
-- PyPI: disabled
+- PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 - Notable changes: [`CHANGELOG.md`](../CHANGELOG.md)
 
-Draft status prevents publication while v0.2.0 is under development. After an explicit readiness review, a reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
+The feature scope planned for v0.2.0 is implemented. The remaining work is release hardening and promotion: merge the patched dependency update, complete a readiness review, mark the manifest `ready`, and promote the exact validated commit to `main` for final release publication.
 
 ## Current end-to-end workflows
 
@@ -56,7 +56,7 @@ modelctl doctor
 modelctl run
 ```
 
-`ANTHROPIC_API_KEY` can replace `modelctl auth login anthropic` for catalog synchronization. Claude Code continues to manage launcher authentication itself.
+`ANTHROPIC_API_KEY` can replace stored modelctl credentials for catalog synchronization. Claude Code owns launcher authentication.
 
 ### Google Gemini through Gemini CLI
 
@@ -71,7 +71,7 @@ modelctl doctor
 modelctl run
 ```
 
-`MODELCTL_GOOGLE` has the highest environment precedence, followed by `GOOGLE_API_KEY` and `GEMINI_API_KEY`. Gemini CLI continues to manage launcher authentication itself.
+Environment precedence is `MODELCTL_GOOGLE`, `GOOGLE_API_KEY`, then `GEMINI_API_KEY`. Gemini CLI owns launcher authentication.
 
 ### OpenAI through Codex CLI
 
@@ -86,137 +86,74 @@ modelctl doctor
 modelctl run
 ```
 
-`OPENAI_API_KEY` can replace `modelctl auth login openai` for catalog synchronization. Codex CLI continues to manage its own ChatGPT or API-key authentication; modelctl does not inject stored credentials into subprocess environments.
+`OPENAI_API_KEY` can replace stored modelctl credentials for catalog synchronization. Codex CLI owns launcher authentication.
 
-One-run policy override with native launcher arguments:
+Provider credentials stored by modelctl are not injected into launcher subprocess environments.
 
-```bash
-modelctl run --strict-compatibility --sandbox workspace-write
-modelctl run --warn-compatibility --continue
-```
+## Implemented v0.2.0 scope
 
-Local state defaults:
+### Provider and model workflows
 
-```text
-~/.config/modelctl/config.json
-~/.config/modelctl/credentials.json   # explicit plaintext fallback only
-~/.local/share/modelctl/modelctl.db
-```
-
-## Implemented features
-
-### Provider, model, credentials, and configuration
-
-- Provider discovery and registry
-- OpenRouter model synchronization with credential validation and bounded HTTP timeouts
-- Anthropic native model synchronization through the official Models API
-- Bounded Anthropic cursor pagination with fresh per-request query dictionaries
-- Anthropic mapping for IDs, names, maximum input tokens, image input, and thinking capability
-- Official `ANTHROPIC_API_KEY` support with `MODELCTL_ANTHROPIC` precedence
-- Google Gemini native model synchronization through the official Models API
-- Bounded Google page-token pagination with fresh per-request query dictionaries, repeated-token detection, and maximum-page guards
-- Google model normalization for `models/<id>`, maximum input tokens, generation support, and thinking capability
-- Filtering of Google models that do not support `generateContent`
-- Official `GOOGLE_API_KEY` and `GEMINI_API_KEY` support with `MODELCTL_GOOGLE` precedence
-- OpenAI native model synchronization through the official Models API
-- Bearer authentication through `OPENAI_API_KEY` with `MODELCTL_OPENAI` precedence
-- Conservative OpenAI coding-candidate filtering for GPT, o-series, and Codex IDs
-- Exclusion of OpenAI embedding, image, audio, transcription, TTS, moderation, realtime, search, computer-use, deep-research, Sora, and fine-tuned IDs
-- No guessed OpenAI context, pricing, or vision metadata when the model-list response does not provide those fields
-- Persistent model repository and provider-scoped lookup
+- OpenRouter catalog synchronization and Aider model translation
+- Anthropic native catalog synchronization and Claude Code routing
+- Google Gemini native catalog synchronization and Gemini CLI routing
+- OpenAI native catalog synchronization and Codex CLI routing
+- Official provider environment-variable aliases with modelctl-specific precedence
+- Bounded HTTP timeouts and pagination guards
+- Explicit malformed-response failures
+- Conservative mapping when provider catalog APIs omit capability, pricing, or modality data
 - Interactive and non-interactive provider/model selection
-- Validation of registered providers and synchronized models
-- Favorite-model support
-- Persistent provider, model, launcher, and compatibility-policy defaults
-- Validated `warn` and `strict` compatibility policy values
-- Environment-variable and operating-system keyring lookup
-- Keyring-first credential storage with no silent plaintext downgrade
-- Explicit `--allow-plaintext-fallback`
-- Provider-ID and empty-token validation
-- Atomic configuration and fallback-credential writes
-- Symbolic-link rejection for protected files
-- POSIX private directory/file permissions (`0700` / `0600`)
-- Shared credential service for authentication, diagnostics, and synchronization
+- Persistent provider-scoped model repository
 
-### Coding-agent launchers
+### Launcher and compatibility workflows
 
-| Launcher ID | CLI | Native provider | Model invocation |
-| --- | --- | --- | --- |
-| `claude` | Claude Code | Anthropic | `claude --model <model>` |
-| `gemini` | Gemini CLI | Google | `gemini --model <model>` |
-| `codex` | Codex CLI | OpenAI | `codex --model <model>` |
-| `aider` | Aider | Multiple providers | `aider --model <model>` |
+- Immutable `LaunchRequest` values
+- Explicit `LauncherCapabilities`
+- Capability-driven launcher recommendations
+- Read-only recommendation and remediation previews
+- Explicit safe apply that refuses unavailable launchers
+- Persisted `warn` and `strict` compatibility policies
+- Per-run warn/strict overrides
+- Native launcher argument forwarding without shell execution
+- Shared compatibility semantics across execution, diagnostics, recommendation, and remediation
 
-All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to `openrouter/<provider>/<model>`.
+### Credential and local-state security
 
-The runtime contract models proven behavior explicitly:
-
-- Immutable `LaunchRequest` containing model, provider, and native arguments
-- `LauncherCapabilities` declaring native-provider affinity, provider-agnostic acceptance, and translated providers
-- Capability-driven recommendations instead of hard-coded launcher IDs
-- Shared request semantics across execution, compatibility policy, doctor diagnostics, and remediation planning
-- Native Anthropic selection resolving to Claude Code
-- Native Google selection resolving to Gemini CLI
-- Native OpenAI selection resolving to Codex CLI
-
-### Management, diagnostics, and compatibility
-
-- `modelctl launchers list`
-- `modelctl launchers recommend [--apply]`
-- `modelctl launchers remediate [--apply]`
-- `modelctl launchers use <launcher-id>`
-- Installation-state and active-launcher display
-- Provider-aware recommendation of translating launchers and matching native launchers
-- Read-only recommendation inspection and explicit apply that refuses unavailable launchers
-- Read-only remediation plans for known active-launcher mismatches
-- Explicit remediation apply that changes only the selected launcher
-- No-op remediation result when no known compatibility change is required
-- `modelctl doctor`
-- Configuration, provider, credential, model, launcher, compatibility, and database checks
-- Backward-compatible `warn` policy when no compatibility setting exists
-- Persisted `warn` or `strict` policy through `modelctl config set compatibility-policy`
-- Strict policy stops before subprocess execution on known mismatches
-- `--strict-compatibility` and `--warn-compatibility` per-run overrides
-- Explicit failure for invalid persisted policy values
-- Native launcher options preserved even when they begin with `--`
+- Operating-system keyring by default
+- No silent plaintext downgrade
+- Explicit plaintext fallback approval
+- Private POSIX permissions
+- Atomic protected-file writes
+- Symbolic-link path rejection
+- Credentials separated from launcher subprocess authentication
 
 ### CI, packaging, and release
 
-- Primary CI dependency audit and Ruff checks
-- Primary CI provider API contract suites for Anthropic, Google, and OpenAI
+- Locked dependency audit and Ruff
+- Focused native-provider API contract tests in primary CI
 - Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
-- Coordinated wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
-- Workspace source overrides disabled for release builds
-- Fresh-environment installed-wheel import and CLI smoke tests
+- Wheel and source-distribution builds for all packages
+- Isolated installed-wheel package and CLI smoke tests
 - Coordinated package, manifest, changelog, documentation, and tag validation
-- Machine-readable readiness status in `release.toml`
-- Validation that manually tagged commits belong to `main`
-- Release workflow-owned dependency audit, lint, complete tests, build, smoke test, and checksum gates
-- Automatic tag creation only from successful trusted `main` changes marked `ready`
-- Trusted merged-PR validation against the exact `main` merge commit
-- Immutable GitHub Release creation with distributions and `SHA256SUMS`
-- Existing tags and release assets are never overwritten
+- Independent release workflow gates and SHA-256 checksum generation
+- Immutable GitHub Release behavior
 - PyPI publication intentionally disabled
 
-### CI failure history
+## CI failure history
 
-PR #28 exposed a mutable pagination-parameter defect. The Google client reused one dictionary across page requests, causing the recorded first request to appear mutated after the second page token was inserted. Ubuntu, macOS, Windows, and the release dry-run failed consistently. The fix creates a fresh query dictionary for every request.
+PR #28 exposed a mutable pagination-parameter defect. The Google client reused one dictionary across page requests, so the recorded first request appeared mutated after the second page token was inserted. Ubuntu, macOS, Windows, and the release dry-run failed consistently.
 
-The failing commit still had a green primary CI and Package result because those workflows did not execute provider tests. PR #29 adds focused provider contract tests to primary CI, preserving the independent complete OS matrix and release gates while detecting provider HTTP regressions earlier.
+PR #28 fixed the request construction by creating a fresh query dictionary for every page. PR #29 added focused Anthropic, Google, and OpenAI provider contract tests to primary CI so similar HTTP-client regressions are detected before the complete OS matrix and release workflow.
 
-### Documentation and security gates
+## Security readiness
 
-- English README and complete Korean `README.ko.md`
-- Bilingual Anthropic, Google, and OpenAI provider documentation
-- Bilingual release guide, completion criteria, and security policy
-- Per-PR English/Korean engineering records
-- Locked uv workspace installation
-- Full commit-SHA pinning for external GitHub Actions
-- Least-privilege workflow permissions
-- Security regression coverage for private files, credential fallback, untrusted tags, merged-event trust boundaries, and model synchronization
-- Current dependency audit runs without an advisory exclusion
+Issue #22 tracked `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247` in `cryptography 49.0.0`. Upstream released patched version 50.0.0 on 2026-07-31.
 
-## Completed pull requests
+PR #30 updates `uv.lock` to `cryptography 50.0.0`. The issue can be closed after the dependency audit, complete tests, packaging, and release dry-run pass and the PR is merged.
+
+No audit exclusion is retained for this advisory.
+
+## v0.2.0 pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
@@ -227,62 +164,27 @@ The failing commit still had a green primary CI and Package result because those
 | #26 | Add preview-first compatibility remediation and explicit apply | Merged |
 | #27 | Add Anthropic native model catalog and Claude Code routing | Merged |
 | #28 | Add Google Gemini native model catalog and Gemini CLI routing | Merged |
+| #29 | Add OpenAI native model catalog, Codex routing, and provider CI hardening | Merged |
+| #30 | Upgrade `cryptography` to patched 50.0.0 and close issue #22 | Active |
 
-## Active v0.2.0 development
+## Remaining steps to complete v0.2.0
 
-- Completed launcher recommendation, strict policy, persisted policy, immutable request, and remediation increments in PRs #21–#26
-- Completed Anthropic native provider catalog and Claude Code routing in PR #27
-- Completed Google Gemini native provider catalog and Gemini CLI routing in PR #28
-- Active OpenAI native provider catalog, Codex CLI routing, and provider CI hardening in PR #29
-- Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Security guarantee: modelctl provider credentials are not silently copied into launcher subprocess environments
+1. Merge PR #30 after all security and release-dry-run checks pass.
+2. Close issue #22 with the merged commit and validation evidence.
+3. Run a release-readiness audit against the exact latest `refac` commit.
+4. Finalize PR #30 history, release criteria, README status, changelog release wording, and progress documentation.
+5. Change `release.toml` from `status = "draft"` to `status = "ready"` in a dedicated readiness PR.
+6. Merge the reviewed readiness change into `main` and require the release workflow to independently pass audit, lint, 137+ tests, builds, installed-wheel smoke checks, metadata validation, and checksum generation.
+7. Confirm immutable tag `v0.2.0` and the GitHub Release assets. PyPI remains disabled.
 
-## Architecture snapshot
+## Deferred work after v0.2.0
 
-```text
-apps/modelctl/       Typer CLI application
-packages/core/       configuration, credentials, providers, repositories, services, launchers
-packages/sdk/        public SDK package foundation
-scripts/             release validation helpers
-tests/               regression, integration, packaging, and security tests
-docs/                project, provider, release, security, and PR documentation
-```
-
-```text
-Typer command
-  -> application Container
-  -> ProviderRegistry / ModelService
-  -> provider API client + UniversalModel mapper
-  -> model repository
-  -> LauncherService
-  -> immutable LaunchRequest + LauncherCapabilities
-  -> recommendation / compatibility / remediation decision
-  -> external CLI
-```
-
-## Known limitations and deferred work
-
-- No PyPI publication
-- OpenAI Models API does not expose endpoint capability, context, modality, or pricing metadata in its list response
-- OpenAI coding-candidate filtering is intentionally conservative and may require maintenance as model naming evolves
-- Anthropic and Google catalog APIs do not provide pricing in their responses, so synchronized prices are zero
-- Google catalog vision support remains false because the Models API response does not declare input modalities
-- Native launcher authentication remains owned by each launcher and is separate from modelctl catalog credentials
-- Remediation currently changes only the selected launcher
-- Remediation does not install software, change providers or models, or execute launchers
-- Capabilities describe current provider routing but do not yet model every launcher feature or option
-- Plugin-based launcher discovery is deferred
-- Full static type-check enforcement is not yet a quality gate
-- Local plaintext credential fallback remains unencrypted and should be used only when explicitly accepted
-- The security review is source- and test-based, not an independent penetration test
-
-## Next priorities
-
-1. Validate and merge the OpenAI native-provider and provider-CI workflow.
-2. Review whether the four proven provider implementations justify a shared HTTP catalog client helper without hiding vendor differences.
-3. Extend remediation only when another safe, reversible action has a proven user workflow.
-4. Reintroduce profile management only with a complete user workflow and tests.
-5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
+- Shared provider HTTP helpers only where four integrations demonstrate genuinely identical behavior
+- Additional remediation actions only when they are safe, reversible, and previewable
+- Profile management with a complete tested workflow
+- Plugin-based launcher discovery
+- Full static type-check enforcement
+- Separately reviewed PyPI Trusted Publishing milestone
 
 ## Validation commands
 
