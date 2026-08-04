@@ -6,7 +6,7 @@
 
 `modelctl`은 AI provider와 모델 선택, credential 및 기본 설정 관리, 로컬 환경 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 완성된 개발 버전은 `0.1.0`입니다. `0.2.0`은 `refac`에서 draft 상태로 개발을 시작했으며 `main`은 공식 릴리스 브랜치로 유지합니다.
+> 현재 완성된 개발 버전은 `0.1.0`입니다. `0.2.0`은 `refac`에서 draft 상태로 개발 중이며 `main`은 공식 릴리스 브랜치로 유지합니다.
 
 ## 현재 동작하는 기능
 
@@ -17,6 +17,7 @@
 - Shell 실행 없이 네이티브 인자 전달
 - Launcher 목록, 설치 상태 확인, 선택
 - Provider-aware launcher 추천과 명시적인 안전 적용 단계
+- Launcher 실행 전 선택적으로 적용하는 strict compatibility 검사
 - `modelctl doctor` 진단 및 호환성 안내
 - 운영체제 keyring과 명시적 평문 fallback
 - Python 3.13 기반 Linux, macOS, Windows 테스트
@@ -95,19 +96,25 @@ modelctl launchers use aider
 ```bash
 modelctl doctor
 modelctl run
+modelctl run --strict-compatibility
 ```
 
-`run` 뒤의 값은 문자열 shell 명령이 아니라 인자 목록으로 전달됩니다.
+기본 실행은 호환성 경고를 표시한 뒤 계속 진행합니다. `--strict-compatibility`를 지정하면 선택된 provider와 launcher가 알려진 비호환 조합일 때 subprocess를 시작하기 전에 종료합니다.
+
+`run` 뒤에서 modelctl 옵션이 아닌 값은 launcher에 그대로 전달됩니다.
 
 ```bash
 modelctl run --continue
 modelctl run --sandbox workspace-write
+modelctl run --strict-compatibility --sandbox workspace-write
 modelctl run --no-auto-commits
 ```
 
+Launcher에 전달하려는 인자 이름이 modelctl 옵션과 충돌하는 경우 `--` 뒤에 배치하세요.
+
 ## OpenRouter 호환성
 
-Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 다른 provider의 모델을 전달하면 `modelctl`은 실행을 차단하지 않고 경고를 표시합니다.
+Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 다른 provider의 모델을 전달하면 `modelctl`은 기본적으로 실행을 차단하지 않고 경고를 표시합니다. 해당 실행을 거부하려면 `--strict-compatibility`를 추가하세요.
 
 현재 OpenRouter 자동 연동은 Aider를 사용합니다.
 
@@ -115,7 +122,7 @@ Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 cli
 modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
-modelctl run
+modelctl run --strict-compatibility
 ```
 
 실행 결과는 다음과 같습니다.
@@ -193,7 +200,7 @@ Credential 동작, 취약점 제보 방법, 지원 버전, 알려진 한계는 [
 
 ## 단기 로드맵
 
-- Provider-aware 추천을 더 엄격한 호환성 정책과 자동 조치로 확장
+- Strict compatibility를 설정 가능한 정책과 자동 조치로 확장
 - Launcher capability와 execution request 리팩터링
 - 완성된 사용자 흐름과 테스트를 전제로 한 profile 관리
 - 별도 검토를 거치는 PyPI 게시 milestone
