@@ -17,6 +17,7 @@
 - Native argument forwarding without shell execution
 - Launcher discovery, installation status, and selection
 - Provider-aware launcher recommendations with an explicit safe apply step
+- Optional strict compatibility enforcement before launcher execution
 - `modelctl doctor` diagnostics and compatibility feedback
 - Operating-system keyring storage with explicit plaintext fallback
 - Linux, macOS, and Windows tests on Python 3.13
@@ -95,19 +96,25 @@ modelctl launchers use aider
 ```bash
 modelctl doctor
 modelctl run
+modelctl run --strict-compatibility
 ```
 
-Arguments after `run` are forwarded as an argument list:
+Normal runs display compatibility warnings and continue. `--strict-compatibility` exits before subprocess execution when the selected provider and launcher are known to be mismatched.
+
+Arguments after `run` that are not modelctl options are forwarded unchanged to the launcher:
 
 ```bash
 modelctl run --continue
 modelctl run --sandbox workspace-write
+modelctl run --strict-compatibility --sandbox workspace-write
 modelctl run --no-auto-commits
 ```
 
+Use `--` when a launcher must receive an argument whose name conflicts with a modelctl option.
+
 ## OpenRouter compatibility
 
-Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. `modelctl` warns, without blocking, when another provider's model is passed to one of them.
+Claude Code, Gemini CLI, and Codex CLI are native clients for their own providers. `modelctl` warns, without blocking, when another provider's model is passed to one of them. Add `--strict-compatibility` to refuse that execution path.
 
 Aider is the current automatic OpenRouter integration:
 
@@ -115,7 +122,7 @@ Aider is the current automatic OpenRouter integration:
 modelctl launchers use aider
 modelctl config set provider openrouter
 modelctl config set model anthropic/claude-sonnet-4
-modelctl run
+modelctl run --strict-compatibility
 ```
 
 Result:
@@ -193,7 +200,7 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, su
 
 ## Near-term roadmap
 
-- Expand provider-aware recommendations into stricter compatibility policies and automatic remediation
+- Expand strict compatibility into configurable policies and automatic remediation
 - Launcher capability and execution-request refactoring
 - Profile management only after a complete workflow and tests exist
 - A separately reviewed PyPI publication milestone
