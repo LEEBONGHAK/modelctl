@@ -1,11 +1,12 @@
+import re
 from unittest.mock import Mock, patch
 
-from click.utils import strip_ansi
 from typer.testing import CliRunner
 
 from modelctl_cli.main import app
 
 runner = CliRunner()
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 def test_config_set_persists_compatibility_policy():
@@ -34,6 +35,6 @@ def test_config_set_reports_invalid_compatibility_policy():
             ["config", "set", "compatibility-policy", "automatic"],
         )
 
-    output = " ".join(strip_ansi(result.output).split())
+    output = " ".join(ANSI_ESCAPE.sub("", result.output).split())
     assert result.exit_code != 0
     assert "Expected one of: strict, warn" in output
