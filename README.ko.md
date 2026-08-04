@@ -4,33 +4,30 @@
 
 **AI 모델과 코딩 에이전트를 통합 관리하는 범용 control plane입니다.**
 
-`modelctl`은 AI provider와 모델 선택, credential 및 기본 설정 관리, 로컬 환경 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
+`modelctl`은 AI provider와 모델 선택, 로컬 credential과 기본 설정 관리, 호환성 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 완성된 개발 버전은 `0.1.0`입니다. `0.2.0`은 `refac`에서 draft 상태로 개발 중이며 `main`은 공식 릴리스 브랜치로 유지합니다.
+> 현재 ready 개발 버전은 `0.2.0`입니다. `main`은 공식 release branch이며 PyPI 게시는 비활성화되어 있습니다.
 
-## 현재 동작하는 기능
+## v0.2.0 주요 기능
 
-- OpenRouter credential 저장과 모델 동기화
-- 대화형·비대화형 provider/model 선택
-- Provider, model, launcher, compatibility policy 기본값 영속화
+- OpenRouter, Anthropic, Google Gemini, OpenAI 모델 catalog
 - Claude Code, Gemini CLI, Codex CLI, Aider launcher
-- Shell 실행 없이 네이티브 인자 전달
-- Launcher 목록, 설치 상태 확인, 선택
-- Provider-aware launcher 추천과 명시적인 안전 적용 단계
-- Launcher 실행 전에 적용하는 `warn` 또는 `strict` 호환성 정책
-- 실행 1회에만 적용하는 strict/warn override
-- 읽기 전용 호환성 remediation 계획과 명시적 안전 적용
-- `modelctl doctor` 진단 및 호환성 안내
-- 운영체제 keyring과 명시적 평문 fallback
-- Python 3.13 기반 Linux, macOS, Windows 테스트
-- Lockfile dependency audit, Ruff, package build, 설치된 wheel smoke test
-- SHA-256 checksum을 포함한 검증된 GitHub Release artifact
+- 대화형·비대화형 provider/model 선택
+- Provider-aware launcher 추천
+- 미리보기 우선 호환성 remediation과 명시적 안전 적용
+- 저장 가능한 `warn`·`strict` 정책과 실행 1회 override
+- Shell 없이 native launcher 인자 전달
+- Keyring 우선 credential 저장과 명시적 평문 fallback
+- Provider credential과 launcher 인증 분리
+- Provider API contract 테스트, 137개 cross-platform 테스트, package build, 설치 wheel smoke test
+- 패치된 `cryptography 50.0.0`과 advisory 예외 없는 dependency audit
+- SHA-256 checksum을 포함한 불변 GitHub Release artifact
 
 프로젝트 상태는 [`docs/PROGRESS.md`](docs/PROGRESS.md), PR별 영문·한국어 기록은 [`docs/pull-requests/README.md`](docs/pull-requests/README.md)를 참고하세요.
 
 ## 저장소에서 설치
 
-이 저장소는 Python 3.13 이상을 사용하는 uv workspace입니다. 완성된 릴리스 상태는 `main`을 사용합니다.
+이 저장소는 Python 3.13 이상을 사용하는 uv workspace입니다.
 
 ```bash
 git clone https://github.com/LEEBONGHAK/modelctl.git
@@ -40,42 +37,68 @@ uv sync --all-packages --locked
 uv run modelctl --help
 ```
 
-다음 버전을 개발하는 기여자는 `refac`에서 branch를 생성합니다.
+## Provider별 사용 흐름
 
-## 빠른 시작
-
-### 1. OpenRouter credential 저장
+### OpenRouter + Aider
 
 ```bash
 modelctl auth login openrouter
-```
-
-기본 저장소는 운영체제 keyring입니다. Keyring을 사용할 수 없더라도 평문 파일로 자동 전환하지 않습니다. 위험을 이해하고 명시적으로 허용하는 경우에만 로컬 파일 fallback을 사용하세요.
-
-```bash
-modelctl auth login openrouter --allow-plaintext-fallback
-```
-
-Fallback 파일은 POSIX 환경에서 현재 사용자 전용 권한을 사용하지만 내용은 암호화되지 않은 평문입니다. `MODELCTL_OPENROUTER`와 같은 환경변수도 사용할 수 있습니다.
-
-### 2. 모델 동기화 및 선택
-
-```bash
 modelctl models sync openrouter
-modelctl use
+modelctl use --provider openrouter --model anthropic/claude-sonnet-4
+modelctl launchers remediate
+modelctl launchers remediate --apply
+modelctl config set compatibility-policy strict
+modelctl run
 ```
 
-Script와 CI에서는 다음처럼 선택합니다.
+Aider에는 다음 ID가 전달됩니다.
+
+```text
+openrouter/anthropic/claude-sonnet-4
+```
+
+### Anthropic + Claude Code
 
 ```bash
-modelctl use \
-  --provider openrouter \
-  --model anthropic/claude-sonnet-4
+modelctl auth login anthropic
+modelctl models sync anthropic
+modelctl use --provider anthropic --model claude-opus-4-6
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl run
 ```
 
-직접 지정한 값은 provider registry와 동기화된 로컬 catalog를 기준으로 검증됩니다.
+Catalog 동기화에는 저장 credential 대신 `ANTHROPIC_API_KEY`를 사용할 수 있습니다.
 
-### 3. Launcher 선택·추천·remediation
+### Google Gemini + Gemini CLI
+
+```bash
+modelctl auth login google
+modelctl models sync google
+modelctl use --provider google --model gemini-3.5-flash
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl run
+```
+
+환경변수 우선순위는 `MODELCTL_GOOGLE`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`입니다.
+
+### OpenAI + Codex CLI
+
+```bash
+modelctl auth login openai
+modelctl models sync openai
+modelctl use --provider openai --model gpt-5.6
+modelctl launchers recommend
+modelctl config set compatibility-policy strict
+modelctl run
+```
+
+Catalog 동기화에는 저장 credential 대신 `OPENAI_API_KEY`를 사용할 수 있습니다.
+
+modelctl이 관리하는 provider credential은 catalog 동기화에만 사용합니다. Keyring의 secret을 launcher subprocess 환경으로 복사하지 않으며 각 코딩 에이전트 CLI가 자체 인증 흐름을 관리합니다.
+
+## Launcher 관리
 
 ```bash
 modelctl launchers list
@@ -86,43 +109,36 @@ modelctl launchers remediate --apply
 modelctl launchers use aider
 ```
 
-`recommend`는 현재 launcher의 호환 여부와 관계없이 선택한 provider와 model에 적합한 launcher를 제안합니다. `remediate`는 현재 active launcher를 평가하고 알려진 호환성 불일치가 있을 때만 변경 계획을 만듭니다.
-
-두 명령 모두 기본적으로 읽기 전용입니다. `--apply`를 지정한 경우에만 권장 launcher가 `PATH`에 설치되어 있을 때 설정을 변경합니다. Remediation은 소프트웨어를 설치하거나 provider·model을 바꾸거나 launcher를 실행하지 않습니다.
-
-| ID | 코딩 에이전트 | Native provider | 기본 명령 |
+| ID | 코딩 에이전트 | Native provider | 기본 실행 |
 | --- | --- | --- | --- |
 | `claude` | Claude Code | Anthropic | `claude --model <model>` |
 | `gemini` | Gemini CLI | Google | `gemini --model <model>` |
 | `codex` | Codex CLI | OpenAI | `codex --model <model>` |
-| `aider` | Aider | 여러 provider | `aider --model <model>` |
+| `aider` | Aider | 변환 provider | `aider --model <model>` |
 
-### 4. 호환성 정책 설정 및 실행
+`recommend`는 capability가 맞는 launcher를 제안합니다. `remediate`는 현재 launcher에 알려진 불일치가 있을 때만 변경 계획을 만듭니다.
 
-저장된 정책의 기본값은 기존 동작을 유지하는 `warn`입니다. 자동화나 안전이 중요한 실행에서 알려진 provider/launcher 불일치를 거부해야 한다면 `strict`를 기본값으로 설정할 수 있습니다.
+두 명령은 기본적으로 읽기 전용입니다. `--apply`는 설치된 추천 launcher만 선택하며 설정 변경 전에 사용 가능 여부를 검사합니다. 소프트웨어 설치, provider/model 변경, launcher 자동 실행은 하지 않습니다.
+
+## 호환성 정책과 실행
+
+저장 정책의 기본값은 기존 동작을 유지하는 `warn`입니다.
 
 ```bash
 modelctl config set compatibility-policy warn
 modelctl config set compatibility-policy strict
-```
-
-저장된 정책으로 실행합니다.
-
-```bash
 modelctl doctor
 modelctl run
 ```
 
-설정을 바꾸지 않고 이번 실행에만 정책을 덮어쓸 수 있습니다.
+이번 실행에만 정책을 덮어쓸 수 있습니다.
 
 ```bash
 modelctl run --strict-compatibility
 modelctl run --warn-compatibility
 ```
 
-Strict 실행은 알려진 비호환 조합에서 subprocess를 생성하기 전에 종료합니다. Warn 실행은 호환성 경고를 표시한 뒤 계속 진행합니다. 호환성 경고는 `modelctl launchers remediate`를 안내하므로 실제 변경 전에 권장 launcher와 변경 계획을 검토할 수 있습니다.
-
-`run` 뒤에서 modelctl 옵션이 아닌 값은 launcher에 그대로 전달됩니다.
+`run` 뒤에서 modelctl 옵션이 아닌 값은 선택한 launcher에 그대로 전달합니다.
 
 ```bash
 modelctl run --continue
@@ -131,42 +147,17 @@ modelctl run --strict-compatibility --sandbox workspace-write
 modelctl run --no-auto-commits
 ```
 
-Launcher에 전달하려는 인자 이름이 modelctl 옵션과 충돌하는 경우 `--` 뒤에 배치하세요.
+Launcher 인자 이름이 modelctl 옵션과 충돌하면 `--` 뒤에 배치하세요.
 
-## OpenRouter 호환성
+## Credential과 로컬 데이터
 
-Claude Code, Gemini CLI, Codex CLI는 각각 자체 provider용 네이티브 client입니다. 기본 `warn` 정책에서는 다른 provider의 모델을 전달해도 실행을 차단하지 않고 경고를 표시합니다. 저장 정책을 `strict`로 바꾸거나 `--strict-compatibility`를 추가하면 해당 실행을 거부합니다.
-
-현재 OpenRouter 자동 연동은 Aider를 사용합니다. Launcher를 임의로 변경하기보다 capability 기반 remediation 계획을 먼저 확인하고 적용할 수 있습니다.
+기본 로그인 흐름은 운영체제 keyring에 credential을 저장하며 평문 저장으로 자동 전환하지 않습니다.
 
 ```bash
-modelctl config set provider openrouter
-modelctl config set model anthropic/claude-sonnet-4
-modelctl launchers remediate
-modelctl launchers remediate --apply
-modelctl config set compatibility-policy strict
-modelctl run
+modelctl auth login openrouter --allow-plaintext-fallback
 ```
 
-계획 적용 후 실행 결과는 다음과 같습니다.
-
-```bash
-aider --model openrouter/anthropic/claude-sonnet-4
-```
-
-## 설정과 로컬 데이터
-
-```bash
-modelctl config show
-modelctl config set provider openrouter
-modelctl config set model anthropic/claude-sonnet-4
-modelctl config set launcher aider
-modelctl config set compatibility-policy strict
-```
-
-지원되는 호환성 정책은 정확히 `warn`과 `strict` 두 가지입니다. 잘못 저장된 값은 실행 강도를 임의로 낮추거나 높이지 않고 명시적으로 오류 처리합니다.
-
-기본 경로는 다음과 같습니다.
+명시적으로 승인한 fallback은 암호화되지 않은 평문입니다. 보호 경로는 원자적으로 저장하고 symbolic link를 거부하며 POSIX에서 directory `0700`, file `0600` 권한을 사용합니다.
 
 ```text
 ~/.config/modelctl/config.json
@@ -174,40 +165,25 @@ modelctl config set compatibility-policy strict
 ~/.local/share/modelctl/modelctl.db
 ```
 
-보호 대상 파일은 원자적으로 저장합니다. POSIX directory와 file 권한은 각각 `0700`, `0600`으로 제한하고 symbolic-link 경로는 거부합니다.
-
-## 개발 및 보안 검증
+## 개발 및 검증
 
 ```bash
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
 uv run pytest
-```
-
-GitHub Actions는 Ubuntu, macOS, Windows 전체 pytest, 모든 배포물 빌드, 격리 환경 wheel 설치, 설치된 CLI 실행도 검증합니다.
-
-## 릴리스 완료 판정
-
-Release 결정은 [`release.toml`](release.toml), 주요 변경 사항은 [`CHANGELOG.md`](CHANGELOG.md), 전체 완료 기준은 [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md)에서 관리합니다.
-
-```bash
-python scripts/release_validation.py
-python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.2.0
 ```
 
-현재 `0.2.0` manifest는 `draft`이므로 release를 게시할 수 없습니다. 명시적으로 `ready`로 전환한 뒤 신뢰된 `main` push 또는 검토된 `main` 대상 Pull Request 병합은 다음 검증을 독립적으로 통과해야 합니다.
+GitHub Actions는 provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 격리 환경 wheel 설치, release metadata, checksum 생성을 독립적으로 검증합니다.
 
-- Package version, manifest, changelog, 문서 일치
-- Lockfile dependency audit
-- Ruff와 전체 pytest suite
-- 배포물 빌드 및 설치된 wheel smoke test
-- Checksum 생성
+## 릴리스 정책
 
-모든 검증이 성공한 경우에만 정확히 해당 `main` commit에 `v<version>` tag를 만들고 하나의 불변 GitHub Release를 게시합니다. 기존 tag와 release asset은 덮어쓰지 않습니다.
+Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.md`](CHANGELOG.md), 완료 기준은 [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md)에서 관리합니다.
 
-**PyPI 게시는 의도적으로 비활성화되어 있습니다.** 어떤 workflow도 PyPI에 package를 게시하지 않습니다. 자세한 내용은 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
+`0.2.0` manifest는 `ready`입니다. `main` 대상 검토 PR은 모든 dry-run gate를 통과해야 합니다. 병합 후 release workflow가 정확한 `main` merge commit에서 모든 검증을 다시 실행한 뒤 불변 tag `v0.2.0`과 하나의 GitHub Release를 생성합니다.
+
+기존 tag와 release asset은 덮어쓰지 않습니다. **어떤 workflow도 PyPI에 package를 게시하지 않습니다.** 자세한 절차는 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
 
 ## 프로젝트 구조
 
@@ -217,16 +193,17 @@ packages/core/       runtime service, credential, provider, repository, launcher
 packages/sdk/        SDK 기반
 scripts/             release 검증 helper
 tests/               회귀, 통합, 패키징, 보안 테스트
-docs/                프로젝트, 릴리스, 보안, PR 문서
+docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
 ```
 
 ## 보안
 
-Credential 동작, 취약점 제보 방법, 지원 버전, 알려진 한계는 [`SECURITY.md`](SECURITY.md)를 참고하세요. 자동 검증은 확인된 위험을 줄이지만 독립적인 침투 테스트나 정식 보안 감사를 대체하지 않습니다.
+Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, 알려진 한계는 [`SECURITY.md`](SECURITY.md)를 참고하세요.
 
-## 단기 로드맵
+## v0.2.0 이후 로드맵
 
-- 추가로 안전성이 검증된 조치가 생긴 뒤 launcher 선택 외 remediation으로 확장
-- OpenRouter 외 capability를 검증할 native provider 연동 추가
-- 완성된 사용자 흐름과 테스트를 전제로 한 profile 관리
-- 별도 검토를 거치는 PyPI 게시 milestone
+- 실제로 동일한 요구가 확인된 provider HTTP 처리만 공통 helper로 추출
+- 안전하고 되돌릴 수 있으며 미리보기 가능한 조치만 remediation에 추가
+- 테스트된 profile 관리와 plugin 기반 launcher discovery
+- 별도 품질 milestone로 static type check 도입
+- PyPI Trusted Publishing 별도 검토
