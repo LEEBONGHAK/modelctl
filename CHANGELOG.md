@@ -12,14 +12,17 @@ Draft development release.
 
 - Provider-aware launcher recommendations through `modelctl launchers recommend`.
 - Explicit `--apply` support that selects only an installed recommended launcher.
+- Opt-in strict compatibility enforcement through `modelctl run --strict-compatibility`.
 
 ### Changed
 
 - Began the v0.2.0 development cycle with coordinated package version `0.2.0` and release status `draft`.
+- Preserved unknown native launcher options after `modelctl run` instead of treating them as modelctl parsing errors.
 
 ### Compatibility
 
 - Existing launcher execution still supports configurations without provider context; recommendations require an explicit provider and model selection.
+- Default runs continue to warn without blocking, while strict runs stop before subprocess execution on known provider/launcher mismatches.
 
 ## [0.1.0] - 2026-08-03
 
@@ -63,4 +66,4 @@ First development release.
 
 - PyPI publication is intentionally disabled.
 - OpenRouter automation is currently provided through Aider; native launchers may require their own provider credentials or proxy configuration.
-- Plugin discovery, profile management, and strict compatibility enforcement remain future work.
+- Plugin discovery and profile management remain future work.

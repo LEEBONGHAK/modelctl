@@ -1,6 +1,6 @@
 # modelctl Project Progress
 
-Last updated: 2026-08-03
+Last updated: 2026-08-04
 
 ## Project goal
 
@@ -39,6 +39,7 @@ modelctl launchers recommend --apply
 modelctl launchers use aider
 modelctl doctor
 modelctl run
+modelctl run --strict-compatibility
 ```
 
 Non-interactive selection:
@@ -47,6 +48,12 @@ Non-interactive selection:
 modelctl use \
   --provider openrouter \
   --model anthropic/claude-sonnet-4
+```
+
+Strict execution with native launcher arguments:
+
+```bash
+modelctl run --strict-compatibility --sandbox workspace-write
 ```
 
 Local state defaults:
@@ -97,7 +104,9 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Read-only recommendation inspection and explicit apply that refuses unavailable launchers
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
-- Non-blocking native-provider mismatch warnings
+- Non-blocking native-provider mismatch warnings by default
+- Opt-in `modelctl run --strict-compatibility` that stops before subprocess execution on known mismatches
+- Native launcher options preserved even when they begin with `--`
 
 ### Packaging and release
 
@@ -125,6 +134,7 @@ All launchers forward native arguments as subprocess argument lists without shel
 - Full commit-SHA pinning for external GitHub Actions
 - Least-privilege workflow permissions
 - Security regression coverage for private files, credential fallback, untrusted tags, merged-event trust boundaries, and model synchronization
+- Narrow temporary audit exception for `GHSA-g6cj-pr64-35w5`, tracked by issue #22 until the fixed dependency is published
 
 ## Completed pull requests
 
@@ -150,13 +160,14 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #18 | Add trusted merged-PR release publication path | Merged |
 | #19 | Promote completed v0.1.0 to `main` | Merged |
 | #20 | Add an owner-only fully validated release command | Merged |
+| #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
 
 ## Active v0.2.0 development
 
-- First feature branch: `feat/v0.2.0-launcher-recommendation`
-- First workflow: inspect a provider-aware recommendation, then opt in with `--apply`
+- Completed first increment: provider-aware launcher recommendation and explicit safe apply in PR #21
+- Active second increment: strict compatibility execution and reliable native option forwarding in PR #23
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Compatibility guarantee: existing launcher execution remains valid without provider context; recommendations require a selected provider and model
+- Compatibility guarantee: default execution remains warning-only; strict blocking is explicit and opt-in
 
 ## Architecture snapshot
 
@@ -180,7 +191,8 @@ Typer command
 ## Known limitations and deferred work
 
 - No PyPI publication
-- Strict compatibility enforcement and automatic remediation are not implemented
+- Strict compatibility is command-scoped rather than a persisted global policy
+- Automatic compatibility remediation is not implemented
 - Plugin-based launcher discovery is deferred
 - Execution-target and launch-request value objects are not yet formalized
 - Full static type-check enforcement is not yet a quality gate
@@ -189,8 +201,8 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the provider-aware launcher recommendation workflow.
-2. Add stricter compatibility policies after additional provider integrations exist.
+1. Validate and merge the strict compatibility execution workflow.
+2. Add persisted compatibility policy only after the command-scoped behavior proves stable.
 3. Refactor launcher capabilities and execution requests around proven requirements.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.

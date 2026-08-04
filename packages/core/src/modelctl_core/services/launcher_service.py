@@ -22,6 +22,12 @@ class LauncherService:
         launcher, model, provider = self._selection()
         return launcher.compatibility_warning(provider, model)
 
+    def check_compatibility(self, *, strict: bool = False) -> str | None:
+        warning = self.compatibility_warning()
+        if strict and warning:
+            raise RuntimeError(f"Strict compatibility check failed: {warning}")
+        return warning
+
     def recommend(self) -> LauncherRecommendation | None:
         provider, model, active_name = self._configured_values()
         launcher = self._recommended_launcher(provider)
