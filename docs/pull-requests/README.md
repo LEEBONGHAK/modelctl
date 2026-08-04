@@ -30,6 +30,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #23 | [PR-023.md](PR-023.md) | Strict compatibility execution and native option forwarding / strict 호환성 실행·native 옵션 전달 |
 | #24 | [PR-024.md](PR-024.md) | Persisted warn/strict compatibility policy / 영속화된 warn·strict 호환성 정책 |
 | #25 | [PR-025.md](PR-025.md) | Capability-driven immutable launcher execution contract / capability 기반 불변 launcher 실행 계약 |
+| #26 | [PR-026.md](PR-026.md) | Preview-first compatibility remediation with explicit apply / 미리보기 우선 호환성 remediation·명시적 적용 |
 
 ## Document format / 문서 형식
 
