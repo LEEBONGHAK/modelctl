@@ -58,6 +58,21 @@ modelctl run
 
 `ANTHROPIC_API_KEY` can replace `modelctl auth login anthropic` for catalog synchronization. Claude Code continues to manage launcher authentication itself; modelctl does not inject stored credentials into subprocess environments.
 
+### Google Gemini through Gemini CLI
+
+```bash
+modelctl auth login google
+modelctl models sync google
+modelctl use --provider google --model gemini-3.5-flash
+modelctl launchers recommend
+modelctl launchers remediate
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
+```
+
+`GOOGLE_API_KEY` or `GEMINI_API_KEY` can replace `modelctl auth login google` for catalog synchronization. `MODELCTL_GOOGLE` has the highest environment precedence, followed by `GOOGLE_API_KEY` and `GEMINI_API_KEY`. Gemini CLI continues to manage launcher authentication itself.
+
 One-run policy override with native launcher arguments:
 
 ```bash
@@ -83,6 +98,11 @@ Local state defaults:
 - Bounded Anthropic cursor pagination with page-size, repeated-cursor, and maximum-page guards
 - Anthropic model mapping for IDs, names, maximum input tokens, image input, and thinking capability
 - Official `ANTHROPIC_API_KEY` support with `MODELCTL_ANTHROPIC` precedence
+- Google Gemini native model synchronization through the official Models API
+- Bounded Google page-token pagination with page-size, repeated-token, and maximum-page guards
+- Google model normalization for `models/<id>`, names, maximum input tokens, generation support, and thinking capability
+- Filtering of Google models that do not support `generateContent`
+- Official `GOOGLE_API_KEY` and `GEMINI_API_KEY` support with `MODELCTL_GOOGLE` precedence
 - Persistent model repository and provider-scoped lookup
 - Interactive and non-interactive provider/model selection
 - Validation of registered providers and synchronized models
@@ -116,6 +136,7 @@ The runtime contract models proven behavior explicitly:
 - Capability-driven recommendations instead of hard-coded launcher IDs
 - Shared request semantics across execution, compatibility policy, doctor diagnostics, and remediation planning
 - Native Anthropic selection resolving to Claude Code through declared capabilities
+- Native Google selection resolving to Gemini CLI through declared capabilities
 
 ### Management, diagnostics, and compatibility
 
@@ -156,7 +177,7 @@ The runtime contract models proven behavior explicitly:
 ### Documentation and security gates
 
 - English README and complete Korean `README.ko.md`
-- Bilingual Anthropic provider documentation
+- Bilingual Anthropic and Google provider documentation
 - Bilingual release guide, completion criteria, and security policy
 - Per-PR English/Korean engineering records
 - Locked uv workspace installation
@@ -196,6 +217,7 @@ The runtime contract models proven behavior explicitly:
 | #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
 | #25 | Formalize launcher capabilities and immutable execution requests | Merged |
 | #26 | Add preview-first compatibility remediation and explicit apply | Merged |
+| #27 | Add Anthropic native model catalog and Claude Code routing | Merged |
 
 ## Active v0.2.0 development
 
@@ -204,7 +226,8 @@ The runtime contract models proven behavior explicitly:
 - Completed third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
 - Completed fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
 - Completed fifth increment: preview-first compatibility remediation and explicit safe apply in PR #26
-- Active sixth increment: Anthropic native provider catalog and Claude Code routing in PR #27
+- Completed sixth increment: Anthropic native provider catalog and Claude Code routing in PR #27
+- Active seventh increment: Google Gemini native provider catalog and Gemini CLI routing in PR #28
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
 - Security guarantee: modelctl provider credentials are not silently copied into launcher subprocess environments
 
@@ -234,9 +257,10 @@ Typer command
 ## Known limitations and deferred work
 
 - No PyPI publication
-- Supported catalog providers are currently OpenRouter and Anthropic
-- Anthropic Models API pricing is not available in the catalog response, so synchronized prices are zero
-- Claude Code authentication remains owned by Claude Code and is separate from modelctl catalog credentials
+- Supported catalog providers are currently OpenRouter, Anthropic, and Google Gemini
+- Anthropic and Google model APIs do not provide pricing in their catalog responses, so synchronized prices are zero
+- Google catalog vision support remains false because the Models API response does not declare input modalities
+- Native launcher authentication remains owned by each launcher and is separate from modelctl catalog credentials
 - Remediation currently changes only the selected launcher
 - Remediation does not install software, change providers or models, or execute launchers
 - Capabilities describe current provider routing but do not yet model every launcher feature or option
@@ -247,8 +271,8 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the Anthropic native-provider workflow.
-2. Evaluate Google or OpenAI native catalog integration using the same provider contract.
+1. Validate and merge the Google Gemini native-provider workflow.
+2. Evaluate OpenAI native catalog integration using the same provider contract.
 3. Extend remediation only when another safe, reversible action has a proven user workflow.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
