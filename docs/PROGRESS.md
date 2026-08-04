@@ -36,7 +36,8 @@ modelctl use
 modelctl launchers list
 modelctl launchers recommend
 modelctl launchers recommend --apply
-modelctl launchers use aider
+modelctl launchers remediate
+modelctl launchers remediate --apply
 modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
@@ -103,16 +104,20 @@ The runtime contract now models these proven behaviors explicitly:
 - Immutable `LaunchRequest` containing model, provider, and native arguments
 - `LauncherCapabilities` declaring native-provider affinity, provider-agnostic acceptance, and translated providers
 - Capability-driven recommendations instead of hard-coded launcher IDs
-- Shared request semantics across execution, compatibility policy, and doctor diagnostics
+- Shared request semantics across execution, compatibility policy, doctor diagnostics, and remediation planning
 
 ### Management, diagnostics, and compatibility
 
 - `modelctl launchers list`
 - `modelctl launchers recommend [--apply]`
+- `modelctl launchers remediate [--apply]`
 - `modelctl launchers use <launcher-id>`
 - Installation-state and active-launcher display
 - Provider-aware recommendation of translating launchers and matching native launchers
 - Read-only recommendation inspection and explicit apply that refuses unavailable launchers
+- Read-only remediation plans for known active-launcher mismatches
+- Explicit remediation apply that changes only the selected launcher
+- No-op remediation result when no known compatibility change is required
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
 - Backward-compatible `warn` policy when no compatibility setting exists
@@ -177,15 +182,17 @@ The runtime contract now models these proven behaviors explicitly:
 | #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
 | #23 | Add strict compatibility execution and native option forwarding | Merged |
 | #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
+| #25 | Formalize launcher capabilities and immutable execution requests | Merged |
 
 ## Active v0.2.0 development
 
 - Completed first increment: provider-aware launcher recommendation and explicit safe apply in PR #21
 - Completed second increment: strict compatibility execution and reliable native option forwarding in PR #23
 - Completed third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
-- Active fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
+- Completed fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
+- Active fifth increment: preview-first compatibility remediation and explicit safe apply in PR #26
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Compatibility guarantee: the execution-contract refactor changes no CLI command, configuration key, subprocess argument order, or Aider model translation behavior
+- Safety guarantee: remediation preview is read-only; apply changes only the launcher and refuses recommendations unavailable on `PATH`
 
 ## Architecture snapshot
 
@@ -203,6 +210,7 @@ Typer command
   -> application Container
   -> LauncherService
   -> immutable LaunchRequest + LauncherCapabilities
+  -> recommendation / compatibility / remediation decision
   -> launcher registry
   -> external CLI
 ```
@@ -210,7 +218,8 @@ Typer command
 ## Known limitations and deferred work
 
 - No PyPI publication
-- Automatic compatibility remediation is not implemented
+- Remediation currently changes only the selected launcher
+- Remediation does not install software, change providers or models, or execute launchers
 - Capabilities describe current provider routing but do not yet model every launcher feature or option
 - Plugin-based launcher discovery is deferred
 - Full static type-check enforcement is not yet a quality gate
@@ -219,9 +228,9 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the launcher execution-contract refactor.
-2. Add capability-aware remediation planning without silently changing configuration.
-3. Extend capabilities only when additional launcher integrations expose concrete requirements.
+1. Validate and merge the preview-first compatibility-remediation workflow.
+2. Add a native-provider integration so capabilities and remediation are validated beyond OpenRouter.
+3. Extend remediation only when another safe, reversible action has a proven user workflow.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
 
