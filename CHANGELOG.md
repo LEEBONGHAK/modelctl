@@ -15,12 +15,16 @@ Draft development release.
 - Opt-in strict compatibility enforcement through `modelctl run --strict-compatibility`.
 - Persisted compatibility policy configuration through `modelctl config set compatibility-policy <warn|strict>`.
 - Per-run warning override through `modelctl run --warn-compatibility`.
+- Immutable launcher execution requests that carry model, provider, and native arguments together.
+- Explicit launcher capabilities for native-provider support and provider model translation.
 
 ### Changed
 
 - Began the v0.2.0 development cycle with coordinated package version `0.2.0` and release status `draft`.
 - Preserved unknown native launcher options after `modelctl run` instead of treating them as modelctl parsing errors.
 - `modelctl run` now resolves the persisted compatibility policy when no command-line override is supplied.
+- Launcher recommendation, compatibility diagnosis, and execution now share one capability-driven request contract.
+- OpenRouter launcher recommendation no longer depends on a hard-coded launcher ID.
 
 ### Compatibility
 
@@ -28,6 +32,7 @@ Draft development release.
 - Configurations without `compatibility_policy` continue to use the backward-compatible `warn` behavior.
 - Strict policies stop before subprocess execution on known provider/launcher mismatches, while `--warn-compatibility` can override a persisted strict policy for one run.
 - Invalid persisted compatibility policies fail explicitly instead of silently changing execution behavior.
+- The launcher execution-contract refactor does not change CLI commands, configuration keys, subprocess argument order, or Aider OpenRouter model translation.
 
 ## [0.1.0] - 2026-08-03
 
