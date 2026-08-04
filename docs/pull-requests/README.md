@@ -27,6 +27,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #19 | [PR-019.md](PR-019.md) | Promote completed v0.1.0 to main / 완성된 v0.1.0 main 승격 |
 | #20 | [PR-020.md](PR-020.md) | Owner-only validated release command / 소유자 전용 검증 릴리스 명령 |
 | #21 | [PR-021.md](PR-021.md) | Begin v0.2.0 with launcher recommendations / launcher 추천으로 v0.2.0 시작 |
+| #23 | [PR-023.md](PR-023.md) | Strict compatibility execution and native option forwarding / strict 호환성 실행·native 옵션 전달 |
 
 ## Document format / 문서 형식
 
@@ -40,6 +41,6 @@ Every PR record includes:
 - Validation and outcome / 검증 및 결과
 - Deferred work or architectural impact when relevant / 관련 후속 작업과 아키텍처 영향
 
-New pull requests should add the next numbered document and update this index in the same PR.
+New pull requests should add the next numbered document and update this index in the same PR. Issue numbers may create gaps in the PR sequence.
 
-새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 인덱스를 갱신하는 것을 원칙으로 합니다.
+새 Pull Request는 같은 PR 안에서 다음 번호의 문서를 추가하고 이 인덱스를 갱신하는 것을 원칙으로 합니다. Issue 번호 사용으로 PR 번호가 연속되지 않을 수 있습니다.
