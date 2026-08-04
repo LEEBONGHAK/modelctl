@@ -17,7 +17,7 @@ class GoogleModelsClient:
     def get_models(self) -> list[dict[str, object]]:
         timeout = httpx.Timeout(30.0, connect=10.0)
         models: list[dict[str, object]] = []
-        params: dict[str, str | int] = {"pageSize": self.PAGE_SIZE}
+        page_token: str | None = None
         seen_tokens: set[str] = set()
 
         with httpx.Client(
@@ -27,6 +27,10 @@ class GoogleModelsClient:
             follow_redirects=False,
         ) as client:
             for _ in range(self.MAX_PAGES):
+                params: dict[str, str | int] = {"pageSize": self.PAGE_SIZE}
+                if page_token is not None:
+                    params["pageToken"] = page_token
+
                 response = client.get("/models", params=params)
                 response.raise_for_status()
                 payload = response.json()
@@ -49,6 +53,6 @@ class GoogleModelsClient:
                     raise ValueError("Google repeated a model pagination token.")
 
                 seen_tokens.add(next_token)
-                params["pageToken"] = next_token
+                page_token = next_token
 
         raise ValueError("Google model pagination exceeded the safety limit.")
