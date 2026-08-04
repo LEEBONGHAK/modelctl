@@ -56,7 +56,7 @@ modelctl doctor
 modelctl run
 ```
 
-`ANTHROPIC_API_KEY` can replace `modelctl auth login anthropic` for catalog synchronization. Claude Code continues to manage launcher authentication itself; modelctl does not inject stored credentials into subprocess environments.
+`ANTHROPIC_API_KEY` can replace `modelctl auth login anthropic` for catalog synchronization. Claude Code continues to manage launcher authentication itself.
 
 ### Google Gemini through Gemini CLI
 
@@ -71,7 +71,22 @@ modelctl doctor
 modelctl run
 ```
 
-`GOOGLE_API_KEY` or `GEMINI_API_KEY` can replace `modelctl auth login google` for catalog synchronization. `MODELCTL_GOOGLE` has the highest environment precedence, followed by `GOOGLE_API_KEY` and `GEMINI_API_KEY`. Gemini CLI continues to manage launcher authentication itself.
+`MODELCTL_GOOGLE` has the highest environment precedence, followed by `GOOGLE_API_KEY` and `GEMINI_API_KEY`. Gemini CLI continues to manage launcher authentication itself.
+
+### OpenAI through Codex CLI
+
+```bash
+modelctl auth login openai
+modelctl models sync openai
+modelctl use --provider openai --model gpt-5.6
+modelctl launchers recommend
+modelctl launchers remediate
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
+```
+
+`OPENAI_API_KEY` can replace `modelctl auth login openai` for catalog synchronization. Codex CLI continues to manage its own ChatGPT or API-key authentication; modelctl does not inject stored credentials into subprocess environments.
 
 One-run policy override with native launcher arguments:
 
@@ -95,14 +110,19 @@ Local state defaults:
 - Provider discovery and registry
 - OpenRouter model synchronization with credential validation and bounded HTTP timeouts
 - Anthropic native model synchronization through the official Models API
-- Bounded Anthropic cursor pagination with page-size, repeated-cursor, and maximum-page guards
-- Anthropic model mapping for IDs, names, maximum input tokens, image input, and thinking capability
+- Bounded Anthropic cursor pagination with fresh per-request query dictionaries
+- Anthropic mapping for IDs, names, maximum input tokens, image input, and thinking capability
 - Official `ANTHROPIC_API_KEY` support with `MODELCTL_ANTHROPIC` precedence
 - Google Gemini native model synchronization through the official Models API
-- Bounded Google page-token pagination with page-size, repeated-token, and maximum-page guards
-- Google model normalization for `models/<id>`, names, maximum input tokens, generation support, and thinking capability
+- Bounded Google page-token pagination with fresh per-request query dictionaries, repeated-token detection, and maximum-page guards
+- Google model normalization for `models/<id>`, maximum input tokens, generation support, and thinking capability
 - Filtering of Google models that do not support `generateContent`
 - Official `GOOGLE_API_KEY` and `GEMINI_API_KEY` support with `MODELCTL_GOOGLE` precedence
+- OpenAI native model synchronization through the official Models API
+- Bearer authentication through `OPENAI_API_KEY` with `MODELCTL_OPENAI` precedence
+- Conservative OpenAI coding-candidate filtering for GPT, o-series, and Codex IDs
+- Exclusion of OpenAI embedding, image, audio, transcription, TTS, moderation, realtime, search, computer-use, deep-research, Sora, and fine-tuned IDs
+- No guessed OpenAI context, pricing, or vision metadata when the model-list response does not provide those fields
 - Persistent model repository and provider-scoped lookup
 - Interactive and non-interactive provider/model selection
 - Validation of registered providers and synchronized models
@@ -135,8 +155,9 @@ The runtime contract models proven behavior explicitly:
 - `LauncherCapabilities` declaring native-provider affinity, provider-agnostic acceptance, and translated providers
 - Capability-driven recommendations instead of hard-coded launcher IDs
 - Shared request semantics across execution, compatibility policy, doctor diagnostics, and remediation planning
-- Native Anthropic selection resolving to Claude Code through declared capabilities
-- Native Google selection resolving to Gemini CLI through declared capabilities
+- Native Anthropic selection resolving to Claude Code
+- Native Google selection resolving to Gemini CLI
+- Native OpenAI selection resolving to Codex CLI
 
 ### Management, diagnostics, and compatibility
 
@@ -159,8 +180,11 @@ The runtime contract models proven behavior explicitly:
 - Explicit failure for invalid persisted policy values
 - Native launcher options preserved even when they begin with `--`
 
-### Packaging and release
+### CI, packaging, and release
 
+- Primary CI dependency audit and Ruff checks
+- Primary CI provider API contract suites for Anthropic, Google, and OpenAI
+- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
 - Coordinated wheel and source-distribution builds for `modelctl`, `modelctl-core`, and `modelctl-sdk`
 - Workspace source overrides disabled for release builds
 - Fresh-environment installed-wheel import and CLI smoke tests
@@ -174,60 +198,42 @@ The runtime contract models proven behavior explicitly:
 - Existing tags and release assets are never overwritten
 - PyPI publication intentionally disabled
 
+### CI failure history
+
+PR #28 exposed a mutable pagination-parameter defect. The Google client reused one dictionary across page requests, causing the recorded first request to appear mutated after the second page token was inserted. Ubuntu, macOS, Windows, and the release dry-run failed consistently. The fix creates a fresh query dictionary for every request.
+
+The failing commit still had a green primary CI and Package result because those workflows did not execute provider tests. PR #29 adds focused provider contract tests to primary CI, preserving the independent complete OS matrix and release gates while detecting provider HTTP regressions earlier.
+
 ### Documentation and security gates
 
 - English README and complete Korean `README.ko.md`
-- Bilingual Anthropic and Google provider documentation
+- Bilingual Anthropic, Google, and OpenAI provider documentation
 - Bilingual release guide, completion criteria, and security policy
 - Per-PR English/Korean engineering records
 - Locked uv workspace installation
-- Ruff and `uv audit --locked`
-- Complete pytest suite on Ubuntu, macOS, and Windows with Python 3.13
 - Full commit-SHA pinning for external GitHub Actions
 - Least-privilege workflow permissions
 - Security regression coverage for private files, credential fallback, untrusted tags, merged-event trust boundaries, and model synchronization
-- Narrow temporary audit exception for `GHSA-g6cj-pr64-35w5`, tracked by issue #22 until the fixed dependency is published
+- Current dependency audit runs without an advisory exclusion
 
 ## Completed pull requests
 
 | PR | Summary | Result |
 | --- | --- | --- |
-| #1 | Make top-level `use` and `run` executable; repair wiring | Merged |
-| #2 | Stabilize workspace installation, lint, and test collection | Merged |
-| #3 | Complete Claude Code execution and argument forwarding | Merged |
-| #4 | Add Gemini CLI and repair runtime configuration | Merged |
-| #5 | Add Codex CLI launcher | Merged |
-| #6 | Add provider-aware Aider launcher | Merged |
-| #7 | Add launcher listing and selection | Merged |
-| #8 | Record project progress and rewrite README | Merged |
-| #9 | Add `modelctl doctor` | Merged |
-| #10 | Add provider/model/launcher compatibility feedback | Merged |
-| #11 | Add non-interactive provider and model selection | Merged |
-| #12 | Add Linux, macOS, and Windows test matrix | Merged |
-| #13 | Build distributions and smoke-test installed wheels | Merged |
-| #14 | Add bilingual records for PRs #1–#13 | Merged |
-| #15 | Validate release tags and automate GitHub Release creation | Merged |
-| #16 | Harden credentials, local state, workflows, and Korean documentation | Merged |
-| #17 | Define v0.1.0 readiness and complete release gates | Merged |
-| #18 | Add trusted merged-PR release publication path | Merged |
-| #19 | Promote completed v0.1.0 to `main` | Merged |
-| #20 | Add an owner-only fully validated release command | Merged |
 | #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
 | #23 | Add strict compatibility execution and native option forwarding | Merged |
 | #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
 | #25 | Formalize launcher capabilities and immutable execution requests | Merged |
 | #26 | Add preview-first compatibility remediation and explicit apply | Merged |
 | #27 | Add Anthropic native model catalog and Claude Code routing | Merged |
+| #28 | Add Google Gemini native model catalog and Gemini CLI routing | Merged |
 
 ## Active v0.2.0 development
 
-- Completed first increment: provider-aware launcher recommendation and explicit safe apply in PR #21
-- Completed second increment: strict compatibility execution and reliable native option forwarding in PR #23
-- Completed third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
-- Completed fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
-- Completed fifth increment: preview-first compatibility remediation and explicit safe apply in PR #26
-- Completed sixth increment: Anthropic native provider catalog and Claude Code routing in PR #27
-- Active seventh increment: Google Gemini native provider catalog and Gemini CLI routing in PR #28
+- Completed launcher recommendation, strict policy, persisted policy, immutable request, and remediation increments in PRs #21–#26
+- Completed Anthropic native provider catalog and Claude Code routing in PR #27
+- Completed Google Gemini native provider catalog and Gemini CLI routing in PR #28
+- Active OpenAI native provider catalog, Codex CLI routing, and provider CI hardening in PR #29
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
 - Security guarantee: modelctl provider credentials are not silently copied into launcher subprocess environments
 
@@ -257,8 +263,9 @@ Typer command
 ## Known limitations and deferred work
 
 - No PyPI publication
-- Supported catalog providers are currently OpenRouter, Anthropic, and Google Gemini
-- Anthropic and Google model APIs do not provide pricing in their catalog responses, so synchronized prices are zero
+- OpenAI Models API does not expose endpoint capability, context, modality, or pricing metadata in its list response
+- OpenAI coding-candidate filtering is intentionally conservative and may require maintenance as model naming evolves
+- Anthropic and Google catalog APIs do not provide pricing in their responses, so synchronized prices are zero
 - Google catalog vision support remains false because the Models API response does not declare input modalities
 - Native launcher authentication remains owned by each launcher and is separate from modelctl catalog credentials
 - Remediation currently changes only the selected launcher
@@ -271,8 +278,8 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the Google Gemini native-provider workflow.
-2. Evaluate OpenAI native catalog integration using the same provider contract.
+1. Validate and merge the OpenAI native-provider and provider-CI workflow.
+2. Review whether the four proven provider implementations justify a shared HTTP catalog client helper without hiding vendor differences.
 3. Extend remediation only when another safe, reversible action has a proven user workflow.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
