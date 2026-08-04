@@ -27,30 +27,36 @@ Development principle:
 
 Draft status prevents publication while v0.2.0 is under development. After an explicit readiness review, a reviewed pull request merged into `main`, or a trusted direct `main` push, creates the version tag and GitHub Release only after the release workflow independently passes dependency audit, Ruff, the complete pytest suite, distribution builds, installed-wheel smoke tests, and checksum generation.
 
-## Current end-to-end workflow
+## Current end-to-end workflows
+
+### OpenRouter through Aider
 
 ```bash
 modelctl auth login openrouter
 modelctl models sync openrouter
-modelctl use
-modelctl launchers list
+modelctl use --provider openrouter --model anthropic/claude-sonnet-4
 modelctl launchers recommend
-modelctl launchers recommend --apply
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl config set compatibility-policy strict
 modelctl doctor
 modelctl run
-modelctl run --warn-compatibility
 ```
 
-Non-interactive selection:
+### Anthropic through Claude Code
 
 ```bash
-modelctl use \
-  --provider openrouter \
-  --model anthropic/claude-sonnet-4
+modelctl auth login anthropic
+modelctl models sync anthropic
+modelctl use --provider anthropic --model claude-opus-4-6
+modelctl launchers recommend
+modelctl launchers remediate
+modelctl config set compatibility-policy strict
+modelctl doctor
+modelctl run
 ```
+
+`ANTHROPIC_API_KEY` can replace `modelctl auth login anthropic` for catalog synchronization. Claude Code continues to manage launcher authentication itself; modelctl does not inject stored credentials into subprocess environments.
 
 One-run policy override with native launcher arguments:
 
@@ -73,6 +79,10 @@ Local state defaults:
 
 - Provider discovery and registry
 - OpenRouter model synchronization with credential validation and bounded HTTP timeouts
+- Anthropic native model synchronization through the official Models API
+- Bounded Anthropic cursor pagination with page-size, repeated-cursor, and maximum-page guards
+- Anthropic model mapping for IDs, names, maximum input tokens, image input, and thinking capability
+- Official `ANTHROPIC_API_KEY` support with `MODELCTL_ANTHROPIC` precedence
 - Persistent model repository and provider-scoped lookup
 - Interactive and non-interactive provider/model selection
 - Validation of registered providers and synchronized models
@@ -99,12 +109,13 @@ Local state defaults:
 
 All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to `openrouter/<provider>/<model>`.
 
-The runtime contract now models these proven behaviors explicitly:
+The runtime contract models proven behavior explicitly:
 
 - Immutable `LaunchRequest` containing model, provider, and native arguments
 - `LauncherCapabilities` declaring native-provider affinity, provider-agnostic acceptance, and translated providers
 - Capability-driven recommendations instead of hard-coded launcher IDs
 - Shared request semantics across execution, compatibility policy, doctor diagnostics, and remediation planning
+- Native Anthropic selection resolving to Claude Code through declared capabilities
 
 ### Management, diagnostics, and compatibility
 
@@ -145,6 +156,7 @@ The runtime contract now models these proven behaviors explicitly:
 ### Documentation and security gates
 
 - English README and complete Korean `README.ko.md`
+- Bilingual Anthropic provider documentation
 - Bilingual release guide, completion criteria, and security policy
 - Per-PR English/Korean engineering records
 - Locked uv workspace installation
@@ -183,6 +195,7 @@ The runtime contract now models these proven behaviors explicitly:
 | #23 | Add strict compatibility execution and native option forwarding | Merged |
 | #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
 | #25 | Formalize launcher capabilities and immutable execution requests | Merged |
+| #26 | Add preview-first compatibility remediation and explicit apply | Merged |
 
 ## Active v0.2.0 development
 
@@ -190,9 +203,10 @@ The runtime contract now models these proven behaviors explicitly:
 - Completed second increment: strict compatibility execution and reliable native option forwarding in PR #23
 - Completed third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
 - Completed fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
-- Active fifth increment: preview-first compatibility remediation and explicit safe apply in PR #26
+- Completed fifth increment: preview-first compatibility remediation and explicit safe apply in PR #26
+- Active sixth increment: Anthropic native provider catalog and Claude Code routing in PR #27
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Safety guarantee: remediation preview is read-only; apply changes only the launcher and refuses recommendations unavailable on `PATH`
+- Security guarantee: modelctl provider credentials are not silently copied into launcher subprocess environments
 
 ## Architecture snapshot
 
@@ -202,22 +216,27 @@ packages/core/       configuration, credentials, providers, repositories, servic
 packages/sdk/        public SDK package foundation
 scripts/             release validation helpers
 tests/               regression, integration, packaging, and security tests
-docs/                project, release, security, and PR documentation
+docs/                project, provider, release, security, and PR documentation
 ```
 
 ```text
 Typer command
   -> application Container
+  -> ProviderRegistry / ModelService
+  -> provider API client + UniversalModel mapper
+  -> model repository
   -> LauncherService
   -> immutable LaunchRequest + LauncherCapabilities
   -> recommendation / compatibility / remediation decision
-  -> launcher registry
   -> external CLI
 ```
 
 ## Known limitations and deferred work
 
 - No PyPI publication
+- Supported catalog providers are currently OpenRouter and Anthropic
+- Anthropic Models API pricing is not available in the catalog response, so synchronized prices are zero
+- Claude Code authentication remains owned by Claude Code and is separate from modelctl catalog credentials
 - Remediation currently changes only the selected launcher
 - Remediation does not install software, change providers or models, or execute launchers
 - Capabilities describe current provider routing but do not yet model every launcher feature or option
@@ -228,8 +247,8 @@ Typer command
 
 ## Next priorities
 
-1. Validate and merge the preview-first compatibility-remediation workflow.
-2. Add a native-provider integration so capabilities and remediation are validated beyond OpenRouter.
+1. Validate and merge the Anthropic native-provider workflow.
+2. Evaluate Google or OpenAI native catalog integration using the same provider contract.
 3. Extend remediation only when another safe, reversible action has a proven user workflow.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
