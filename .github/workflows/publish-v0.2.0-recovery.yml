@@ -6,9 +6,6 @@ on:
       - main
     paths:
       - .github/workflows/publish-v0.2.0-recovery.yml
-  push:
-    branches:
-      - release/publish-v0.2.0
 
 concurrency:
   group: publish-v0.2.0-recovery
@@ -16,23 +13,21 @@ concurrency:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   validate-and-publish:
     runs-on: ubuntu-latest
     env:
       RELEASE_TAG: v0.2.0
-      TARGET_SHA: d8f2bad5111e18859c746acc412ce1ea0d627e05
+      TARGET_SHA: 9da3f46fc2fe817c2643437d48f42dd078f26482
       REPOSITORY: LEEBONGHAK/modelctl
-      PR_NUMBER: "31"
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: d8f2bad5111e18859c746acc412ce1ea0d627e05
+          ref: 9da3f46fc2fe817c2643437d48f42dd078f26482
 
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
@@ -103,10 +98,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          existing_tag_sha="$(
+          if existing_tag_sha="$(
             gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-              --jq '.object.sha' 2>/dev/null || true
-          )"
+              --jq '.object.sha' 2>/dev/null
+          )"; then
+            :
+          else
+            existing_tag_sha=""
+          fi
 
           if [[ -z "${existing_tag_sha}" ]]; then
             gh api --method POST "repos/${REPOSITORY}/git/refs" \
@@ -129,14 +128,12 @@ jobs:
           fi
 
       - name: Verify release assets
-        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          release_json="$(gh release view "${RELEASE_TAG}" --repo "${REPOSITORY}" --json url,tagName,assets)"
-          release_url="$(jq -r '.url' <<<"${release_json}")"
+          release_json="$(gh release view "${RELEASE_TAG}" --repo "${REPOSITORY}" --json tagName,assets)"
           tag_name="$(jq -r '.tagName' <<<"${release_json}")"
           asset_names="$(jq -r '.assets[].name' <<<"${release_json}" | sort)"
           asset_count="$(wc -l <<<"${asset_names}" | tr -d ' ')"
@@ -149,24 +146,4 @@ jobs:
           [[ "${sdist_count}" == "3" ]]
           grep -qx 'SHA256SUMS' <<<"${asset_names}"
 
-          printf 'url=%s\n' "${release_url}" >> "${GITHUB_OUTPUT}"
-
-      - name: Record successful publication
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_URL: ${{ steps.release.outputs.url }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          body="v0.2.0 publication completed successfully. Target main commit: ${TARGET_SHA}. Release: ${RELEASE_URL}. Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. Validation passed: dependency audit, Ruff, 137 tests, package builds, isolated wheel smoke tests, release metadata, seven release assets, and checksums."
-          gh api --method POST "repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="${body}" >/dev/null
-
-      - name: Record publication failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          body="v0.2.0 publication recovery failed. Inspect ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. No existing tag or release is overwritten by this workflow."
-          gh api --method POST "repos/${REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="${body}" >/dev/null
+          printf '%s\n' "${asset_names}"
