@@ -37,4 +37,5 @@ def test_config_set_reports_invalid_compatibility_policy():
 
     output = " ".join(ANSI_ESCAPE.sub("", result.output).split())
     assert result.exit_code != 0
-    assert "Expected one of: strict, warn" in output
+    assert "Expected one of:" in output
+    assert "strict, warn" in output
