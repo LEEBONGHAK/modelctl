@@ -19,7 +19,7 @@
 - Native launcher argument forwarding without shell execution
 - Keyring-first credential storage with explicit plaintext fallback
 - Provider credentials kept separate from launcher authentication
-- Provider API contract tests, 137 cross-platform tests, package builds, and installed-wheel smoke tests
+- Provider API contract tests, 138 cross-platform tests, package builds, and installed-wheel smoke tests
 - Locked `cryptography 50.0.0` and dependency audit without an advisory exclusion
 - Validated immutable GitHub Release artifacts with SHA-256 checksums
 
