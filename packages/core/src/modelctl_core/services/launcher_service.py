@@ -1,5 +1,7 @@
 from dataclasses import dataclass, replace
 
+from modelctl_core.launcher.base import LaunchRequest
+
 
 COMPATIBILITY_POLICY_WARN = "warn"
 COMPATIBILITY_POLICY_STRICT = "strict"
@@ -29,8 +31,8 @@ class LauncherService:
         self.config = config
 
     def compatibility_warning(self) -> str | None:
-        launcher, model, provider = self._selection()
-        return launcher.compatibility_warning(provider, model)
+        launcher, request = self._execution_request()
+        return launcher.compatibility_warning(request)
 
     def compatibility_policy(self) -> str:
         config = self.config.load()
@@ -54,10 +56,10 @@ class LauncherService:
         if launcher is None:
             return None
 
-        if provider == "openrouter":
+        if launcher.capabilities.translates(provider):
             reason = (
-                "Aider translates OpenRouter model identifiers automatically and uses the "
-                "selected provider context."
+                f"{launcher.display_name} translates {provider} model identifiers "
+                "automatically and uses the selected provider context."
             )
         else:
             reason = (
@@ -97,20 +99,28 @@ class LauncherService:
         return replace(recommendation, active=True, changed=True)
 
     def run(self, extra_args: list[str] | None = None) -> None:
-        launcher, model, provider = self._selection()
-        launcher.run(
-            model,
-            extra_args,
-            provider=provider,
-        )
+        launcher, request = self._execution_request(extra_args)
+        launcher.run(request)
 
     def _recommended_launcher(self, provider: str):
         launchers = self.registry.list()
-        if provider == "openrouter":
-            return next((item for item in launchers if item.name == "aider"), None)
+        translated = next(
+            (
+                item
+                for item in launchers
+                if item.capabilities.translates(provider)
+            ),
+            None,
+        )
+        if translated is not None:
+            return translated
 
         return next(
-            (item for item in launchers if item.native_provider == provider),
+            (
+                item
+                for item in launchers
+                if item.capabilities.native_provider == provider
+            ),
             None,
         )
 
@@ -129,7 +139,10 @@ class LauncherService:
 
         return provider, model, active_name
 
-    def _selection(self):
+    def _execution_request(
+        self,
+        extra_args: list[str] | None = None,
+    ):
         config = self.config.load()
         launcher_name = config.get("launcher", "claude")
         model = config.get("default_model")
@@ -144,11 +157,12 @@ class LauncherService:
         if not launcher:
             raise RuntimeError(f"Unknown launcher: {launcher_name}")
 
-        return (
-            launcher,
-            model,
-            provider if isinstance(provider, str) and provider else None,
+        request = LaunchRequest.create(
+            model=model,
+            provider=provider if isinstance(provider, str) and provider else None,
+            extra_args=extra_args,
         )
+        return launcher, request
 
     @staticmethod
     def _validate_compatibility_policy(policy: object) -> str:
