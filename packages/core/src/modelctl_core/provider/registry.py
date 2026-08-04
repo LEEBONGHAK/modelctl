@@ -1,5 +1,6 @@
 from modelctl_core.provider.anthropic.provider import AnthropicProvider
 from modelctl_core.provider.google.provider import GoogleProvider
+from modelctl_core.provider.openai.provider import OpenAIProvider
 from modelctl_core.provider.openrouter.provider import OpenRouterProvider
 
 
@@ -11,6 +12,7 @@ class ProviderRegistry:
         self.register(OpenRouterProvider())
         self.register(AnthropicProvider())
         self.register(GoogleProvider())
+        self.register(OpenAIProvider())
 
     def register(self, provider):
         self._providers[provider.id] = provider

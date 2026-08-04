@@ -25,6 +25,9 @@ Draft development release.
 - Google Gemini native provider discovery and official model-catalog synchronization.
 - Official `GOOGLE_API_KEY` and `GEMINI_API_KEY` environment-variable support.
 - Bounded Gemini Models API pagination with malformed-response and repeated-token guards.
+- OpenAI native provider discovery and official model-catalog synchronization.
+- Official `OPENAI_API_KEY` environment-variable support.
+- Primary CI provider-contract tests for Anthropic, Google, and OpenAI integrations.
 
 ### Changed
 
@@ -37,6 +40,13 @@ Draft development release.
 - Anthropic provider selection now resolves to the existing native Claude Code launcher for recommendation and remediation.
 - Google provider selection now resolves to the existing native Gemini CLI launcher for recommendation and remediation.
 - Google catalog synchronization excludes models that do not support `generateContent`.
+- OpenAI provider selection now resolves to the existing native Codex CLI launcher for recommendation and remediation.
+- OpenAI catalog synchronization conservatively excludes non-coding model families and fields unavailable from the Models API response are not guessed.
+
+### Fixed
+
+- Prevented provider pagination request snapshots from being corrupted by reuse of one mutable query dictionary.
+- Added provider API contract tests to the primary CI workflow so provider regressions cannot leave CI green while the OS test matrix and release dry-run fail.
 
 ### Compatibility
 
@@ -48,6 +58,7 @@ Draft development release.
 - Remediation preview never changes configuration; apply changes only the selected launcher and refuses unavailable recommendations.
 - `MODELCTL_ANTHROPIC` keeps precedence over the official `ANTHROPIC_API_KEY` alias.
 - `MODELCTL_GOOGLE` keeps precedence over official aliases; `GOOGLE_API_KEY` takes precedence over `GEMINI_API_KEY`.
+- `MODELCTL_OPENAI` keeps precedence over the official `OPENAI_API_KEY` alias.
 - Provider credentials managed by modelctl are used for catalog synchronization and are not injected into launcher subprocess environments.
 
 ## [0.1.0] - 2026-08-03

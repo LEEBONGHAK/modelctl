@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-audit:
+  lint-audit-and-provider-contracts:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,3 +29,10 @@ jobs:
 
       - name: Lint
         run: uv run ruff check .
+
+      - name: Test provider API contracts
+        run: >-
+          uv run pytest
+          tests/test_anthropic_provider.py
+          tests/test_google_provider.py
+          tests/test_openai_provider.py
