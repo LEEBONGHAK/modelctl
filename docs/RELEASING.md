@@ -10,192 +10,174 @@ This document describes coordinated development releases for the `modelctl`, `mo
 
 - `refac` is the ongoing development branch.
 - `main` is the canonical completed-version and release branch.
-- A completed version is merged from a reviewed release branch into `main`.
+- A completed version is promoted through a reviewed release pull request targeting `main`.
 - Tags and GitHub Releases are created only from validated commits contained in `main`.
 
-### Current publication policy
-
-- `release.toml` is the machine-readable release decision.
-- A version is eligible for a tag only when its manifest status is `ready`.
-- A trusted push to `main`, or the merged event of a pull request whose base is `main`, independently runs dependency audit, lint, tests, package builds, and installed-wheel smoke validation.
-- Closed but unmerged pull requests do not run release publication.
-- After all checks pass, the workflow creates the coordinated `v*` tag and one GitHub Release.
-- Existing tags and GitHub Release assets are never overwritten.
-- **PyPI publication is not configured and no PyPI publishing job exists.**
-
-### Completion criteria
-
-The complete functional, quality, security, and publication criteria are maintained in [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md).
-
-The current draft manifest must match all package versions:
+### Current v0.2.0 decision
 
 ```toml
 version = "0.2.0"
-status = "draft"
+status = "ready"
 channel = "development"
 publish_pypi = false
 ```
 
-Package versions are read from:
+All three package versions match `0.2.0`. The readiness branch descends from the exact validated `refac` merge commit that includes PR #30 and `cryptography 50.0.0`.
 
-```text
-apps/modelctl/pyproject.toml
-packages/core/pyproject.toml
-packages/sdk/pyproject.toml
-```
+### Publication policy
 
-Validate locally:
+- `release.toml` is the machine-readable release decision.
+- A version is eligible for a tag only when status is `ready`.
+- A trusted `main` push or an actually merged pull request targeting `main` independently runs audit, lint, tests, package builds, installed-wheel smoke validation, and checksums.
+- Closed but unmerged pull requests cannot publish.
+- The workflow creates the coordinated `v*` tag and one GitHub Release only after every gate succeeds.
+- Existing tags and GitHub Release assets are never overwritten.
+- **PyPI publication is not configured and no PyPI publishing job exists.**
+
+### Validation
 
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.2.0
+uv sync --all-packages --locked
+uv audit --locked
+uv run ruff check .
+uv run pytest
 ```
 
-Validation also requires the matching changelog entry, English and Korean READMEs, security policy, release criteria, and this release guide.
+Validation requires matching package versions, manifest, changelog, English and Korean READMEs, security policy, release criteria, and this release guide.
 
 ### Pull-request dry run
 
-An opened, synchronized, or reopened relevant pull request runs the complete release validation without creating a tag or release:
+An opened, synchronized, or reopened relevant pull request performs the complete release validation without creating a tag or release:
 
 - validate package versions, manifest, documentation, and proposed tag
 - install the locked workspace
-- run `uv audit --locked`
-- run Ruff and the complete pytest suite
+- run dependency audit without an advisory exclusion
+- run Ruff and all 137 tests
 - build wheels and source distributions without workspace source overrides
-- install the built wheels in a fresh Python 3.13 environment
-- verify installed imports, `modelctl version`, and `modelctl --help`
+- install built wheels in a fresh Python 3.13 environment
+- verify imports, `modelctl version`, and `modelctl --help`
 - generate `SHA256SUMS`
 - upload a temporary workflow artifact
 
-### Creating a completed release
+### Completing v0.2.0
 
-To mark a version complete:
+1. Keep the readiness branch based on the exact validated `refac` lineage.
+2. Set `status = "ready"` and update completion documents.
+3. Open the reviewed readiness pull request against `main`.
+4. Require all pull-request workflows to pass.
+5. Merge into `main` with the exact checked head SHA.
+6. Confirm that the post-merge release run checks out the `main` merge commit and reruns every gate.
+7. Confirm immutable tag `v0.2.0`, six Python distribution files, and `SHA256SUMS` in the GitHub Release.
 
-1. Finish implementation and validation on `refac` or a release-preparation branch.
-2. Update the three package versions.
-3. Add the matching `CHANGELOG.md` entry.
-4. Update `docs/RELEASE_CRITERIA.md` for the version.
-5. Set the matching version and `status = "ready"` in `release.toml`.
-6. Merge the reviewed release pull request into `main`.
-
-The trusted merged event checks out the exact `main` merge commit and reruns every release gate. If successful and the tag does not exist, it creates `v<version>` at that merge commit and publishes the GitHub Release with generated notes, six Python distribution files, and `SHA256SUMS`.
-
-A direct trusted push to `main` and a manually created matching `v*` tag are also supported. A manual tag must point to a commit contained in `main` and passes the same full validation before a release is created.
+If the platform does not emit the expected merged-pull-request publication event, the repository owner can use the existing audited `/release v0.2.0` command on the merged readiness pull request. That fallback resolves the exact merge commit, requires it to belong to `main`, and reruns the same gates before publication.
 
 ### Trust boundaries
 
-- The merged-event publication condition requires `pull_request.merged == true` and base branch `main`.
-- The workflow checks out `pull_request.merge_commit_sha`, not an untrusted head branch, for the post-merge release run.
-- Closed but unmerged pull requests are skipped.
-- Pull-request dry runs do not receive content write permission.
-- Only the publication job receives `contents: write`, after all validation succeeds.
+- Publication requires `pull_request.merged == true` and base branch `main`, a trusted `main` push, or the owner-only validated fallback.
+- Post-merge validation checks out the exact merge commit rather than the untrusted head branch.
+- Pull-request dry runs have read-only content permission.
+- Only the final publication job receives `contents: write` after validation.
+- Manual matching tags must point to a commit contained in `main`.
 
 ### Immutability and recovery
 
-- An existing tag is never moved.
+- Existing tags are never moved.
 - Existing GitHub Release assets are never replaced.
-- If a version needs correction after tagging, prepare a new patch version instead of modifying the existing release.
-- If a tag exists at another commit, later release triggers skip that version rather than overwriting it.
+- A correction after tagging requires a new patch version.
+- If `v0.2.0` already points elsewhere, publication exits without overwriting it.
 
 ### PyPI
 
-PyPI publication remains intentionally deferred. Enabling it later requires a separate reviewed pull request, package-name ownership confirmation, a protected environment, Trusted Publishing configuration, and a dry-run plan. Creating a GitHub tag or Release does not publish anything to PyPI.
+PyPI publication remains intentionally deferred. Enabling it requires a separate reviewed pull request, package-name ownership confirmation, protected environment, Trusted Publishing configuration, and a dry-run plan. A GitHub tag or Release does not publish to PyPI.
 
 ## 한국어
 
 ### 브랜치 정책
 
-- `refac`은 지속적인 개발 브랜치입니다.
-- `main`은 완성 버전과 릴리스의 공식 브랜치입니다.
-- 완성된 버전은 검토된 release branch에서 `main`으로 병합합니다.
-- Tag와 GitHub Release는 `main`에 포함된 검증된 commit에서만 생성합니다.
+- `refac`은 지속적인 개발 branch입니다.
+- `main`은 완성 버전과 릴리스의 공식 branch입니다.
+- 완성 버전은 `main` 대상의 검토된 release Pull Request로 승격합니다.
+- Tag와 GitHub Release는 `main`에 포함된 검증 commit에서만 생성합니다.
 
-### 현재 게시 정책
-
-- `release.toml`을 기계가 판독하는 release 결정 파일로 사용합니다.
-- Manifest status가 `ready`인 버전만 tag 생성 대상이 됩니다.
-- 신뢰된 `main` push 또는 base가 `main`인 Pull Request의 실제 병합 이벤트에서 dependency audit, lint, test, package build, 설치된 wheel smoke 검증을 독립적으로 수행합니다.
-- 닫혔지만 병합되지 않은 Pull Request에서는 release 게시를 실행하지 않습니다.
-- 모든 검증을 통과한 경우 통합 `v*` tag와 하나의 GitHub Release를 생성합니다.
-- 기존 tag와 GitHub Release asset은 절대 덮어쓰지 않습니다.
-- **PyPI 게시는 구성되어 있지 않으며 PyPI 게시 job도 존재하지 않습니다.**
-
-### 완료 기준
-
-전체 기능·품질·보안·게시 기준은 [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)에서 관리합니다.
-
-현재 draft release manifest는 모든 package version과 일치해야 합니다.
+### 현재 v0.2.0 결정
 
 ```toml
 version = "0.2.0"
-status = "draft"
+status = "ready"
 channel = "development"
 publish_pypi = false
 ```
 
-Package version은 다음 파일에서 읽습니다.
+세 package version은 모두 `0.2.0`입니다. Readiness branch는 PR #30과 `cryptography 50.0.0`을 포함한 정확한 검증 `refac` merge commit에서 파생됐습니다.
 
-```text
-apps/modelctl/pyproject.toml
-packages/core/pyproject.toml
-packages/sdk/pyproject.toml
-```
+### 게시 정책
 
-로컬 검증 명령은 다음과 같습니다.
+- `release.toml`을 기계 판독 가능한 release 결정 파일로 사용합니다.
+- Status가 `ready`인 버전만 tag 생성 대상입니다.
+- 신뢰된 `main` push 또는 실제로 병합된 `main` 대상 Pull Request에서 audit, lint, test, package build, 설치 wheel smoke 검증, checksum을 독립적으로 실행합니다.
+- 닫혔지만 병합되지 않은 Pull Request는 게시할 수 없습니다.
+- 모든 gate가 성공한 뒤에만 통합 `v*` tag와 하나의 GitHub Release를 생성합니다.
+- 기존 tag와 GitHub Release asset은 덮어쓰지 않습니다.
+- **PyPI 게시는 구성되어 있지 않으며 PyPI 게시 job도 없습니다.**
+
+### 검증
 
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
 python scripts/release_validation.py --tag v0.2.0
+uv sync --all-packages --locked
+uv audit --locked
+uv run ruff check .
+uv run pytest
 ```
 
-검증에는 동일 버전의 changelog, 영문·한국어 README, 보안 정책, 완료 기준, 이 릴리스 가이드도 필요합니다.
+검증에는 package version, manifest, changelog, 영문·한국어 README, 보안 정책, 완료 기준, 이 release guide의 일치가 필요합니다.
 
 ### Pull Request dry run
 
-관련 Pull Request가 열리거나 갱신되거나 다시 열리면 tag나 release를 생성하지 않고 전체 release 검증을 수행합니다.
+관련 Pull Request가 열리거나 갱신되거나 다시 열리면 tag나 release를 만들지 않고 전체 검증을 수행합니다.
 
 - Package version, manifest, 문서, 제안 tag 검증
-- Lockfile 기반 workspace 설치
-- `uv audit --locked` 실행
-- Ruff 및 전체 pytest suite 실행
-- Workspace source override 없는 wheel·source distribution 빌드
-- 새로운 Python 3.13 환경에 생성한 wheel 설치
-- 설치된 package import, `modelctl version`, `modelctl --help` 검증
+- 잠긴 workspace 설치
+- Advisory 예외 없는 dependency audit
+- Ruff와 전체 137개 테스트
+- Workspace source override 없는 wheel·source distribution build
+- 새로운 Python 3.13 환경에 wheel 설치
+- Import, `modelctl version`, `modelctl --help` 검증
 - `SHA256SUMS` 생성
 - 임시 workflow artifact 업로드
 
-### 완성 버전 릴리스 생성
+### v0.2.0 완료 절차
 
-버전을 완성 상태로 표시하는 절차는 다음과 같습니다.
+1. Readiness branch를 정확히 검증된 `refac` 계보에서 유지합니다.
+2. `status = "ready"`와 완료 문서를 갱신합니다.
+3. `main` 대상 readiness Pull Request를 엽니다.
+4. 모든 Pull Request workflow 통과를 요구합니다.
+5. 확인한 head SHA 그대로 `main`에 병합합니다.
+6. 병합 후 release run이 `main` merge commit을 checkout하고 모든 gate를 다시 실행하는지 확인합니다.
+7. 불변 tag `v0.2.0`, Python 배포 파일 여섯 개, `SHA256SUMS`가 GitHub Release에 존재하는지 확인합니다.
 
-1. `refac` 또는 release 준비 branch에서 구현과 검증을 완료합니다.
-2. 세 package version을 변경합니다.
-3. 동일 버전의 `CHANGELOG.md` 항목을 추가합니다.
-4. 해당 버전에 맞게 `docs/RELEASE_CRITERIA.md`를 갱신합니다.
-5. `release.toml`에 같은 version과 `status = "ready"`를 설정합니다.
-6. 검토된 release Pull Request를 `main`에 병합합니다.
-
-신뢰된 병합 이벤트는 정확한 `main` merge commit을 checkout한 뒤 모든 release gate를 다시 실행합니다. 성공하고 tag가 존재하지 않으면 해당 merge commit에 `v<version>`을 생성하고 자동 release note, Python 배포 파일 여섯 개, `SHA256SUMS`를 포함한 GitHub Release를 게시합니다.
-
-신뢰된 `main` 직접 push와 동일 형식의 수동 `v*` tag도 지원합니다. 수동 tag는 `main`에 포함된 commit을 가리켜야 하며 같은 전체 검증을 통과해야 합니다.
+플랫폼이 기대한 병합 PR 게시 이벤트를 생성하지 않으면 저장소 owner가 병합된 readiness PR에 기존 `/release v0.2.0` 명령을 사용할 수 있습니다. 이 fallback은 정확한 merge commit이 `main`에 포함됐는지 확인하고 동일한 gate를 다시 실행한 뒤 게시합니다.
 
 ### 신뢰 경계
 
-- 병합 이벤트 게시 조건은 `pull_request.merged == true`와 base branch `main`을 모두 요구합니다.
-- 병합 후 release 실행에서는 신뢰할 수 없는 head branch가 아니라 `pull_request.merge_commit_sha`를 checkout합니다.
-- 닫혔지만 병합되지 않은 Pull Request는 건너뜁니다.
-- Pull Request dry run에는 content write 권한이 없습니다.
-- 모든 검증을 통과한 뒤 publication job에만 `contents: write` 권한을 부여합니다.
+- 게시는 `pull_request.merged == true`와 base `main`, 신뢰된 `main` push, 또는 owner-only 검증 fallback을 요구합니다.
+- 병합 후 검증은 신뢰할 수 없는 head가 아니라 정확한 merge commit을 checkout합니다.
+- Pull Request dry-run에는 read-only content 권한만 있습니다.
+- 모든 검증 후 최종 게시 job에만 `contents: write`를 부여합니다.
+- 수동 tag는 `main`에 포함된 commit을 가리켜야 합니다.
 
-### 불변성 및 복구
+### 불변성과 복구
 
 - 기존 tag는 이동하지 않습니다.
 - 기존 GitHub Release asset은 교체하지 않습니다.
-- Tag 생성 이후 수정이 필요하면 기존 release를 변경하지 않고 새로운 patch version을 준비합니다.
-- 같은 tag가 다른 commit에 이미 존재하면 이후 release trigger는 해당 버전을 덮어쓰지 않고 건너뜁니다.
+- Tag 이후 수정은 새로운 patch version으로 처리합니다.
+- `v0.2.0`이 다른 commit을 가리키면 덮어쓰지 않고 게시를 종료합니다.
 
 ### PyPI
 
-PyPI 게시는 의도적으로 연기한 상태입니다. 나중에 활성화하려면 package name 소유권 확인, 보호된 environment, Trusted Publishing 설정, dry-run 계획을 포함한 별도 검토 PR이 필요합니다. GitHub tag나 Release를 생성해도 PyPI에는 아무것도 게시되지 않습니다.
+PyPI 게시는 의도적으로 연기했습니다. 활성화하려면 package name 소유권, 보호 environment, Trusted Publishing, dry-run 계획을 포함한 별도 검토 PR이 필요합니다. GitHub tag나 Release는 PyPI 게시를 수행하지 않습니다.
