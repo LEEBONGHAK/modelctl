@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from modelctl_core.launcher.base import LaunchRequest
 from modelctl_core.services.doctor_service import DoctorService
 
 
@@ -36,11 +37,13 @@ class FakeLauncher:
     def __init__(self, available=True, warning=None):
         self._available = available
         self.warning = warning
+        self.request = None
 
     def available(self):
         return self._available
 
-    def compatibility_warning(self, provider, model):
+    def compatibility_warning(self, request):
+        self.request = request
         return self.warning
 
 
@@ -70,6 +73,7 @@ class FakeEngine:
 
 def test_doctor_reports_working_configuration(monkeypatch):
     monkeypatch.setattr(Path, "exists", lambda self: True)
+    launcher = FakeLauncher()
     service = DoctorService(
         FakeConfig(
             {
@@ -80,13 +84,17 @@ def test_doctor_reports_working_configuration(monkeypatch):
         ),
         FakeCredentials("token"),
         FakeProviders(),
-        FakeLaunchers(FakeLauncher()),
+        FakeLaunchers(launcher),
         FakeEngine(),
     )
 
     checks = service.run()
 
     assert all(check.status == "ok" for check in checks)
+    assert launcher.request == LaunchRequest(
+        model="anthropic/claude-sonnet-4",
+        provider="openrouter",
+    )
 
 
 def test_doctor_reports_missing_runtime_selection(monkeypatch):
