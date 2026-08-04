@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from modelctl_core.launcher.base import LaunchRequest, LauncherCapabilities
 from modelctl_core.services.launcher_service import LauncherService
 
 
@@ -28,11 +29,16 @@ def recommendation_launcher(
     display_name: str,
     native_provider: str | None,
     installed: bool = True,
+    translated_providers: frozenset[str] = frozenset(),
 ):
     return SimpleNamespace(
         name=name,
         display_name=display_name,
-        native_provider=native_provider,
+        capabilities=LauncherCapabilities(
+            native_provider=native_provider,
+            accepts_any_provider=name == "aider",
+            translated_providers=translated_providers,
+        ),
         available=lambda: installed,
     )
 
@@ -45,19 +51,23 @@ def mismatched_service(config=None):
     return LauncherService(registry, config or configured()), launcher
 
 
-def test_launcher_service_forwards_provider_context():
+def test_launcher_service_builds_immutable_execution_request():
     launcher = Mock()
     registry = Mock()
     registry.get.return_value = launcher
     config = configured(launcher="aider")
+    extra_args = ["--no-auto-commits"]
 
-    LauncherService(registry, config).run(["--no-auto-commits"])
+    LauncherService(registry, config).run(extra_args)
+    extra_args.append("--dirty")
 
     registry.get.assert_called_once_with("aider")
     launcher.run.assert_called_once_with(
-        "anthropic/claude-sonnet-4",
-        ["--no-auto-commits"],
-        provider="openrouter",
+        LaunchRequest(
+            model="anthropic/claude-sonnet-4",
+            provider="openrouter",
+            extra_args=("--no-auto-commits",),
+        )
     )
 
 
@@ -74,9 +84,7 @@ def test_launcher_service_preserves_execution_without_provider_context():
     LauncherService(registry, config).run()
 
     launcher.run.assert_called_once_with(
-        "claude-sonnet-4",
-        None,
-        provider=None,
+        LaunchRequest(model="claude-sonnet-4")
     )
 
 
@@ -87,8 +95,10 @@ def test_launcher_service_returns_compatibility_warning():
 
     assert warning == "Potential mismatch"
     launcher.compatibility_warning.assert_called_once_with(
-        "openrouter",
-        "anthropic/claude-sonnet-4",
+        LaunchRequest(
+            model="anthropic/claude-sonnet-4",
+            provider="openrouter",
+        )
     )
 
 
@@ -130,11 +140,16 @@ def test_compatibility_check_rejects_invalid_persisted_policy():
         service.check_compatibility()
 
 
-def test_recommendation_uses_aider_for_openrouter():
+def test_recommendation_uses_translating_launcher_for_openrouter():
     registry = Mock()
     registry.list.return_value = [
         recommendation_launcher("claude", "Claude Code", "anthropic"),
-        recommendation_launcher("aider", "Aider", None),
+        recommendation_launcher(
+            "aider",
+            "Aider",
+            None,
+            translated_providers=frozenset({"openrouter"}),
+        ),
     ]
 
     recommendation = LauncherService(registry, configured()).recommend()
@@ -145,7 +160,7 @@ def test_recommendation_uses_aider_for_openrouter():
     assert recommendation.installed is True
     assert recommendation.active is False
     assert recommendation.changed is False
-    assert "translates OpenRouter" in recommendation.reason
+    assert "translates openrouter" in recommendation.reason
 
 
 def test_recommendation_uses_native_launcher_for_provider():
@@ -184,7 +199,13 @@ def test_recommendation_returns_none_for_unknown_provider():
 def test_apply_recommendation_persists_and_reports_active_launcher():
     registry = Mock()
     registry.list.return_value = [
-        recommendation_launcher("aider", "Aider", None, installed=True),
+        recommendation_launcher(
+            "aider",
+            "Aider",
+            None,
+            installed=True,
+            translated_providers=frozenset({"openrouter"}),
+        ),
     ]
     config = configured()
 
@@ -199,7 +220,13 @@ def test_apply_recommendation_persists_and_reports_active_launcher():
 def test_apply_recommendation_keeps_already_active_launcher_unchanged():
     registry = Mock()
     registry.list.return_value = [
-        recommendation_launcher("aider", "Aider", None, installed=True),
+        recommendation_launcher(
+            "aider",
+            "Aider",
+            None,
+            installed=True,
+            translated_providers=frozenset({"openrouter"}),
+        ),
     ]
     config = configured(launcher="aider")
 
@@ -213,7 +240,13 @@ def test_apply_recommendation_keeps_already_active_launcher_unchanged():
 def test_apply_recommendation_refuses_unavailable_launcher():
     registry = Mock()
     registry.list.return_value = [
-        recommendation_launcher("aider", "Aider", None, installed=False),
+        recommendation_launcher(
+            "aider",
+            "Aider",
+            None,
+            installed=False,
+            translated_providers=frozenset({"openrouter"}),
+        ),
     ]
     config = configured()
 
