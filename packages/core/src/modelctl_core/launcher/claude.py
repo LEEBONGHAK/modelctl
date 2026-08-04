@@ -1,29 +1,22 @@
 import shutil
 import subprocess
 
-from modelctl_core.launcher.base import Launcher
+from modelctl_core.launcher.base import LaunchRequest, Launcher, LauncherCapabilities
 
 
 class ClaudeCodeLauncher(Launcher):
     name = "claude"
     display_name = "Claude Code"
-    native_provider = "anthropic"
+    capabilities = LauncherCapabilities(native_provider="anthropic")
 
     def available(self) -> bool:
         return shutil.which("claude") is not None
 
-    def run(
-        self,
-        model: str,
-        extra_args: list[str] | None = None,
-        provider: str | None = None,
-    ) -> None:
-        del provider
-
+    def run(self, request: LaunchRequest) -> None:
         if not self.available():
             raise RuntimeError(
                 "Claude Code CLI not found. Install it and run `claude` once to authenticate."
             )
 
-        command = ["claude", "--model", model, *(extra_args or [])]
+        command = ["claude", "--model", request.model, *request.extra_args]
         subprocess.run(command, check=True)

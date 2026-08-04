@@ -98,13 +98,20 @@ Local state defaults:
 
 All launchers forward native arguments as subprocess argument lists without shell execution. Aider translates OpenRouter model IDs to `openrouter/<provider>/<model>`.
 
+The runtime contract now models these proven behaviors explicitly:
+
+- Immutable `LaunchRequest` containing model, provider, and native arguments
+- `LauncherCapabilities` declaring native-provider affinity, provider-agnostic acceptance, and translated providers
+- Capability-driven recommendations instead of hard-coded launcher IDs
+- Shared request semantics across execution, compatibility policy, and doctor diagnostics
+
 ### Management, diagnostics, and compatibility
 
 - `modelctl launchers list`
 - `modelctl launchers recommend [--apply]`
 - `modelctl launchers use <launcher-id>`
 - Installation-state and active-launcher display
-- Provider-aware recommendation of Aider for OpenRouter and native launchers for supported native providers
+- Provider-aware recommendation of translating launchers and matching native launchers
 - Read-only recommendation inspection and explicit apply that refuses unavailable launchers
 - `modelctl doctor`
 - Configuration, provider, credential, model, launcher, compatibility, and database checks
@@ -169,14 +176,16 @@ All launchers forward native arguments as subprocess argument lists without shel
 | #20 | Add an owner-only fully validated release command | Merged |
 | #21 | Begin v0.2.0 with provider-aware launcher recommendations | Merged |
 | #23 | Add strict compatibility execution and native option forwarding | Merged |
+| #24 | Persist warn/strict compatibility policy and per-run overrides | Merged |
 
 ## Active v0.2.0 development
 
 - Completed first increment: provider-aware launcher recommendation and explicit safe apply in PR #21
 - Completed second increment: strict compatibility execution and reliable native option forwarding in PR #23
-- Active third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
+- Completed third increment: persisted compatibility policy and per-run warn/strict overrides in PR #24
+- Active fourth increment: immutable launch requests and explicit launcher capabilities in PR #25
 - Version state: coordinated `0.2.0`, `status = "draft"`, PyPI disabled
-- Compatibility guarantee: configurations without a policy remain warning-only; strict behavior is selected explicitly through configuration or a run override
+- Compatibility guarantee: the execution-contract refactor changes no CLI command, configuration key, subprocess argument order, or Aider model translation behavior
 
 ## Architecture snapshot
 
@@ -192,27 +201,27 @@ docs/                project, release, security, and PR documentation
 ```text
 Typer command
   -> application Container
-  -> service
-  -> credential / provider / repository / launcher registry
-  -> external CLI or API
+  -> LauncherService
+  -> immutable LaunchRequest + LauncherCapabilities
+  -> launcher registry
+  -> external CLI
 ```
 
 ## Known limitations and deferred work
 
 - No PyPI publication
 - Automatic compatibility remediation is not implemented
-- Compatibility decisions still use launcher-native-provider matching rather than a full capability matrix
+- Capabilities describe current provider routing but do not yet model every launcher feature or option
 - Plugin-based launcher discovery is deferred
-- Execution-target and launch-request value objects are not yet formalized
 - Full static type-check enforcement is not yet a quality gate
 - Local plaintext credential fallback remains unencrypted and should be used only when explicitly accepted
 - The security review is source- and test-based, not an independent penetration test
 
 ## Next priorities
 
-1. Validate and merge the persisted compatibility-policy workflow.
-2. Refactor launcher capabilities and execution requests around the proven recommendation and policy behavior.
-3. Add capability-aware compatibility guidance and automatic remediation only after the refactoring stabilizes.
+1. Validate and merge the launcher execution-contract refactor.
+2. Add capability-aware remediation planning without silently changing configuration.
+3. Extend capabilities only when additional launcher integrations expose concrete requirements.
 4. Reintroduce profile management only with a complete user workflow and tests.
 5. Plan a separate reviewed PyPI publication milestone when ownership and Trusted Publishing are ready.
 

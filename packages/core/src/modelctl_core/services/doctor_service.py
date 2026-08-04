@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 from sqlalchemy import text
 
+from modelctl_core.launcher.base import LaunchRequest
+
 
 @dataclass(frozen=True)
 class DiagnosticCheck:
@@ -104,7 +106,8 @@ class DoctorService:
             )
 
         checker = getattr(launcher, "compatibility_warning", None)
-        warning = checker(provider_id, model) if callable(checker) else None
+        request = LaunchRequest.create(model=model, provider=provider_id)
+        warning = checker(request) if callable(checker) else None
         if warning:
             return DiagnosticCheck("Compatibility", "warning", warning)
         return DiagnosticCheck(

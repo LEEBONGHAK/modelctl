@@ -1,25 +1,18 @@
 import shutil
 import subprocess
 
-from modelctl_core.launcher.base import Launcher
+from modelctl_core.launcher.base import LaunchRequest, Launcher, LauncherCapabilities
 
 
 class GeminiCliLauncher(Launcher):
     name = "gemini"
     display_name = "Gemini CLI"
-    native_provider = "google"
+    capabilities = LauncherCapabilities(native_provider="google")
 
     def available(self) -> bool:
         return shutil.which("gemini") is not None
 
-    def run(
-        self,
-        model: str,
-        extra_args: list[str] | None = None,
-        provider: str | None = None,
-    ) -> None:
-        del provider
-
+    def run(self, request: LaunchRequest) -> None:
         if not self.available():
             raise RuntimeError(
                 "Gemini CLI not found. Install it with: "
@@ -27,6 +20,6 @@ class GeminiCliLauncher(Launcher):
             )
 
         subprocess.run(
-            ["gemini", "--model", model, *(extra_args or [])],
+            ["gemini", "--model", request.model, *request.extra_args],
             check=True,
         )
