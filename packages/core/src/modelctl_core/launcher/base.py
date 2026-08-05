@@ -1,52 +1,28 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class LauncherCapabilities:
-    """Static behavior exposed by a launcher implementation."""
-
-    native_provider: str | None = None
-    accepts_any_provider: bool = False
-    translated_providers: frozenset[str] = frozenset()
-
-    def accepts(self, provider: str | None) -> bool:
-        return (
-            provider is None
-            or self.accepts_any_provider
-            or provider == self.native_provider
-        )
-
-    def translates(self, provider: str) -> bool:
-        return provider in self.translated_providers
-
-
-@dataclass(frozen=True)
-class LaunchRequest:
-    """Validated modelctl input passed to one launcher execution."""
-
-    model: str
-    provider: str | None = None
-    extra_args: tuple[str, ...] = ()
-
-    @classmethod
-    def create(
-        cls,
-        model: str,
-        provider: str | None = None,
-        extra_args: list[str] | tuple[str, ...] | None = None,
-    ) -> "LaunchRequest":
-        return cls(
-            model=model,
-            provider=provider,
-            extra_args=tuple(extra_args or ()),
-        )
+from modelctl_sdk import (
+    LAUNCHER_PLUGIN_CONTRACT_VERSION,
+    LaunchRequest,
+    LauncherCapabilities,
+    LauncherMetadata,
+)
 
 
 class Launcher(ABC):
     name: str
     display_name: str
     capabilities = LauncherCapabilities()
+    plugin_id = "modelctl.builtin"
+    contract_version = LAUNCHER_PLUGIN_CONTRACT_VERSION
+
+    @property
+    def metadata(self) -> LauncherMetadata:
+        return LauncherMetadata(
+            plugin_id=self.plugin_id,
+            launcher_id=self.name,
+            display_name=self.display_name,
+            contract_version=self.contract_version,
+        )
 
     def compatibility_warning(self, request: LaunchRequest) -> str | None:
         """Return a non-blocking warning for a potentially incompatible request."""
@@ -72,6 +48,14 @@ class Launcher(ABC):
         )
 
     @abstractmethod
+    def available(self) -> bool:
+        """Return whether the launcher executable is available locally."""
+        raise NotImplementedError
+
+    @abstractmethod
     def run(self, request: LaunchRequest) -> None:
         """Launch an agent from one immutable execution request."""
         raise NotImplementedError
+
+
+__all__ = ["LaunchRequest", "Launcher", "LauncherCapabilities", "LauncherMetadata"]
