@@ -4,10 +4,9 @@ on:
   push:
     branches:
       - feat/v0.3.0-named-profiles
-  pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-lock:
@@ -15,8 +14,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
 
       - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
         with:
@@ -25,8 +22,13 @@ jobs:
       - name: Generate coordinated lock
         run: uv lock
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: v0.3.0-uv-lock
-          path: uv.lock
-          if-no-files-found: error
+      - name: Commit generated lock
+        run: |
+          if git diff --quiet -- uv.lock; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "chore(lock): coordinate v0.3.0 workspace versions"
+          git push origin HEAD:feat/v0.3.0-named-profiles
