@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/v0.3.0-named-profiles
+  pull_request:
 
 permissions:
   contents: read
