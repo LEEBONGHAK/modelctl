@@ -162,11 +162,14 @@ class ProfileService:
         profiles: dict[str, Profile] = {}
         for raw_name, raw_profile in raw_profiles.items():
             if not isinstance(raw_name, str):
-                raise ValueError("Invalid profiles configuration: names must be strings.")
+                raise ValueError(
+                    "Invalid profiles configuration: names must be strings."
+                )
             normalized = self.normalize_name(raw_name)
             if normalized != raw_name:
                 raise ValueError(
-                    f"Invalid stored profile name '{raw_name}'; expected '{normalized}'."
+                    "Invalid stored profile name "
+                    f"'{raw_name}'; expected '{normalized}'."
                 )
             profiles[normalized] = self._profile_from_mapping(
                 normalized,
@@ -206,7 +209,8 @@ class ProfileService:
         policy = self._required_string(
             raw_profile,
             "compatibility_policy",
-            f"Invalid profile '{name}': compatibility_policy must be a non-empty string.",
+            f"Invalid profile '{name}': compatibility_policy must be "
+            "a non-empty string.",
         )
         if policy != policy.lower():
             raise ValueError(
