@@ -6,6 +6,7 @@ from modelctl_cli.commands.doctor import doctor
 from modelctl_cli.commands.launchers import launchers_app
 from modelctl_cli.commands.models import models_app
 from modelctl_cli.commands.plugins import plugins_app
+from modelctl_cli.commands.profiles import profiles_app
 from modelctl_cli.commands.root import register_root_commands
 from modelctl_cli.commands.run import run
 from modelctl_cli.commands.use import use
@@ -18,6 +19,7 @@ app = typer.Typer(
 register_root_commands(app)
 
 app.add_typer(config_app, name="config")
+app.add_typer(profiles_app, name="profiles")
 app.add_typer(launchers_app, name="launchers")
 app.add_typer(plugins_app, name="plugins")
 app.add_typer(models_app, name="models")

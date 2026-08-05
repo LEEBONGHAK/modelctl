@@ -6,7 +6,20 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing compatibility, and launching coding-agent CLIs consistently.
 
-> Current ready development version: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+> Active development version: `0.3.0` (`draft`). Latest ready release: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+
+## v0.3.0 development
+
+The first v0.3.0 increment adds named configuration profiles:
+
+- save provider, model, launcher, and compatibility policy as one snapshot
+- list and inspect saved profiles
+- validate the complete snapshot before one atomic configuration write
+- reject malformed profiles and unexpected fields
+- keep credentials and launcher authentication outside profiles
+- preserve existing selection, diagnostics, remediation, and execution behavior
+
+The current increment passes Ruff, package validation, installed-wheel smoke tests, and all 150 tests on Ubuntu, macOS, and Windows with Python 3.13.
 
 ## v0.2.0 highlights
 
@@ -19,7 +32,6 @@
 - Native launcher argument forwarding without shell execution
 - Keyring-first credential storage with explicit plaintext fallback
 - Provider credentials kept separate from launcher authentication
-- Provider API contract tests, 138 cross-platform tests, package builds, and installed-wheel smoke tests
 - Locked `cryptography 50.0.0` and dependency audit without an advisory exclusion
 - Validated immutable GitHub Release artifacts with SHA-256 checksums
 
@@ -98,6 +110,22 @@ modelctl run
 
 Provider credentials managed by modelctl are used for catalog synchronization only. They are not copied from keyring storage into launcher subprocess environments; each coding-agent CLI owns its supported authentication flow.
 
+## Named profiles
+
+Save the current effective provider, model, launcher, and compatibility policy:
+
+```bash
+modelctl profiles save work
+modelctl profiles list
+modelctl profiles show work
+modelctl profiles use work
+modelctl profiles delete work
+```
+
+Profile names are normalized to lowercase and may contain letters, numbers, dots, underscores, and hyphens. Applying a profile validates its provider/model selection and launcher before making one atomic configuration write. Unrelated configuration and other saved profiles are preserved.
+
+Profiles contain no credentials, environment secrets, or launcher-managed authentication data. Malformed, partial, or extended profile objects are rejected explicitly.
+
 ## Launcher management
 
 ```bash
@@ -165,6 +193,8 @@ The explicitly approved fallback is unencrypted plaintext. Protected paths use a
 ~/.local/share/modelctl/modelctl.db
 ```
 
+Named profiles are stored inside `config.json`. They never reference or copy values from `credentials.json` or the operating-system keyring.
+
 ## Development and validation
 
 ```bash
@@ -172,7 +202,7 @@ uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
 uv run pytest
-python scripts/release_validation.py --tag v0.2.0
+python scripts/release_validation.py
 ```
 
 GitHub Actions independently runs provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation, release metadata checks, and checksum generation.
@@ -181,7 +211,7 @@ GitHub Actions independently runs provider contract tests, the complete pytest s
 
 Release decisions are declared in [`release.toml`](release.toml), changes in [`CHANGELOG.md`](CHANGELOG.md), and the completion checklist in [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md).
 
-The `0.2.0` manifest is `ready`. A reviewed pull request targeting `main` must still pass every dry-run gate. After merge, the release workflow checks out the exact `main` merge commit and repeats all gates before creating immutable tag `v0.2.0` and one GitHub Release.
+The `0.3.0` manifest is `draft`; feature pull requests cannot publish it. The latest ready release remains `0.2.0` on `main`. A future dedicated readiness pull request must complete every v0.3.0 criterion before promotion and publication are possible.
 
 Existing tags and release assets are never overwritten. **No workflow publishes packages to PyPI.** See [`docs/RELEASING.md`](docs/RELEASING.md).
 
@@ -200,10 +230,10 @@ docs/                provider, project, release, security, and PR documentation
 
 See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, dependency security, release trust boundaries, and known limitations.
 
-## Post-v0.2.0 roadmap
+## Remaining v0.3.0 roadmap
 
-- Extract shared provider HTTP helpers only where proven integrations have identical requirements
-- Extend remediation only with safe, reversible, previewable actions
-- Add tested profile management and plugin-based launcher discovery
-- Introduce static type-check enforcement as a separate quality milestone
+- Add profile portability only where the validated workflow proves a concrete need
+- Define a minimal, versioned launcher plugin SDK contract
+- Discover installed launcher plugins without arbitrary filesystem imports or automatic downloads
+- Add plugin diagnostics and static type-check enforcement as separate milestones
 - Review PyPI Trusted Publishing separately

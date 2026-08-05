@@ -4,6 +4,32 @@ All notable changes to `modelctl` are documented in this file.
 
 The project follows Semantic Versioning. Until a stable `1.0.0` release, minor versions may include breaking changes with migration notes.
 
+## [0.3.0]
+
+Third development release in progress.
+
+### Added
+
+- Named configuration snapshots through `modelctl profiles save <name>`.
+- Profile inspection through `modelctl profiles list` and `modelctl profiles show <name>`.
+- Validated profile application through `modelctl profiles use <name>`.
+- Explicit profile deletion through `modelctl profiles delete <name>`.
+- Service and CLI regression tests for profile lifecycle, normalization, malformed data, and validation failures.
+
+### Changed
+
+- Coordinated the workspace, CLI, core, SDK, and lockfile versions at `0.3.0`.
+- Marked `release.toml` as `draft` while v0.3.0 development is active.
+- Applied profiles as one complete configuration snapshot instead of a hidden runtime overlay.
+- Preserved unrelated configuration keys and saved profiles when applying a profile.
+
+### Security
+
+- Profiles contain only provider, model, launcher, and compatibility policy values.
+- Credential material and launcher-managed authentication data are never included in profiles.
+- Unknown or extra stored profile fields are rejected instead of being silently accepted.
+- Profile application validates the complete model and launcher selection before one atomic configuration write.
+
 ## [0.2.0] - 2026-08-04
 
 Second development release.

@@ -37,6 +37,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #30 | [PR-030.md](PR-030.md) | Patched cryptography lock and security-issue closure / cryptography 패치 lock·보안 이슈 종료 |
 | #31 | [PR-031.md](PR-031.md) | Declare v0.2.0 ready and promote the validated lineage to main / v0.2.0 ready 선언·검증 계보 main 승격 |
 | #33 | [PR-033.md](PR-033.md) | Remove stale audit exclusion and enforce clean ready releases / 오래된 audit 예외 제거·clean ready release 강제 |
+| #36 | [PR-036.md](PR-036.md) | Begin v0.3.0 with validated named profiles / 검증된 이름 있는 profile로 v0.3.0 시작 |
 
 ## Document format / 문서 형식
 
