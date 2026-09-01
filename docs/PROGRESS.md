@@ -20,12 +20,13 @@ Development principle:
 - Manifest status: `ready`
 - Current phase: dedicated readiness promotion to `main`
 - Readiness branch: `release/v0.3.0-readiness`
+- Active readiness pull request: #43
 - Validated `refac` baseline commit: `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03`
 - Validated baseline tree: `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 
-The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482`. Version 0.3.0 is now a validated readiness candidate awaiting promotion of its dedicated readiness branch to `main`.
+The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482`. Version 0.3.0 is now a validated readiness candidate awaiting promotion through PR #43.
 
 ## Completed v0.3.0 increments
 
@@ -99,9 +100,9 @@ Explicit non-goals remain:
 
 ## Release path
 
-1. Open the dedicated `main` ← `release/v0.3.0-readiness` pull request.
-2. Require that exact readiness head to pass CI, Test, Package, and complete Release validation.
-3. Merge only the validated readiness head into `main`.
+1. PR #43 promotes `release/v0.3.0-readiness` to `main`.
+2. Require the exact PR #43 readiness head to pass CI, Test, Package, and complete Release validation.
+3. Merge only that validated readiness head into `main`.
 4. Let the release workflow independently revalidate the exact `main` merge commit before creating immutable tag `v0.3.0` and its GitHub Release.
 5. Never overwrite an existing tag or release asset; PyPI publication remains disabled.
 
