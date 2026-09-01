@@ -198,10 +198,15 @@ class ProfileService:
             raise ValueError(f"Invalid profile '{name}': expected an object.")
 
         stored_profile = cast(dict[object, object], raw_profile)
-        fields = set(stored_profile)
+        fields: set[str] = set()
+        for field in stored_profile:
+            if not isinstance(field, str):
+                raise ValueError(f"Invalid profile '{name}': field names must be strings.")
+            fields.add(field)
+
         if fields != PROFILE_FIELDS:
             missing = sorted(PROFILE_FIELDS - fields)
-            extra = sorted(str(field) for field in fields - PROFILE_FIELDS)
+            extra = sorted(fields - PROFILE_FIELDS)
             details: list[str] = []
             if missing:
                 details.append(f"missing {', '.join(missing)}")
