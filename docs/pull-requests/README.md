@@ -43,6 +43,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #39 | [PR-039.md](PR-039.md) | Installed launcher entry-point discovery and isolation / 설치 launcher entry-point 탐색·격리 |
 | #40 | [PR-040.md](PR-040.md) | Plugin-aware doctor diagnostics and compatibility hardening / plugin-aware doctor 진단·호환성 강화 |
 | #41 | [PR-041.md](PR-041.md) | Strict static type-check enforcement for v0.3 boundaries / v0.3 경계 strict static type-check 강제 |
+| #42 | [PR-042.md](PR-042.md) | Final v0.3.0 documentation and release-criteria review / v0.3.0 최종 문서·release criteria 검토 |
 
 ## Document format / 문서 형식
 
