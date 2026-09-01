@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from modelctl_core.launcher.aider import AiderLauncher
 from modelctl_core.launcher.base import Launcher
 from modelctl_core.launcher.claude import ClaudeCodeLauncher
