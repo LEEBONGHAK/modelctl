@@ -37,7 +37,8 @@ Version 0.3.0 is under active development. This checklist records the completion
 - [x] Build all wheel and source distributions.
 - [x] Install built wheels together and smoke-test installed imports and CLI startup.
 - [x] Install a real launcher-plugin fixture and verify entry-point discovery from an isolated wheel environment.
-- [ ] Add static type-check enforcement at the SDK, profile, and plugin boundaries.
+- [x] Enforce strict basedpyright checks at the SDK, profile, and launcher-plugin boundaries in primary CI.
+- [x] Ship PEP 561 `py.typed` markers and verify them from installed SDK/core wheels.
 - [ ] Complete all remaining v0.3.0 increments and final documentation.
 - [ ] Run the final clean dependency audit, release dry-run, and checksum validation.
 
@@ -63,9 +64,9 @@ Version 0.3.0 is under active development. This checklist records the completion
 
 - [x] `CHANGELOG.md` contains an active `0.3.0` heading.
 - [x] `release.toml` declares `0.3.0`, `draft`, development channel, and disabled PyPI publication.
+- [x] The release workflow independently repeats audit, lint, strict type checking, tests, builds, installed-wheel smoke checks, and checksums.
 - [ ] All v0.3.0 completion criteria are satisfied and independently reviewed.
 - [ ] A dedicated readiness pull request promotes the exact validated `refac` lineage to `main`.
-- [ ] The release workflow independently repeats audit, lint, tests, builds, installed-wheel smoke checks, and checksums.
 - [ ] Only the exact validated `main` commit may receive immutable tag `v0.3.0` and its GitHub Release.
 
 ## 한국어
@@ -96,7 +97,8 @@ Version 0.3.0 is under active development. This checklist records the completion
 - [x] 모든 wheel과 source distribution을 빌드합니다.
 - [x] 생성한 wheel을 함께 설치하고 package import와 CLI 실행을 smoke test합니다.
 - [x] 실제 launcher-plugin fixture를 설치하고 격리 wheel 환경에서 entry-point discovery를 검증합니다.
-- [ ] SDK, profile, plugin 경계에 static type-check 강제를 추가합니다.
+- [x] SDK, profile, launcher-plugin 경계에 strict basedpyright 검사를 primary CI gate로 강제합니다.
+- [x] PEP 561 `py.typed` marker를 배포하고 설치된 SDK/core wheel에서 실제 포함 여부를 검증합니다.
 - [ ] 남은 v0.3.0 기능과 최종 문서를 완료합니다.
 - [ ] 최종 clean dependency audit, release dry-run, checksum 검증을 수행합니다.
 
@@ -122,7 +124,7 @@ Version 0.3.0 is under active development. This checklist records the completion
 
 - [x] `CHANGELOG.md`에 개발 중인 `0.3.0` 항목이 존재합니다.
 - [x] `release.toml`이 `0.3.0`, `draft`, development channel, PyPI 비활성화를 선언합니다.
+- [x] Release workflow가 audit, lint, strict type check, 전체 테스트, build, 설치 wheel smoke test, checksum을 독립적으로 반복합니다.
 - [ ] 모든 v0.3.0 완료 기준을 충족하고 독립 검토합니다.
 - [ ] 전용 readiness PR에서 정확히 검증된 `refac` 계보를 `main`으로 승격합니다.
-- [ ] Release workflow가 audit, lint, 전체 테스트, build, 설치 wheel smoke test, checksum을 독립적으로 반복합니다.
 - [ ] 정확히 검증된 `main` commit에만 불변 tag `v0.3.0`과 GitHub Release를 생성합니다.
