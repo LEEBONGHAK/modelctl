@@ -3,7 +3,8 @@
 ## Version / 버전
 
 - Version: `0.3.0`
-- Status: **Draft — feature complete, readiness validation pending**
+- Status: **Draft**
+- Phase: feature complete; readiness validation pending / 기능 완료; readiness validation 대기
 - Channel: development release / 개발 버전
 - Release branch: `main`
 - Development branch: `refac`
