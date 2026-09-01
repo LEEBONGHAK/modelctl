@@ -78,7 +78,18 @@ class DoctorService:
         launcher = self.launchers.get(launcher_id)
         if launcher is None:
             return DiagnosticCheck("Launcher", "error", f"Unknown launcher: {launcher_id}")
-        if launcher.available():
+
+        try:
+            available = launcher.available()
+        except Exception as error:
+            return DiagnosticCheck(
+                "Launcher",
+                "error",
+                f"{launcher.display_name} availability check failed: "
+                f"{type(error).__name__}: {error}",
+            )
+
+        if available:
             return DiagnosticCheck("Launcher", "ok", f"{launcher.display_name} is installed")
         return DiagnosticCheck(
             "Launcher",
