@@ -20,6 +20,8 @@ Third development release in progress.
 - Launcher source and plugin load status in `modelctl launchers list`.
 - Installed-package launcher plugin fixture in packaging smoke tests.
 - Plugin-aware `modelctl doctor` checks for distribution origin, plugin ID, SDK contract compatibility, and executable availability.
+- Strict basedpyright enforcement for the public SDK, named-profile, and launcher-plugin boundaries.
+- PEP 561 `py.typed` markers for shipped SDK and core packages, verified from installed wheels.
 
 ### Changed
 
@@ -31,6 +33,8 @@ Third development release in progress.
 - Deterministically reject duplicate external launcher IDs instead of choosing one based on environment ordering.
 - Treat unrelated broken or duplicate plugins as doctor warnings while escalating failure of the currently selected plugin to an error.
 - Hardened external launcher regression coverage across recommendation, remediation, strict compatibility, immutable argument forwarding, and unavailable recommendation apply.
+- Replaced dynamic profile collaborators with structural Protocol boundaries and narrowed persisted profile/plugin data after runtime validation.
+- Added the same strict type-check gate to release validation so release paths cannot bypass primary CI typing.
 
 ### Security
 
@@ -102,7 +106,7 @@ First development release.
 
 - OpenRouter credential storage and model-catalog synchronization.
 - Interactive and non-interactive provider/model selection.
-- Persistent provider, model, and launcher configuration.
+- Persistent provider/model/launcher configuration.
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers.
 - Native launcher argument forwarding.
 - Automatic OpenRouter model translation for Aider.
