@@ -15,16 +15,17 @@ Development principle:
 ## Branch and release state
 
 - Canonical release branch: `main`
-- Ongoing development branch: `refac`
-- Latest ready and published version: `0.2.0`
-- Active development version: `0.3.0`
-- Manifest status: `draft`
-- Current phase: final documentation review and readiness preparation
-- Active feature branch: `feat/v0.3.0-final-docs`
+- Development branch: `refac`
+- Ready version: `0.3.0`
+- Manifest status: `ready`
+- Current phase: dedicated readiness promotion to `main`
+- Readiness branch: `release/v0.3.0-readiness`
+- Validated `refac` baseline commit: `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03`
+- Validated baseline tree: `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 
-The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482` after clean audit, Ruff, tests, builds, installed-wheel smoke checks, and checksums passed.
+The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482`. Version 0.3.0 is now a validated readiness candidate awaiting promotion of its dedicated readiness branch to `main`.
 
 ## Completed v0.3.0 increments
 
@@ -68,11 +69,26 @@ PR #38 contains the same discovery implementation history but was closed unmerge
 - ship PEP 561 `py.typed` markers for SDK/core and verify them from installed wheels
 - repeat the strict type gate in the complete release workflow
 
-## Final v0.3.0 scope review
+### Final documentation and scope review — PR #42
 
-The planned v0.3.0 functional scope is complete. Profile portability is explicitly deferred because no concrete usage need has been demonstrated; it is not a release blocker.
+- reconcile English/Korean release documentation with the completed v0.3.0 feature set
+- resolve profile portability as an explicitly deferred, evidence-driven follow-up rather than a release blocker
+- preserve the exact `Draft` release-validation contract through final documentation review
+- complete full CI, Package, Test, and Release validation with no unresolved review threads
 
-Explicit non-goals for v0.3.0 remain:
+## Readiness validation evidence
+
+The final PR #42 head `1e82ccf819f14fad3b6d6f2a986f0247703b632e` passed CI, Package, Test, and complete Release validation. Its Git tree is `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`.
+
+After PR #42 merged, exact `refac` commit `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03` retained that identical tree. The merge commit independently passed push CI, Package, and the full Python 3.13 test matrix on Ubuntu, macOS, and Windows.
+
+The readiness branch was created directly from that exact baseline commit. Its changes are limited to release-state and release-facing documentation finalization; no runtime feature is added.
+
+## Final v0.3.0 scope
+
+Profile portability is explicitly deferred because no concrete usage need has been demonstrated. It is not a v0.3.0 release blocker.
+
+Explicit non-goals remain:
 
 - provider plugins
 - automatic plugin installation or update
@@ -81,37 +97,13 @@ Explicit non-goals for v0.3.0 remain:
 - credential export
 - PyPI publication
 
-`release.toml` remains `draft` through final documentation review and full readiness validation. Only the dedicated `main`-targeting readiness PR may switch it to `ready`.
+## Release path
 
-## Stable v0.2.0 workflows
-
-### OpenRouter through Aider
-
-```bash
-modelctl auth login openrouter
-modelctl models sync openrouter
-modelctl use --provider openrouter --model anthropic/claude-sonnet-4
-modelctl launchers remediate --apply
-modelctl config set compatibility-policy strict
-modelctl doctor
-modelctl run
-```
-
-### Native providers
-
-- Anthropic catalog through Claude Code
-- Google Gemini catalog through Gemini CLI
-- OpenAI native catalog through Codex CLI
-
-Provider catalog credentials remain separate from launcher authentication and are never injected from keyring storage into launcher subprocess environments.
-
-## Remaining v0.3.0 sequence
-
-1. Complete this final documentation and release-criteria review on `refac`.
-2. Run one clean full readiness validation of the completed tree: dependency audit, Ruff, strict type check, provider contracts, all cross-platform tests, all distributions, installed-wheel/plugin smoke checks, release dry-run, and checksums.
-3. Create one dedicated readiness branch from that exact validated `refac` lineage, change release metadata from `draft` to `ready`, finalize release-facing documentation, and open `main` ← readiness PR.
-4. Require the `main`-targeting PR to independently pass CI, Test, Package, and Release workflows before merge.
-5. After merge, allow the release workflow to revalidate the exact `main` merge commit before creating immutable tag `v0.3.0` and its GitHub Release.
+1. Open the dedicated `main` ← `release/v0.3.0-readiness` pull request.
+2. Require that exact readiness head to pass CI, Test, Package, and complete Release validation.
+3. Merge only the validated readiness head into `main`.
+4. Let the release workflow independently revalidate the exact `main` merge commit before creating immutable tag `v0.3.0` and its GitHub Release.
+5. Never overwrite an existing tag or release asset; PyPI publication remains disabled.
 
 ## Validation commands
 
