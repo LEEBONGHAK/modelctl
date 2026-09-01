@@ -293,3 +293,35 @@ def test_doctor_reports_plugin_availability_check_failure(monkeypatch):
     assert check.status == "warning"
     assert "availability check failed" in check.detail
     assert "RuntimeError: probe failed" in check.detail
+
+
+def test_doctor_keeps_running_when_selected_plugin_availability_probe_fails(monkeypatch):
+    monkeypatch.setattr(Path, "exists", lambda self: True)
+    plugin = FakeLauncher(
+        available=RuntimeError("probe failed"),
+        metadata=SimpleNamespace(
+            plugin_id="example.plugin",
+            launcher_id="custom",
+            contract_version="1.0",
+        ),
+    )
+    service = service_for(
+        {
+            "provider": "openrouter",
+            "default_model": "custom-model",
+            "launcher": "custom",
+        },
+        FakeLaunchers(
+            FakeLauncher(),
+            extra={"custom": plugin},
+            records=[plugin_record("custom")],
+        ),
+    )
+
+    checks = {check.name: check for check in service.run()}
+
+    assert checks["Launcher"].status == "error"
+    assert "availability check failed" in checks["Launcher"].detail
+    assert checks["Launcher plugin custom"].status == "error"
+    assert "RuntimeError: probe failed" in checks["Launcher plugin custom"].detail
+    assert checks["Database"].status == "ok"
