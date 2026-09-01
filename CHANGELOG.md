@@ -15,6 +15,10 @@ Third development release in progress.
 - Validated profile application through `modelctl profiles use <name>`.
 - Explicit profile deletion through `modelctl profiles delete <name>`.
 - Service and CLI regression tests for profile lifecycle, normalization, malformed data, and validation failures.
+- Public launcher plugin SDK contract with immutable launch requests, explicit capabilities, stable metadata IDs, and major-version compatibility validation.
+- Installed launcher discovery from the dedicated `modelctl.launchers` Python entry-point group.
+- Launcher source and plugin load status in `modelctl launchers list`.
+- Installed-package launcher plugin fixture in packaging smoke tests.
 
 ### Changed
 
@@ -22,6 +26,8 @@ Third development release in progress.
 - Marked `release.toml` as `draft` while v0.3.0 development is active.
 - Applied profiles as one complete configuration snapshot instead of a hidden runtime overlay.
 - Preserved unrelated configuration keys and saved profiles when applying a profile.
+- Adapted successful external launcher plugins to the same core launcher runtime used by built-ins.
+- Deterministically reject duplicate external launcher IDs instead of choosing one based on environment ordering.
 
 ### Security
 
@@ -29,6 +35,9 @@ Third development release in progress.
 - Credential material and launcher-managed authentication data are never included in profiles.
 - Unknown or extra stored profile fields are rejected instead of being silently accepted.
 - Profile application validates the complete model and launcher selection before one atomic configuration write.
+- Launcher discovery is restricted to already-installed Python package metadata; arbitrary filesystem paths, remote registries, downloads, and automatic installation remain unsupported.
+- Entry points that collide with built-in launcher IDs are rejected before their code is loaded.
+- Broken, incompatible, or malformed launcher plugins are isolated and remain visible in diagnostics without replacing built-ins.
 
 ## [0.2.0] - 2026-08-04
 
