@@ -69,6 +69,7 @@ Version 0.3.0 has completed its planned functional scope, final documentation re
 - [x] The PR #42 final head and merged `refac` commit have the identical Git tree `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`.
 - [x] The exact merged `refac` baseline commit independently passed push CI, Package, and Ubuntu/macOS/Windows Test workflows.
 - [x] The readiness branch starts from exact baseline commit `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03` and introduces no runtime feature change.
+- [x] PR #43 readiness head `af868d51ecc3d59345741805293a83138bc2480f` passed CI, Package, Release, and all three Python 3.13 Test jobs; the full suite reported 172 passed.
 
 ### Release criteria
 
@@ -76,7 +77,7 @@ Version 0.3.0 has completed its planned functional scope, final documentation re
 - [x] `release.toml` declares `0.3.0`, `ready`, development channel, and disabled PyPI publication on the dedicated readiness branch.
 - [x] The release workflow independently repeats audit, lint, strict type checking, tests, builds, installed-wheel smoke checks, and checksums.
 - [x] The completed `refac` tree passes one final full readiness validation with no unresolved review threads.
-- [ ] The dedicated `main`-targeting readiness pull request passes CI, Test, Package, and Release validation before merge.
+- [x] The dedicated `main`-targeting readiness pull request passes CI, Test, Package, and Release validation before merge.
 - [x] Only the exact validated `main` commit may receive immutable tag `v0.3.0` and its GitHub Release; existing tags/assets cannot be overwritten.
 
 ## 한국어
@@ -136,6 +137,7 @@ Version 0.3.0 has completed its planned functional scope, final documentation re
 - [x] PR #42 최종 head와 병합된 `refac` commit은 동일한 Git tree `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`를 가집니다.
 - [x] 정확한 `refac` baseline merge commit에서도 push CI, Package, Ubuntu/macOS/Windows Test가 독립적으로 통과했습니다.
 - [x] Readiness branch는 정확한 baseline commit `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03`에서 분기했으며 runtime 기능 변경을 추가하지 않습니다.
+- [x] PR #43 readiness head `af868d51ecc3d59345741805293a83138bc2480f`에서 CI, Package, Release, Python 3.13 기반 3개 OS Test가 모두 통과했고 전체 suite는 172 passed였습니다.
 
 ### 릴리스 기준
 
@@ -143,5 +145,5 @@ Version 0.3.0 has completed its planned functional scope, final documentation re
 - [x] 전용 readiness branch에서 `release.toml`이 `0.3.0`, `ready`, development channel, PyPI 비활성화를 선언합니다.
 - [x] Release workflow가 audit, lint, strict type check, 전체 테스트, build, 설치 wheel smoke test, checksum을 독립적으로 반복합니다.
 - [x] 완료된 `refac` tree가 미해결 review thread 없이 최종 full readiness validation을 통과했습니다.
-- [ ] `main` 대상 전용 readiness PR이 병합 전에 CI, Test, Package, Release validation을 모두 통과합니다.
+- [x] `main` 대상 전용 readiness PR이 병합 전에 CI, Test, Package, Release validation을 모두 통과합니다.
 - [x] 정확히 검증된 `main` commit에만 불변 tag `v0.3.0`과 GitHub Release를 생성할 수 있으며 기존 tag/asset은 덮어쓰지 않습니다.
