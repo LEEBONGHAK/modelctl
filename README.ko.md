@@ -6,11 +6,11 @@
 
 `modelctl`은 AI provider와 모델 선택, 로컬 credential과 기본 설정 관리, 호환성 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 기능 완료 후보는 `0.3.0`(`draft`, readiness validation 대기)이며 최신 ready release는 `0.2.0`입니다. `main`은 공식 release branch이고 PyPI 게시는 비활성화되어 있습니다.
+> 최신 ready release는 `0.3.0`입니다. `main`은 공식 release branch이고 PyPI 게시는 비활성화되어 있습니다.
 
-## v0.3.0 후보 범위
+## v0.3.0 주요 기능
 
-완료된 v0.3.0 기능 범위에는 다음이 포함됩니다.
+버전 0.3.0에는 다음 기능이 추가되었습니다.
 
 - provider/model/launcher/compatibility-policy를 묶는 이름 있는 profile
 - 공개 versioned launcher plugin SDK 계약
@@ -220,7 +220,7 @@ GitHub Actions는 strict v0.3 boundary type check, provider contract 테스트, 
 
 Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.md`](CHANGELOG.md), 완료 기준은 [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md)에서 관리합니다.
 
-`0.3.0` manifest는 최종 readiness validation 동안에도 `draft`를 유지합니다. 최신 ready release는 `main`의 `0.2.0`입니다. 오직 `main`을 대상으로 하는 전용 readiness Pull Request만 `0.3.0`을 `ready`로 변경하고 정확히 검증된 `refac` 계보를 승격할 수 있습니다.
+`0.3.0` manifest는 `ready` 상태입니다. Release 경로는 검증된 readiness 계보만 `main`으로 승격하고, 불변 tag `v0.3.0`과 GitHub Release를 만들기 전에 정확한 `main` merge commit에서 audit, lint, strict type check, 전체 테스트, build, 설치 wheel smoke test, checksum을 다시 독립 검증합니다.
 
 기존 tag와 release asset은 덮어쓰지 않습니다. **어떤 workflow도 PyPI에 package를 게시하지 않습니다.** 자세한 절차는 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
 
@@ -239,10 +239,9 @@ docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
 
 Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, 알려진 한계는 [`SECURITY.md`](SECURITY.md)를 참고하세요.
 
-## 남은 v0.3.0 릴리스 단계
+## v0.3.0 이후 검토 항목
 
-- 최종 문서 및 release criteria 검토 완료
-- 완료된 `refac` tree에서 한 번의 최종 full readiness validation 수행
-- `main` 대상 전용 readiness PR 생성 및 검증
-- 정확히 검증된 계보만 `main`으로 승격하고 tag 생성 전 release workflow가 다시 검증하도록 유지
-- PyPI Trusted Publishing은 v0.3.0 이후 별도로 검토하며 이번 릴리스 범위에서는 계속 제외
+- 실제 사용에서 구체적인 필요가 확인된 경우에만 profile portability 재검토
+- launcher-plugin 계약과 별도로 provider-plugin 아키텍처 검토
+- 설치 package 신뢰 경계를 약화하지 않는 plugin 배포·설치 UX 검토
+- PyPI Trusted Publishing 별도 검토; v0.3.0에서는 PyPI 게시를 계속 비활성화
