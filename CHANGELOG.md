@@ -4,9 +4,9 @@ All notable changes to `modelctl` are documented in this file.
 
 The project follows Semantic Versioning. Until a stable `1.0.0` release, minor versions may include breaking changes with migration notes.
 
-## [0.3.0]
+## [0.3.0] - 2026-09-01
 
-Third development release in progress.
+Third development release.
 
 ### Added
 
@@ -26,7 +26,7 @@ Third development release in progress.
 ### Changed
 
 - Coordinated the workspace, CLI, core, SDK, and lockfile versions at `0.3.0`.
-- Marked `release.toml` as `draft` while v0.3.0 development is active.
+- Kept `release.toml` in `draft` throughout feature development and final documentation review, then promoted it to `ready` only on the dedicated readiness branch.
 - Applied profiles as one complete configuration snapshot instead of a hidden runtime overlay.
 - Preserved unrelated configuration keys and saved profiles when applying a profile.
 - Adapted successful external launcher plugins to the same core launcher runtime used by built-ins.
@@ -35,6 +35,7 @@ Third development release in progress.
 - Hardened external launcher regression coverage across recommendation, remediation, strict compatibility, immutable argument forwarding, and unavailable recommendation apply.
 - Replaced dynamic profile collaborators with structural Protocol boundaries and narrowed persisted profile/plugin data after runtime validation.
 - Added the same strict type-check gate to release validation so release paths cannot bypass primary CI typing.
+- Deferred profile portability from v0.3.0 because no concrete workflow need was demonstrated.
 
 ### Security
 
