@@ -216,10 +216,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          existing_tag_sha="$(
+          existing_tag_sha=""
+          if ! existing_tag_sha="$(
             gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-              --jq '.object.sha' 2>/dev/null || true
-          )"
+              --jq '.object.sha' 2>/dev/null
+          )"; then
+            existing_tag_sha=""
+          fi
 
           if [[ "${AUTO_CREATE_TAG}" == "true" ]]; then
             if [[ -z "${existing_tag_sha}" ]]; then
