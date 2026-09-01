@@ -6,11 +6,11 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing compatibility, and launching coding-agent CLIs consistently.
 
-> Active development version: `0.3.0` (`draft`). Latest ready release: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+> Feature-complete candidate: `0.3.0` (`draft`, readiness validation pending). Latest ready release: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
 
-## v0.3.0 development
+## v0.3.0 candidate scope
 
-The working v0.3.0 path now includes:
+The completed v0.3.0 feature set includes:
 
 - named provider/model/launcher/compatibility-policy profiles
 - a public versioned launcher plugin SDK contract
@@ -21,6 +21,8 @@ The working v0.3.0 path now includes:
 - external launcher regression coverage across recommendation, remediation, strict compatibility, and argument forwarding
 - strict basedpyright enforcement at the public SDK, named-profile, and launcher-plugin boundaries
 - PEP 561 typed-package markers verified from installed SDK/core wheels
+
+Profile portability is intentionally deferred from v0.3.0 because no concrete usage need has been demonstrated. It can be revisited in a later version based on real workflow evidence rather than speculative scope.
 
 Installed launcher plugins are treated as trusted executable Python extensions. modelctl does not scan arbitrary plugin directories, download plugin code, or install/update plugins automatically.
 
@@ -218,7 +220,7 @@ GitHub Actions independently runs the strict v0.3 boundary type check, provider 
 
 Release decisions are declared in [`release.toml`](release.toml), changes in [`CHANGELOG.md`](CHANGELOG.md), and the completion checklist in [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md).
 
-The `0.3.0` manifest is `draft`; feature pull requests cannot publish it. The latest ready release remains `0.2.0` on `main`. A future dedicated readiness pull request must complete every v0.3.0 criterion before promotion and publication are possible.
+The `0.3.0` manifest remains `draft` through final readiness validation. The latest ready release remains `0.2.0` on `main`. Only a dedicated `main`-targeting readiness pull request may change `0.3.0` to `ready` and promote the exact validated `refac` lineage.
 
 Existing tags and release assets are never overwritten. **No workflow publishes packages to PyPI.** See [`docs/RELEASING.md`](docs/RELEASING.md).
 
@@ -237,9 +239,10 @@ docs/                provider, project, release, security, and PR documentation
 
 See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, dependency security, release trust boundaries, and known limitations.
 
-## Remaining v0.3.0 roadmap
+## Remaining v0.3.0 release steps
 
-- Add profile portability only where validated real usage proves a concrete need
-- Complete the v0.3.0 documentation and release-criteria review
-- Run the final full validation and dedicated readiness review before promotion to `main`
-- Review PyPI Trusted Publishing separately
+- Complete the final documentation and release-criteria review
+- Run one final full readiness validation of the completed `refac` tree
+- Open and validate the dedicated `main`-targeting readiness PR
+- Promote only the exact validated lineage to `main` and let the release workflow revalidate before tagging
+- Review PyPI Trusted Publishing separately after v0.3.0; it remains out of scope for this release
