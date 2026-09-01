@@ -19,6 +19,8 @@
 - `modelctl launchers list`의 plugin source 및 load status
 - `modelctl doctor`의 plugin-aware runtime health 진단
 - 외부 launcher의 recommendation, remediation, strict compatibility, argument forwarding 회귀 검증
+- 공개 SDK, named-profile, launcher-plugin 경계의 strict basedpyright 강제
+- 설치된 SDK/core wheel에서 검증하는 PEP 561 typed-package marker
 
 설치된 launcher plugin은 신뢰된 실행 가능 Python 확장으로 취급합니다. modelctl은 임의 plugin directory를 스캔하거나 plugin 코드를 다운로드하거나 plugin을 자동 설치·업데이트하지 않습니다.
 
@@ -205,11 +207,12 @@ modelctl auth login openrouter --allow-plaintext-fallback
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 python scripts/release_validation.py
 ```
 
-GitHub Actions는 provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 실제 launcher-plugin fixture를 포함한 격리 wheel 설치 검증, release metadata, checksum 생성을 독립적으로 검증합니다.
+GitHub Actions는 strict v0.3 boundary type check, provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 실제 launcher-plugin fixture와 `py.typed` marker를 포함한 격리 wheel 설치 검증, release metadata, checksum 생성을 독립적으로 검증합니다.
 
 ## 릴리스 정책
 
@@ -224,7 +227,7 @@ Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.m
 ```text
 apps/modelctl/       Typer CLI 애플리케이션
 packages/core/       runtime service, credential, provider, repository, launcher
-packages/sdk/        SDK 기반
+packages/sdk/        공개 launcher plugin SDK 기반
 scripts/             release 검증 helper
 tests/               회귀, 통합, 패키징, 보안 테스트
 docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
@@ -237,7 +240,6 @@ Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, �
 ## 남은 v0.3.0 로드맵
 
 - 검증된 실제 사용에서 구체적 필요성이 확인된 profile 이식 기능만 추가
-- SDK, profile, launcher-plugin 경계에 static type-check 강제 추가
 - v0.3.0 문서와 release criteria 최종 검토
-- `main` 승격 전 전용 readiness 검토 수행
+- `main` 승격 전 최종 full validation과 전용 readiness 검토 수행
 - PyPI Trusted Publishing 별도 검토

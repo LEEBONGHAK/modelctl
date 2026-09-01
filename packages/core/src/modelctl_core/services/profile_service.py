@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Protocol, cast
 
 from modelctl_core.config.manager import ConfigManager
 from modelctl_core.services.config_service import COMPATIBILITY_POLICIES
@@ -10,14 +11,26 @@ from modelctl_core.services.config_service import COMPATIBILITY_POLICIES
 DEFAULT_LAUNCHER = "claude"
 DEFAULT_COMPATIBILITY_POLICY = "warn"
 PROFILE_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
-PROFILE_FIELDS = frozenset(
-    {
-        "provider",
-        "default_model",
-        "launcher",
-        "compatibility_policy",
-    }
-)
+PROFILE_FIELDS: set[str] = {
+    "provider",
+    "default_model",
+    "launcher",
+    "compatibility_policy",
+}
+
+
+class ProfileSelectionValidator(Protocol):
+    def validate(self, provider_id: str, model_id: str) -> tuple[str, str]: ...
+
+
+class ProfileLauncher(Protocol):
+    name: str
+
+
+class ProfileLauncherRegistry(Protocol):
+    def get(self, name: str) -> object | None: ...
+
+    def list(self) -> Sequence[ProfileLauncher]: ...
 
 
 @dataclass(frozen=True)
@@ -41,8 +54,8 @@ class ProfileService:
     def __init__(
         self,
         manager: ConfigManager | None = None,
-        selection_service=None,
-        launcher_registry=None,
+        selection_service: ProfileSelectionValidator | None = None,
+        launcher_registry: ProfileLauncherRegistry | None = None,
     ) -> None:
         self.manager = manager or ConfigManager()
         self.selection_service = selection_service
@@ -159,8 +172,9 @@ class ProfileService:
         if not isinstance(raw_profiles, dict):
             raise ValueError("Invalid profiles configuration: expected an object.")
 
+        stored_profiles = cast(dict[object, object], raw_profiles)
         profiles: dict[str, Profile] = {}
-        for raw_name, raw_profile in raw_profiles.items():
+        for raw_name, raw_profile in stored_profiles.items():
             if not isinstance(raw_name, str):
                 raise ValueError(
                     "Invalid profiles configuration: names must be strings."
@@ -180,7 +194,14 @@ class ProfileService:
     def _profile_from_mapping(self, name: str, raw_profile: object) -> Profile:
         if not isinstance(raw_profile, dict):
             raise ValueError(f"Invalid profile '{name}': expected an object.")
-        fields = set(raw_profile)
+
+        stored_profile = cast(dict[object, object], raw_profile)
+        fields: set[str] = set()
+        for field in stored_profile:
+            if not isinstance(field, str):
+                raise ValueError(f"Invalid profile '{name}': field names must be strings.")
+            fields.add(field)
+
         if fields != PROFILE_FIELDS:
             missing = sorted(PROFILE_FIELDS - fields)
             extra = sorted(fields - PROFILE_FIELDS)
@@ -191,23 +212,24 @@ class ProfileService:
                 details.append(f"unexpected {', '.join(extra)}")
             raise ValueError(f"Invalid profile '{name}': {'; '.join(details)}.")
 
+        mapping = cast(Mapping[str, object], stored_profile)
         provider = self._required_string(
-            raw_profile,
+            mapping,
             "provider",
             f"Invalid profile '{name}': provider must be a non-empty string.",
         )
         model = self._required_string(
-            raw_profile,
+            mapping,
             "default_model",
             f"Invalid profile '{name}': default_model must be a non-empty string.",
         )
         launcher = self._required_string(
-            raw_profile,
+            mapping,
             "launcher",
             f"Invalid profile '{name}': launcher must be a non-empty string.",
         )
         policy = self._required_string(
-            raw_profile,
+            mapping,
             "compatibility_policy",
             f"Invalid profile '{name}': compatibility_policy must be "
             "a non-empty string.",

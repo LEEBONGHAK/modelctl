@@ -42,6 +42,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #38 | [PR-038.md](PR-038.md) | Superseded validated discovery draft, closed unmerged / 검증 후 도구 문제로 대체된 미병합 draft |
 | #39 | [PR-039.md](PR-039.md) | Installed launcher entry-point discovery and isolation / 설치 launcher entry-point 탐색·격리 |
 | #40 | [PR-040.md](PR-040.md) | Plugin-aware doctor diagnostics and compatibility hardening / plugin-aware doctor 진단·호환성 강화 |
+| #41 | [PR-041.md](PR-041.md) | Strict static type-check enforcement for v0.3 boundaries / v0.3 경계 strict static type-check 강제 |
 
 ## Document format / 문서 형식
 
