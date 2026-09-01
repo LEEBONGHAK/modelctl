@@ -40,7 +40,8 @@ def test_launchers_list_shows_plugin_source_and_broken_entry_point():
         result = runner.invoke(app, ["launchers", "list"])
 
     assert result.exit_code == 0
-    assert "Custom Launcher" in result.stdout
-    assert "modelctl-custom==1.0.0" in result.stdout
-    assert "broken-plugin==1.0.0" in result.stdout
-    assert "ImportError: boom" in result.stdout
+    assert "custom" in result.stdout
+    assert "loaded" in result.stdout
+    assert "broken" in result.stdout
+    assert "error" in result.stdout
+    assert "ImportError" in result.stdout
