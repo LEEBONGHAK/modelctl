@@ -86,7 +86,9 @@ A broken plugin therefore does not prevent unrelated built-ins or other valid pl
 
 ## Diagnostics / 진단
 
-Run:
+Use discovery diagnostics to inspect every registered or rejected launcher entry point:
+
+모든 등록 또는 거부된 launcher entry point는 discovery 진단에서 확인할 수 있습니다.
 
 ```bash
 modelctl launchers list
@@ -95,6 +97,31 @@ modelctl launchers list
 The table includes the launcher source and load status. Installed plugin sources are reported using their distribution name and version when available, for example `modelctl-example-plugin==1.2.0`. Import failures, initialization failures, incompatible contract versions, metadata mismatches, and duplicate IDs remain visible as failed diagnostic rows.
 
 표에는 launcher source와 load status가 표시됩니다. 설치 plugin source는 가능한 경우 `modelctl-example-plugin==1.2.0`처럼 distribution 이름과 버전으로 표시됩니다. Import 실패, 초기화 실패, 비호환 contract version, metadata 불일치, 중복 ID는 실패한 진단 행으로 남습니다.
+
+Use runtime health diagnostics when deciding whether the current environment is ready to run:
+
+현재 환경이 실제 실행 가능한지 판단할 때는 runtime health 진단을 사용합니다.
+
+```bash
+modelctl doctor
+```
+
+For each external launcher, `doctor` reports distribution origin, plugin ID, SDK contract compatibility, and executable availability. A loaded and available compatible plugin reports `OK`. A compatible plugin whose executable is unavailable reports `WARN`. Broken, duplicate, incompatible, or availability-probe failures on an unrelated plugin report `WARN` so they do not disable otherwise healthy launchers. If the currently selected launcher failed discovery, its plugin diagnostic is promoted to `ERROR` in addition to the normal unknown-launcher error.
+
+각 외부 launcher에 대해 `doctor`는 distribution origin, plugin ID, SDK contract 호환성, executable availability를 표시합니다. 정상 로드되고 실행 가능한 호환 plugin은 `OK`, executable이 없는 호환 plugin은 `WARN`입니다. 현재 선택과 무관한 plugin의 import 실패, duplicate, 비호환 contract, availability probe 실패는 다른 정상 launcher의 사용을 막지 않도록 `WARN`으로 표시합니다. 현재 선택된 launcher 자체가 discovery에 실패했다면 일반 unknown-launcher 오류와 함께 plugin 진단도 `ERROR`로 승격됩니다.
+
+## Runtime compatibility / Runtime 호환성
+
+Discovered plugins do not use a separate execution path. Once loaded, they participate in the existing capability-driven launcher service exactly like built-ins:
+
+탐색된 plugin은 별도 실행 경로를 사용하지 않습니다. 정상 로드된 뒤에는 built-in과 동일한 capability 기반 launcher service에 참여합니다.
+
+- provider-aware recommendation / provider-aware 추천
+- preview-first remediation and explicit apply / 미리보기 우선 remediation과 명시적 적용
+- persisted or per-run strict compatibility checks / 저장 또는 실행 단위 strict compatibility 검사
+- immutable `LaunchRequest` construction / 불변 `LaunchRequest` 생성
+- native argument forwarding through `extra_args` / `extra_args`를 통한 native 인자 전달
+- refusal to apply an unavailable recommended launcher / 실행 불가능한 추천 launcher 적용 거부
 
 ## Trust boundary / 신뢰 경계
 
