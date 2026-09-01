@@ -9,7 +9,7 @@ Last updated: 2026-09-01
 Development principle:
 
 1. Deliver a working end-to-end workflow first.
-2. Add regression, cross-platform, packaging, release, and security gates.
+2. Add regression, cross-platform, packaging, release, security, and typing gates.
 3. Refactor abstractions only after real integrations expose common requirements.
 
 ## Branch and release state
@@ -19,8 +19,8 @@ Development principle:
 - Latest ready and published version: `0.2.0`
 - Active development version: `0.3.0`
 - Manifest status: `draft`
-- Active feature branch: `feat/v0.3.0-plugin-diagnostics`
-- Active pull request: #40
+- Active feature branch: `feat/v0.3.0-static-type-check`
+- Active pull request: #41
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 
@@ -53,34 +53,37 @@ The v0.2.0 tag and immutable GitHub Release were created from exact `main` commi
 
 PR #38 contains the same discovery implementation history but was closed unmerged after the connected GitHub draft-to-ready transition failed because of an upstream GraphQL schema incompatibility. PR #39 is the actual merged implementation path.
 
-## Current v0.3.0 increment: plugin diagnostics and compatibility hardening
+### Plugin diagnostics and compatibility hardening — PR #40
 
-PR #40 extends the working plugin path rather than introducing a second plugin runtime.
+- make `modelctl doctor` plugin-aware
+- report distribution origin, plugin ID, SDK contract compatibility, executable availability, and discovery/probe failures
+- keep unrelated broken plugins isolated while escalating the selected launcher failure
+- verify external plugins use recommendation, remediation, strict compatibility, immutable request, and native argument forwarding paths
 
-### Doctor diagnostics
+## Current v0.3.0 increment: static type-check enforcement
 
-`modelctl doctor` now evaluates each installed external launcher and reports:
+PR #41 turns the existing `basedpyright` development dependency into an enforced quality gate.
 
-- package distribution origin
-- plugin ID
-- SDK contract compatibility
-- launcher executable availability
-- duplicate entry-point conflicts
-- import, initialization, metadata, and contract failures
-- availability probe failures
+### Strict boundary scope
 
-A broken plugin unrelated to the current launcher remains isolated and reports `WARN`. If the currently selected launcher itself failed discovery, the plugin diagnostic is promoted to `ERROR` alongside the unknown-launcher error.
+Primary CI runs `uv run basedpyright` in strict mode over:
 
-### Compatibility hardening
+- public `modelctl_sdk` launcher contract and exports
+- core launcher base
+- installed plugin discovery
+- plugin adapter and launcher registry
+- named profile service
 
-Regression coverage verifies that discovered plugins use the same capability-driven runtime as built-ins:
+The scope is intentionally boundary-first rather than a whole-repository annotation rewrite. New v0.3 boundary code is expected to remain compatible with this strict gate.
 
-- provider-aware recommendation
-- preview-first remediation
-- strict compatibility checks
-- immutable `LaunchRequest` construction
-- native argument forwarding through `extra_args`
-- refusal to apply unavailable recommended launchers
+### Boundary hardening
+
+- Profile selection and launcher collaborators use structural Protocols instead of implicit `Any`.
+- Stored profile dictionaries are narrowed only after runtime object/key validation.
+- Installed Python entry points use explicit `EntryPoint` typing and discovery status literals.
+- Plugin metadata/capability runtime validation remains intact while satisfying strict static checking.
+- SDK/core wheels ship PEP 561 `py.typed` markers and packaging smoke tests verify the markers after isolated installation.
+- Release validation repeats the same strict basedpyright gate so release paths cannot bypass primary CI typing.
 
 ## Stable v0.2.0 workflows
 
@@ -106,9 +109,9 @@ Provider catalog credentials remain separate from launcher authentication and ar
 
 ## Remaining v0.3.0 sequence
 
-1. Validate real profile usage and add portability only where a concrete need is demonstrated.
-2. Introduce static type-check enforcement at the SDK, profile, and plugin boundaries.
-3. Review the complete v0.3.0 documentation and release criteria.
+1. Validate real profile usage and add portability only if a concrete need is demonstrated.
+2. Review the complete v0.3.0 documentation and release criteria.
+3. Run the final clean audit, strict type check, cross-platform tests, builds, installed-wheel/plugin smoke checks, and checksums.
 4. Complete a dedicated readiness review before promotion to `main`.
 
 Explicit non-goals remain provider plugins, automatic plugin installation, remote registries, arbitrary filesystem plugin paths, credential export, and PyPI publication during feature development.
@@ -119,6 +122,7 @@ Explicit non-goals remain provider plugins, automatic plugin installation, remot
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
