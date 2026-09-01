@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
+from importlib.metadata import EntryPoint
+
 from modelctl_core.launcher.aider import AiderLauncher
 from modelctl_core.launcher.base import Launcher
 from modelctl_core.launcher.claude import ClaudeCodeLauncher
@@ -12,14 +15,14 @@ from modelctl_core.launcher.gemini import GeminiCliLauncher
 
 
 class LauncherRegistry:
-    def __init__(self, entry_points=None):
+    def __init__(self, entry_points: Iterable[EntryPoint] | None = None) -> None:
         self._launchers: dict[str, Launcher] = {
             "claude": ClaudeCodeLauncher(),
             "gemini": GeminiCliLauncher(),
             "codex": CodexCliLauncher(),
             "aider": AiderLauncher(),
         }
-        self._diagnostics = [
+        self._diagnostics: list[LauncherDiscoveryRecord] = [
             LauncherDiscoveryRecord(
                 launcher_id=launcher.name,
                 display_name=launcher.display_name,
