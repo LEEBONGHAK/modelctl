@@ -125,12 +125,20 @@ def _load_plugin(entry_point: EntryPoint) -> LauncherPlugin:
             "Launcher entry point must expose a LauncherPlugin instance, class, "
             "or zero-argument factory."
         )
-    if not isinstance(candidate.metadata, LauncherMetadata):
+
+    metadata_value = _runtime_attribute(candidate, "metadata")
+    if not isinstance(metadata_value, LauncherMetadata):
         raise TypeError("Launcher plugin metadata must be LauncherMetadata.")
-    if not isinstance(candidate.capabilities, LauncherCapabilities):
+
+    capabilities_value = _runtime_attribute(candidate, "capabilities")
+    if not isinstance(capabilities_value, LauncherCapabilities):
         raise TypeError("Launcher plugin capabilities must be LauncherCapabilities.")
 
     return candidate
+
+
+def _runtime_attribute(value: object, name: str) -> object:
+    return cast(object, getattr(value, name))
 
 
 def _source(entry_point: EntryPoint) -> str:
