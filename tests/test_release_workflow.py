@@ -55,6 +55,15 @@ def test_release_workflow_only_auto_tags_trusted_ready_main_changes():
     assert "no overwrite" in content
 
 
+def test_release_workflow_treats_missing_tag_as_absent():
+    content = workflow_text()
+
+    assert 'existing_tag_sha=""' in content
+    assert 'if ! existing_tag_sha="$(' in content
+    assert "--jq '.object.sha' 2>/dev/null" in content
+    assert "--jq '.object.sha' 2>/dev/null || true" not in content
+
+
 def test_release_workflow_skips_closed_unmerged_pull_requests():
     content = workflow_text()
 
