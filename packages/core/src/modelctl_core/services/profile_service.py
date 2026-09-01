@@ -11,14 +11,12 @@ from modelctl_core.services.config_service import COMPATIBILITY_POLICIES
 DEFAULT_LAUNCHER = "claude"
 DEFAULT_COMPATIBILITY_POLICY = "warn"
 PROFILE_NAME_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
-PROFILE_FIELDS = frozenset(
-    {
-        "provider",
-        "default_model",
-        "launcher",
-        "compatibility_policy",
-    }
-)
+PROFILE_FIELDS: set[str] = {
+    "provider",
+    "default_model",
+    "launcher",
+    "compatibility_policy",
+}
 
 
 class ProfileSelectionValidator(Protocol):
