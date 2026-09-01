@@ -1,6 +1,6 @@
 # modelctl Project Progress
 
-Last updated: 2026-08-05
+Last updated: 2026-09-01
 
 ## Project goal
 
@@ -19,53 +19,68 @@ Development principle:
 - Latest ready and published version: `0.2.0`
 - Active development version: `0.3.0`
 - Manifest status: `draft`
-- Active feature branch: `feat/v0.3.0-named-profiles`
-- Active pull request: #36
+- Active feature branch: `feat/v0.3.0-plugin-diagnostics`
+- Active pull request: #40
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 
-The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482` after clean audit, Ruff, 138 tests, builds, installed-wheel smoke checks, and checksums passed.
+The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482` after clean audit, Ruff, tests, builds, installed-wheel smoke checks, and checksums passed.
 
-## Current v0.3.0 increment: named profiles
+## Completed v0.3.0 increments
 
-PR #36 introduces the first v0.3.0 end-to-end workflow:
+### Named profiles — PR #36
 
-```bash
-modelctl profiles save work
-modelctl profiles list
-modelctl profiles show work
-modelctl profiles use work
-modelctl profiles delete work
-```
+- save, list, show, use, and delete named configuration snapshots
+- validate provider/model and launcher selection before one atomic configuration write
+- preserve unrelated settings and exclude all credentials from profiles
 
-A profile snapshots:
+### Versioned launcher plugin SDK — PR #37
 
-- provider
-- default model
-- launcher
-- compatibility policy
+- public immutable `LaunchRequest`
+- explicit `LauncherCapabilities`
+- stable `LauncherMetadata`
+- public `LauncherPlugin` protocol
+- launcher contract version `1.0` with major-version compatibility validation
 
-### Behavior completed
+### Installed launcher discovery — PR #39
 
-- Names are trimmed, normalized to lowercase, and validated consistently.
-- Saving captures the current effective defaults, including backward-compatible launcher and policy defaults.
-- Listing is deterministic and sorted by profile name.
-- Applying validates the provider/model and launcher before any configuration mutation.
-- Applying performs one atomic configuration write and preserves unrelated settings and profiles.
-- Deleting the final profile removes the empty profile container.
-- Unknown names, malformed snapshots, missing fields, and unexpected fields fail explicitly.
-- Credentials, environment secrets, and launcher-managed authentication data are not part of the schema.
-- Existing `config`, `use`, `doctor`, `launchers`, and `run` workflows remain compatible.
+- discover only installed `modelctl.launchers` Python entry points
+- preserve built-ins and reject built-in ID collisions before loading external code
+- reject duplicate external launcher IDs deterministically
+- isolate import, initialization, metadata, and contract failures
+- adapt valid plugins into the existing core launcher runtime
+- verify real installed entry-point discovery in isolated packaging smoke tests
 
-### Validation completed
+PR #38 contains the same discovery implementation history but was closed unmerged after the connected GitHub draft-to-ready transition failed because of an upstream GraphQL schema incompatibility. PR #39 is the actual merged implementation path.
 
-- Coordinated workspace, CLI, core, SDK, manifest, and lockfile at `0.3.0`.
-- Release state remains `draft` and non-publishing.
-- Primary CI passed dependency audit, Ruff, and provider contract suites.
-- All 150 tests passed on Ubuntu, macOS, and Windows with Python 3.13.
-- All wheel and source distributions built successfully.
-- Built wheels installed together in an isolated environment.
-- Installed package imports, `modelctl version`, and `modelctl --help` passed.
+## Current v0.3.0 increment: plugin diagnostics and compatibility hardening
+
+PR #40 extends the working plugin path rather than introducing a second plugin runtime.
+
+### Doctor diagnostics
+
+`modelctl doctor` now evaluates each installed external launcher and reports:
+
+- package distribution origin
+- plugin ID
+- SDK contract compatibility
+- launcher executable availability
+- duplicate entry-point conflicts
+- import, initialization, metadata, and contract failures
+- availability probe failures
+
+A broken plugin unrelated to the current launcher remains isolated and reports `WARN`. If the currently selected launcher itself failed discovery, the plugin diagnostic is promoted to `ERROR` alongside the unknown-launcher error.
+
+### Compatibility hardening
+
+Regression coverage verifies that discovered plugins use the same capability-driven runtime as built-ins:
+
+- provider-aware recommendation
+- preview-first remediation
+- strict compatibility checks
+- immutable `LaunchRequest` construction
+- native argument forwarding through `extra_args`
+- refusal to apply unavailable recommended launchers
 
 ## Stable v0.2.0 workflows
 
@@ -85,18 +100,16 @@ modelctl run
 
 - Anthropic catalog through Claude Code
 - Google Gemini catalog through Gemini CLI
-- OpenAI catalog through Codex CLI
+- OpenAI native catalog through Codex CLI
 
 Provider catalog credentials remain separate from launcher authentication and are never injected from keyring storage into launcher subprocess environments.
 
 ## Remaining v0.3.0 sequence
 
 1. Validate real profile usage and add portability only where a concrete need is demonstrated.
-2. Define the minimum versioned launcher plugin contract in `modelctl-sdk`.
-3. Discover installed launcher entry points while preserving built-ins and rejecting duplicate IDs.
-4. Add plugin diagnostics, compatibility hardening, and installed-wheel plugin fixtures.
-5. Introduce static type-check enforcement at the SDK, profile, and plugin boundaries.
-6. Complete a dedicated readiness review before promotion to `main`.
+2. Introduce static type-check enforcement at the SDK, profile, and plugin boundaries.
+3. Review the complete v0.3.0 documentation and release criteria.
+4. Complete a dedicated readiness review before promotion to `main`.
 
 Explicit non-goals remain provider plugins, automatic plugin installation, remote registries, arbitrary filesystem plugin paths, credential export, and PyPI publication during feature development.
 
