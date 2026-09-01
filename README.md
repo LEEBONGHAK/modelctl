@@ -6,11 +6,11 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing compatibility, and launching coding-agent CLIs consistently.
 
-> Feature-complete candidate: `0.3.0` (`draft`, readiness validation pending). Latest ready release: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+> Latest ready release: `0.3.0`. `main` is the canonical release branch. PyPI publication remains disabled.
 
-## v0.3.0 candidate scope
+## v0.3.0 highlights
 
-The completed v0.3.0 feature set includes:
+Version 0.3.0 adds:
 
 - named provider/model/launcher/compatibility-policy profiles
 - a public versioned launcher plugin SDK contract
@@ -220,7 +220,7 @@ GitHub Actions independently runs the strict v0.3 boundary type check, provider 
 
 Release decisions are declared in [`release.toml`](release.toml), changes in [`CHANGELOG.md`](CHANGELOG.md), and the completion checklist in [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md).
 
-The `0.3.0` manifest remains `draft` through final readiness validation. The latest ready release remains `0.2.0` on `main`. Only a dedicated `main`-targeting readiness pull request may change `0.3.0` to `ready` and promote the exact validated `refac` lineage.
+The `0.3.0` manifest is `ready`. The release path promotes only a validated readiness lineage to `main`, then independently repeats audit, lint, strict type checking, tests, builds, installed-wheel smoke checks, and checksums before creating immutable tag `v0.3.0` and its GitHub Release.
 
 Existing tags and release assets are never overwritten. **No workflow publishes packages to PyPI.** See [`docs/RELEASING.md`](docs/RELEASING.md).
 
@@ -239,10 +239,9 @@ docs/                provider, project, release, security, and PR documentation
 
 See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, dependency security, release trust boundaries, and known limitations.
 
-## Remaining v0.3.0 release steps
+## Post-v0.3.0 considerations
 
-- Complete the final documentation and release-criteria review
-- Run one final full readiness validation of the completed `refac` tree
-- Open and validate the dedicated `main`-targeting readiness PR
-- Promote only the exact validated lineage to `main` and let the release workflow revalidate before tagging
-- Review PyPI Trusted Publishing separately after v0.3.0; it remains out of scope for this release
+- Revisit profile portability only when real usage demonstrates a concrete need
+- Review provider-plugin architecture separately from the launcher-plugin contract
+- Review plugin distribution/installation UX without weakening the installed-package trust boundary
+- Review PyPI Trusted Publishing separately; PyPI publication remains disabled for v0.3.0
