@@ -19,6 +19,8 @@ The working v0.3.0 path now includes:
 - plugin source and load status in `modelctl launchers list`
 - plugin-aware runtime health checks in `modelctl doctor`
 - external launcher regression coverage across recommendation, remediation, strict compatibility, and argument forwarding
+- strict basedpyright enforcement at the public SDK, named-profile, and launcher-plugin boundaries
+- PEP 561 typed-package markers verified from installed SDK/core wheels
 
 Installed launcher plugins are treated as trusted executable Python extensions. modelctl does not scan arbitrary plugin directories, download plugin code, or install/update plugins automatically.
 
@@ -205,11 +207,12 @@ Named profiles are stored inside `config.json`. They never reference or copy val
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 python scripts/release_validation.py
 ```
 
-GitHub Actions independently runs provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation including an installed launcher-plugin fixture, release metadata checks, and checksum generation.
+GitHub Actions independently runs the strict v0.3 boundary type check, provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation including an installed launcher-plugin fixture and `py.typed` markers, release metadata checks, and checksum generation.
 
 ## Release policy
 
@@ -224,7 +227,7 @@ Existing tags and release assets are never overwritten. **No workflow publishes 
 ```text
 apps/modelctl/       Typer CLI application
 packages/core/       runtime services, credentials, providers, repositories, launchers
-packages/sdk/        SDK foundation
+packages/sdk/        public launcher plugin SDK foundation
 scripts/             release validation helpers
 tests/               regression, integration, packaging, and security tests
 docs/                provider, project, release, security, and PR documentation
@@ -237,7 +240,6 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, de
 ## Remaining v0.3.0 roadmap
 
 - Add profile portability only where validated real usage proves a concrete need
-- Add static type-check enforcement at SDK, profile, and launcher-plugin boundaries
 - Complete the v0.3.0 documentation and release-criteria review
-- Run a dedicated readiness review before promotion to `main`
+- Run the final full validation and dedicated readiness review before promotion to `main`
 - Review PyPI Trusted Publishing separately
