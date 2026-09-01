@@ -10,6 +10,7 @@ on:
     paths:
       - ".github/workflows/release.yml"
       - ".github/workflows/release-command.yml"
+      - "pyproject.toml"
       - "release.toml"
       - "CHANGELOG.md"
       - "README.md"
@@ -40,6 +41,7 @@ on:
     paths:
       - ".github/workflows/release.yml"
       - ".github/workflows/release-command.yml"
+      - "pyproject.toml"
       - "release.toml"
       - "CHANGELOG.md"
       - "README.md"
@@ -126,6 +128,9 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Type check v0.3 boundaries
+        run: uv run basedpyright
+
       - name: Run complete test suite
         run: uv run pytest
 
@@ -149,7 +154,16 @@ jobs:
       - name: Verify installed packages and CLI
         shell: bash
         run: |
-          .release-smoke/bin/python -c "import modelctl_cli, modelctl_core, modelctl_sdk"
+          .release-smoke/bin/python - <<'PY'
+          from importlib.resources import files
+
+          import modelctl_cli
+          import modelctl_core
+          import modelctl_sdk
+
+          assert files("modelctl_core").joinpath("py.typed").is_file()
+          assert files("modelctl_sdk").joinpath("py.typed").is_file()
+          PY
           .release-smoke/bin/modelctl version
           .release-smoke/bin/modelctl --help
 
