@@ -16,10 +16,13 @@ def test_release_workflow_runs_all_quality_gates_before_publication():
         "uv sync --all-packages --locked",
         "uv audit --locked",
         "uv run ruff check .",
+        "uv run basedpyright",
         "uv run pytest",
         "uv build packages/core --out-dir dist --no-sources",
         "uv build packages/sdk --out-dir dist --no-sources",
         "uv build apps/modelctl --out-dir dist --no-sources",
+        'files("modelctl_core").joinpath("py.typed").is_file()',
+        'files("modelctl_sdk").joinpath("py.typed").is_file()',
         ".release-smoke/bin/modelctl version",
         ".release-smoke/bin/modelctl --help",
         "sha256sum dist/* > dist/SHA256SUMS",
@@ -27,6 +30,12 @@ def test_release_workflow_runs_all_quality_gates_before_publication():
 
     for command in required_commands:
         assert command in content
+
+
+def test_release_workflow_tracks_type_check_configuration_changes():
+    content = workflow_text()
+
+    assert content.count('- "pyproject.toml"') >= 2
 
 
 def test_release_workflow_only_auto_tags_trusted_ready_main_changes():
