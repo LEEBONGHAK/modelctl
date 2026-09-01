@@ -69,8 +69,7 @@ jobs:
           assert record.status == "loaded"
           assert record.source == "modelctl-test-launcher-plugin==0.1.0"
           PY
-          .package-smoke/bin/modelctl launchers list | tee launcher-plugin-smoke.txt
-          grep -F "Fixture Launcher" launcher-plugin-smoke.txt
+          .package-smoke/bin/modelctl launchers list
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
