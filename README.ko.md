@@ -10,16 +10,17 @@
 
 ## v0.3.0 개발 현황
 
-첫 번째 v0.3.0 increment로 이름 있는 설정 profile을 추가했습니다.
+현재 v0.3.0 working path에는 다음 기능이 포함되어 있습니다.
 
-- provider, model, launcher, compatibility policy를 하나의 snapshot으로 저장
-- 저장한 profile 목록과 상세 내용 조회
-- 전체 snapshot을 검증한 뒤 설정을 한 번만 원자적으로 저장
-- 손상된 profile과 예상하지 않은 필드 거부
-- credential과 launcher 인증정보를 profile에서 제외
-- 기존 선택, 진단, remediation, 실행 동작 유지
+- provider/model/launcher/compatibility-policy를 묶는 이름 있는 profile
+- 공개 versioned launcher plugin SDK 계약
+- 전용 `modelctl.launchers` Python entry-point group 기반 설치 launcher 탐색
+- built-in launcher 보호와 결정적 duplicate ID 거부
+- `modelctl launchers list`의 plugin source 및 load status
+- `modelctl doctor`의 plugin-aware runtime health 진단
+- 외부 launcher의 recommendation, remediation, strict compatibility, argument forwarding 회귀 검증
 
-현재 increment는 Ruff, package 검증, 설치 wheel smoke test와 Python 3.13 기반 Ubuntu·macOS·Windows의 전체 150개 테스트를 통과합니다.
+설치된 launcher plugin은 신뢰된 실행 가능 Python 확장으로 취급합니다. modelctl은 임의 plugin directory를 스캔하거나 plugin 코드를 다운로드하거나 plugin을 자동 설치·업데이트하지 않습니다.
 
 ## v0.2.0 주요 기능
 
@@ -135,6 +136,7 @@ modelctl launchers recommend --apply
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl launchers use aider
+modelctl doctor
 ```
 
 | ID | 코딩 에이전트 | Native provider | 기본 실행 |
@@ -147,6 +149,8 @@ modelctl launchers use aider
 `recommend`는 capability가 맞는 launcher를 제안합니다. `remediate`는 현재 launcher에 알려진 불일치가 있을 때만 변경 계획을 만듭니다.
 
 두 명령은 기본적으로 읽기 전용입니다. `--apply`는 설치된 추천 launcher만 선택하며 설정 변경 전에 사용 가능 여부를 검사합니다. 소프트웨어 설치, provider/model 변경, launcher 자동 실행은 하지 않습니다.
+
+제3자 launcher package는 `modelctl.launchers` Python entry-point group을 등록할 수 있습니다. `modelctl launchers list`는 discovery source/status를 표시하고, `modelctl doctor`는 plugin contract 호환성과 executable health를 진단합니다. 자세한 내용은 [`docs/LAUNCHER_PLUGINS.md`](docs/LAUNCHER_PLUGINS.md)를 참고하세요.
 
 ## 호환성 정책과 실행
 
@@ -205,7 +209,7 @@ uv run pytest
 python scripts/release_validation.py
 ```
 
-GitHub Actions는 provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 격리 환경 wheel 설치, release metadata, checksum 생성을 독립적으로 검증합니다.
+GitHub Actions는 provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 실제 launcher-plugin fixture를 포함한 격리 wheel 설치 검증, release metadata, checksum 생성을 독립적으로 검증합니다.
 
 ## 릴리스 정책
 
@@ -232,8 +236,8 @@ Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, �
 
 ## 남은 v0.3.0 로드맵
 
-- 검증된 workflow에서 실제 필요성이 확인된 profile 이식 기능만 추가
-- 최소 범위의 versioned launcher plugin SDK 계약 정의
-- 임의 filesystem import나 자동 download 없이 설치된 launcher plugin 탐색
-- Plugin 진단과 static type check를 별도 milestone로 도입
+- 검증된 실제 사용에서 구체적 필요성이 확인된 profile 이식 기능만 추가
+- SDK, profile, launcher-plugin 경계에 static type-check 강제 추가
+- v0.3.0 문서와 release criteria 최종 검토
+- `main` 승격 전 전용 readiness 검토 수행
 - PyPI Trusted Publishing 별도 검토

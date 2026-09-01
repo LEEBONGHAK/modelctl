@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
+
 from modelctl_core.launcher.base import LaunchRequest
 from modelctl_core.launcher.registry import LauncherRegistry
 from modelctl_core.services.launcher_service import LauncherService
@@ -8,7 +10,15 @@ from modelctl_sdk import LauncherCapabilities, LauncherMetadata
 
 
 class FakeEntryPoint:
-    def __init__(self, name, target, *, value=None, package="test-plugin", version="1.0.0"):
+    def __init__(
+        self,
+        name,
+        target,
+        *,
+        value=None,
+        package="test-plugin",
+        version="1.0.0",
+    ):
         self.name = name
         self.value = value or f"test_plugin:{name}"
         self._target = target
@@ -101,7 +111,10 @@ def test_duplicate_external_launcher_ids_are_all_rejected_deterministically():
     ]
     assert len(duplicates) == 2
     assert all(item.status == "duplicate" for item in duplicates)
-    assert [item.source for item in duplicates] == ["plugin-a==1.0.0", "plugin-b==1.0.0"]
+    assert [item.source for item in duplicates] == [
+        "plugin-a==1.0.0",
+        "plugin-b==1.0.0",
+    ]
 
 
 def test_broken_plugin_is_isolated_while_other_plugin_loads():
@@ -163,3 +176,75 @@ def test_discovered_plugin_participates_in_launcher_recommendation():
     assert recommendation.name == "custom"
     assert recommendation.display_name == "Custom Launcher"
     assert recommendation.installed is True
+
+
+def test_discovered_plugin_participates_in_remediation_and_strict_compatibility():
+    entry_point = FakeEntryPoint("custom", CustomLauncher)
+    registry = LauncherRegistry(entry_points=[entry_point])
+    config = Mock()
+    config.load.return_value = {
+        "provider": "custom-provider",
+        "default_model": "custom-model",
+        "launcher": "claude",
+    }
+    service = LauncherService(registry, config)
+
+    remediation = service.plan_remediation()
+
+    assert remediation.action_required is True
+    assert remediation.current_name == "claude"
+    assert remediation.recommended_name == "custom"
+    assert remediation.recommended_installed is True
+
+    config.load.return_value = {
+        "provider": "custom-provider",
+        "default_model": "custom-model",
+        "launcher": "custom",
+    }
+    assert service.check_compatibility(policy="strict") is None
+
+
+def test_discovered_plugin_receives_forwarded_arguments_as_immutable_request():
+    entry_point = FakeEntryPoint("custom", CustomLauncher)
+    registry = LauncherRegistry(entry_points=[entry_point])
+    config = Mock()
+    config.load.return_value = {
+        "provider": "custom-provider",
+        "default_model": "custom-model",
+        "launcher": "custom",
+    }
+    service = LauncherService(registry, config)
+
+    service.run(extra_args=["--mode", "fast"])
+
+    launcher = registry.get("custom")
+    assert launcher is not None
+    assert launcher._plugin.requests == [
+        LaunchRequest(
+            model="custom-model",
+            provider="custom-provider",
+            extra_args=("--mode", "fast"),
+        )
+    ]
+
+
+def test_unavailable_discovered_plugin_cannot_be_applied_as_recommendation():
+    entry_point = FakeEntryPoint("other", OtherLauncher)
+    registry = LauncherRegistry(entry_points=[entry_point])
+    config = Mock()
+    config.load.return_value = {
+        "provider": "other-provider",
+        "default_model": "other-model",
+        "launcher": "claude",
+    }
+    service = LauncherService(registry, config)
+
+    recommendation = service.recommend()
+    assert recommendation is not None
+    assert recommendation.name == "other"
+    assert recommendation.installed is False
+
+    with pytest.raises(RuntimeError, match="not installed"):
+        service.apply_recommendation()
+
+    config.update.assert_not_called()

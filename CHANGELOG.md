@@ -19,6 +19,7 @@ Third development release in progress.
 - Installed launcher discovery from the dedicated `modelctl.launchers` Python entry-point group.
 - Launcher source and plugin load status in `modelctl launchers list`.
 - Installed-package launcher plugin fixture in packaging smoke tests.
+- Plugin-aware `modelctl doctor` checks for distribution origin, plugin ID, SDK contract compatibility, and executable availability.
 
 ### Changed
 
@@ -28,6 +29,8 @@ Third development release in progress.
 - Preserved unrelated configuration keys and saved profiles when applying a profile.
 - Adapted successful external launcher plugins to the same core launcher runtime used by built-ins.
 - Deterministically reject duplicate external launcher IDs instead of choosing one based on environment ordering.
+- Treat unrelated broken or duplicate plugins as doctor warnings while escalating failure of the currently selected plugin to an error.
+- Hardened external launcher regression coverage across recommendation, remediation, strict compatibility, immutable argument forwarding, and unavailable recommendation apply.
 
 ### Security
 
