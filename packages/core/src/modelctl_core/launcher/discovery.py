@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from importlib import metadata as importlib_metadata
+from importlib.metadata import EntryPoint
 from itertools import groupby
-from typing import Iterable
+from typing import Literal, cast
 
 from modelctl_sdk import (
     LAUNCHER_ENTRY_POINT_GROUP,
@@ -14,12 +16,14 @@ from modelctl_sdk import (
 
 from modelctl_core.launcher.plugin_adapter import PluginLauncherAdapter
 
+LauncherDiscoveryStatus = Literal["loaded", "duplicate", "error"]
+
 
 @dataclass(frozen=True)
 class LauncherDiscoveryRecord:
     launcher_id: str
     source: str
-    status: str
+    status: LauncherDiscoveryStatus
     display_name: str | None = None
     plugin_id: str | None = None
     error: str | None = None
@@ -27,14 +31,14 @@ class LauncherDiscoveryRecord:
 
 def discover_launcher_plugins(
     reserved_ids: set[str],
-    entry_points: Iterable[object] | None = None,
+    entry_points: Iterable[EntryPoint] | None = None,
 ) -> tuple[list[PluginLauncherAdapter], list[LauncherDiscoveryRecord]]:
     """Load installed launcher plugins without allowing them to replace built-ins."""
 
     selected = (
         importlib_metadata.entry_points(group=LAUNCHER_ENTRY_POINT_GROUP)
         if entry_points is None
-        else list(entry_points)
+        else entry_points
     )
     ordered = sorted(selected, key=lambda item: (item.name, item.value, _source(item)))
 
@@ -104,15 +108,15 @@ def discover_launcher_plugins(
     return launchers, records
 
 
-def _load_plugin(entry_point) -> LauncherPlugin:
-    loaded = entry_point.load()
+def _load_plugin(entry_point: EntryPoint) -> LauncherPlugin:
+    loaded = cast(object, entry_point.load())
 
     if isinstance(loaded, type):
-        candidate = loaded()
+        candidate = cast(type[object], loaded)()
     elif isinstance(loaded, LauncherPlugin):
         candidate = loaded
     elif callable(loaded):
-        candidate = loaded()
+        candidate = cast(Callable[[], object], loaded)()
     else:
         candidate = loaded
 
@@ -129,16 +133,15 @@ def _load_plugin(entry_point) -> LauncherPlugin:
     return candidate
 
 
-def _source(entry_point) -> str:
-    distribution = getattr(entry_point, "dist", None)
+def _source(entry_point: EntryPoint) -> str:
+    distribution = entry_point.dist
     if distribution is None:
-        return str(entry_point.value)
+        return entry_point.value
 
-    metadata = getattr(distribution, "metadata", None)
-    name = metadata.get("Name") if metadata is not None else None
-    version = getattr(distribution, "version", None)
+    name = distribution.metadata.get("Name")
+    version = distribution.version
     if name and version:
         return f"{name}=={version}"
     if name:
-        return str(name)
-    return str(entry_point.value)
+        return name
+    return entry_point.value
