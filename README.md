@@ -10,16 +10,17 @@
 
 ## v0.3.0 development
 
-The first v0.3.0 increment adds named configuration profiles:
+The working v0.3.0 path now includes:
 
-- save provider, model, launcher, and compatibility policy as one snapshot
-- list and inspect saved profiles
-- validate the complete snapshot before one atomic configuration write
-- reject malformed profiles and unexpected fields
-- keep credentials and launcher authentication outside profiles
-- preserve existing selection, diagnostics, remediation, and execution behavior
+- named provider/model/launcher/compatibility-policy profiles
+- a public versioned launcher plugin SDK contract
+- installed launcher discovery through the dedicated `modelctl.launchers` Python entry-point group
+- built-in launcher protection and deterministic duplicate-ID rejection
+- plugin source and load status in `modelctl launchers list`
+- plugin-aware runtime health checks in `modelctl doctor`
+- external launcher regression coverage across recommendation, remediation, strict compatibility, and argument forwarding
 
-The current increment passes Ruff, package validation, installed-wheel smoke tests, and all 150 tests on Ubuntu, macOS, and Windows with Python 3.13.
+Installed launcher plugins are treated as trusted executable Python extensions. modelctl does not scan arbitrary plugin directories, download plugin code, or install/update plugins automatically.
 
 ## v0.2.0 highlights
 
@@ -135,6 +136,7 @@ modelctl launchers recommend --apply
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl launchers use aider
+modelctl doctor
 ```
 
 | ID | Coding agent | Native provider | Base invocation |
@@ -147,6 +149,8 @@ modelctl launchers use aider
 `recommend` proposes a capability-compatible launcher. `remediate` creates a change plan only when the active launcher has a known mismatch.
 
 Both commands are read-only by default. Their `--apply` variants change only the selected launcher and refuse unavailable recommendations before configuration mutation. They never install software, change the provider or model, or start a launcher.
+
+Third-party launcher packages can register the `modelctl.launchers` Python entry-point group. `modelctl launchers list` shows discovery source/status, while `modelctl doctor` reports plugin contract compatibility and executable health. See [`docs/LAUNCHER_PLUGINS.md`](docs/LAUNCHER_PLUGINS.md).
 
 ## Compatibility and execution
 
@@ -205,7 +209,7 @@ uv run pytest
 python scripts/release_validation.py
 ```
 
-GitHub Actions independently runs provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation, release metadata checks, and checksum generation.
+GitHub Actions independently runs provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation including an installed launcher-plugin fixture, release metadata checks, and checksum generation.
 
 ## Release policy
 
@@ -232,8 +236,8 @@ See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, de
 
 ## Remaining v0.3.0 roadmap
 
-- Add profile portability only where the validated workflow proves a concrete need
-- Define a minimal, versioned launcher plugin SDK contract
-- Discover installed launcher plugins without arbitrary filesystem imports or automatic downloads
-- Add plugin diagnostics and static type-check enforcement as separate milestones
+- Add profile portability only where validated real usage proves a concrete need
+- Add static type-check enforcement at SDK, profile, and launcher-plugin boundaries
+- Complete the v0.3.0 documentation and release-criteria review
+- Run a dedicated readiness review before promotion to `main`
 - Review PyPI Trusted Publishing separately
