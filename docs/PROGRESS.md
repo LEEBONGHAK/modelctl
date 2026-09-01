@@ -19,8 +19,8 @@ Development principle:
 - Latest ready and published version: `0.2.0`
 - Active development version: `0.3.0`
 - Manifest status: `draft`
-- Active feature branch: `feat/v0.3.0-static-type-check`
-- Active pull request: #41
+- Current phase: final documentation review and readiness preparation
+- Active feature branch: `feat/v0.3.0-final-docs`
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
 
@@ -60,30 +60,28 @@ PR #38 contains the same discovery implementation history but was closed unmerge
 - keep unrelated broken plugins isolated while escalating the selected launcher failure
 - verify external plugins use recommendation, remediation, strict compatibility, immutable request, and native argument forwarding paths
 
-## Current v0.3.0 increment: static type-check enforcement
+### Static type-check enforcement — PR #41
 
-PR #41 turns the existing `basedpyright` development dependency into an enforced quality gate.
+- enforce strict `basedpyright` at the public SDK, named-profile, and launcher-plugin boundaries
+- type profile collaborators and persisted profile narrowing explicitly
+- type installed launcher entry points and discovery status
+- ship PEP 561 `py.typed` markers for SDK/core and verify them from installed wheels
+- repeat the strict type gate in the complete release workflow
 
-### Strict boundary scope
+## Final v0.3.0 scope review
 
-Primary CI runs `uv run basedpyright` in strict mode over:
+The planned v0.3.0 functional scope is complete. Profile portability is explicitly deferred because no concrete usage need has been demonstrated; it is not a release blocker.
 
-- public `modelctl_sdk` launcher contract and exports
-- core launcher base
-- installed plugin discovery
-- plugin adapter and launcher registry
-- named profile service
+Explicit non-goals for v0.3.0 remain:
 
-The scope is intentionally boundary-first rather than a whole-repository annotation rewrite. New v0.3 boundary code is expected to remain compatible with this strict gate.
+- provider plugins
+- automatic plugin installation or update
+- remote plugin registries
+- arbitrary filesystem plugin paths
+- credential export
+- PyPI publication
 
-### Boundary hardening
-
-- Profile selection and launcher collaborators use structural Protocols instead of implicit `Any`.
-- Stored profile dictionaries are narrowed only after runtime object/key validation.
-- Installed Python entry points use explicit `EntryPoint` typing and discovery status literals.
-- Plugin metadata/capability runtime validation remains intact while satisfying strict static checking.
-- SDK/core wheels ship PEP 561 `py.typed` markers and packaging smoke tests verify the markers after isolated installation.
-- Release validation repeats the same strict basedpyright gate so release paths cannot bypass primary CI typing.
+`release.toml` remains `draft` through final documentation review and full readiness validation. Only the dedicated `main`-targeting readiness PR may switch it to `ready`.
 
 ## Stable v0.2.0 workflows
 
@@ -109,12 +107,11 @@ Provider catalog credentials remain separate from launcher authentication and ar
 
 ## Remaining v0.3.0 sequence
 
-1. Validate real profile usage and add portability only if a concrete need is demonstrated.
-2. Review the complete v0.3.0 documentation and release criteria.
-3. Run the final clean audit, strict type check, cross-platform tests, builds, installed-wheel/plugin smoke checks, and checksums.
-4. Complete a dedicated readiness review before promotion to `main`.
-
-Explicit non-goals remain provider plugins, automatic plugin installation, remote registries, arbitrary filesystem plugin paths, credential export, and PyPI publication during feature development.
+1. Complete this final documentation and release-criteria review on `refac`.
+2. Run one clean full readiness validation of the completed tree: dependency audit, Ruff, strict type check, provider contracts, all cross-platform tests, all distributions, installed-wheel/plugin smoke checks, release dry-run, and checksums.
+3. Create one dedicated readiness branch from that exact validated `refac` lineage, change release metadata from `draft` to `ready`, finalize release-facing documentation, and open `main` ← readiness PR.
+4. Require the `main`-targeting PR to independently pass CI, Test, Package, and Release workflows before merge.
+5. After merge, allow the release workflow to revalidate the exact `main` merge commit before creating immutable tag `v0.3.0` and its GitHub Release.
 
 ## Validation commands
 
