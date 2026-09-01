@@ -1,176 +1,110 @@
 # modelctl Project Progress
 
-Last updated: 2026-08-04
+Last updated: 2026-09-01
 
 ## Project goal
 
-`modelctl` is a universal command-line control plane for AI models and coding agents. The long-term goal is to become the **uv of AI coding agents**: one small CLI for selecting providers and models, managing credentials and configuration, and launching multiple coding-agent CLIs consistently.
+`modelctl` is a universal command-line control plane for AI models and coding agents. The long-term goal is to become the **uv of AI coding agents**: one small CLI for selecting providers and models, managing credentials and reusable configuration, and launching multiple coding-agent CLIs consistently.
 
 Development principle:
 
 1. Deliver a working end-to-end workflow first.
-2. Add regression, cross-platform, packaging, release, and security gates.
+2. Add regression, cross-platform, packaging, release, security, and typing gates.
 3. Refactor abstractions only after real integrations expose common requirements.
 
 ## Branch and release state
 
 - Canonical release branch: `main`
-- Ongoing development branch: `refac`
-- Completed release on `main`: `0.1.0`
-- Ready version: `0.2.0`
+- Development branch: `refac`
+- Ready version: `0.3.0`
 - Manifest status: `ready`
-- Channel: development release
+- Current phase: dedicated readiness promotion to `main`
+- Readiness branch: `release/v0.3.0-readiness`
+- Active readiness pull request: #43
+- Validated `refac` baseline commit: `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03`
+- Validated baseline tree: `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`
 - PyPI publication: disabled
 - Completion criteria: [`RELEASE_CRITERIA.md`](RELEASE_CRITERIA.md)
-- Release procedure: [`RELEASING.md`](RELEASING.md)
 
-PR #31 promoted the validated v0.2.0 lineage to `main` as `d8f2bad5111e18859c746acc412ce1ea0d627e05`. A publication recovery run then exposed one final readiness discrepancy: the patched lock used `cryptography 50.0.0`, but the obsolete audit ignore entry remained in workspace configuration.
+The v0.2.0 tag and immutable GitHub Release were created from exact `main` commit `9da3f46fc2fe817c2643437d48f42dd078f26482`. Version 0.3.0 is now a validated readiness candidate awaiting promotion through PR #43.
 
-PR #33 removes that stale exception and adds a release-validation gate that rejects non-empty audit ignore lists for any `ready` release.
+## Completed v0.3.0 increments
 
-## End-to-end workflows
+### Named profiles — PR #36
 
-### OpenRouter through Aider
+- save, list, show, use, and delete named configuration snapshots
+- validate provider/model and launcher selection before one atomic configuration write
+- preserve unrelated settings and exclude all credentials from profiles
 
-```bash
-modelctl auth login openrouter
-modelctl models sync openrouter
-modelctl use --provider openrouter --model anthropic/claude-sonnet-4
-modelctl launchers remediate
-modelctl launchers remediate --apply
-modelctl config set compatibility-policy strict
-modelctl doctor
-modelctl run
-```
+### Versioned launcher plugin SDK — PR #37
 
-### Anthropic through Claude Code
+- public immutable `LaunchRequest`
+- explicit `LauncherCapabilities`
+- stable `LauncherMetadata`
+- public `LauncherPlugin` protocol
+- launcher contract version `1.0` with major-version compatibility validation
 
-```bash
-modelctl auth login anthropic
-modelctl models sync anthropic
-modelctl use --provider anthropic --model claude-opus-4-6
-modelctl launchers recommend
-modelctl config set compatibility-policy strict
-modelctl doctor
-modelctl run
-```
+### Installed launcher discovery — PR #39
 
-### Google Gemini through Gemini CLI
+- discover only installed `modelctl.launchers` Python entry points
+- preserve built-ins and reject built-in ID collisions before loading external code
+- reject duplicate external launcher IDs deterministically
+- isolate import, initialization, metadata, and contract failures
+- adapt valid plugins into the existing core launcher runtime
+- verify real installed entry-point discovery in isolated packaging smoke tests
 
-```bash
-modelctl auth login google
-modelctl models sync google
-modelctl use --provider google --model gemini-3.5-flash
-modelctl launchers recommend
-modelctl config set compatibility-policy strict
-modelctl doctor
-modelctl run
-```
+PR #38 contains the same discovery implementation history but was closed unmerged after the connected GitHub draft-to-ready transition failed because of an upstream GraphQL schema incompatibility. PR #39 is the actual merged implementation path.
 
-### OpenAI through Codex CLI
+### Plugin diagnostics and compatibility hardening — PR #40
 
-```bash
-modelctl auth login openai
-modelctl models sync openai
-modelctl use --provider openai --model gpt-5.6
-modelctl launchers recommend
-modelctl config set compatibility-policy strict
-modelctl doctor
-modelctl run
-```
+- make `modelctl doctor` plugin-aware
+- report distribution origin, plugin ID, SDK contract compatibility, executable availability, and discovery/probe failures
+- keep unrelated broken plugins isolated while escalating the selected launcher failure
+- verify external plugins use recommendation, remediation, strict compatibility, immutable request, and native argument forwarding paths
 
-Provider catalog credentials remain separate from launcher authentication and are not injected from keyring storage into subprocess environments.
+### Static type-check enforcement — PR #41
 
-## Completed v0.2.0 scope
+- enforce strict `basedpyright` at the public SDK, named-profile, and launcher-plugin boundaries
+- type profile collaborators and persisted profile narrowing explicitly
+- type installed launcher entry points and discovery status
+- ship PEP 561 `py.typed` markers for SDK/core and verify them from installed wheels
+- repeat the strict type gate in the complete release workflow
 
-### Providers and models
+### Final documentation and scope review — PR #42
 
-- OpenRouter synchronization and Aider translation
-- Anthropic native synchronization and Claude Code routing
-- Google Gemini native synchronization and Gemini CLI routing
-- OpenAI native synchronization and Codex CLI routing
-- Official provider environment aliases with modelctl-specific precedence
-- Bounded HTTP timeouts and pagination guards
-- Explicit malformed-response handling
-- Conservative mapping when catalog APIs omit context, price, capability, or modality fields
-- Interactive and non-interactive provider/model selection
+- reconcile English/Korean release documentation with the completed v0.3.0 feature set
+- resolve profile portability as an explicitly deferred, evidence-driven follow-up rather than a release blocker
+- preserve the exact `Draft` release-validation contract through final documentation review
+- complete full CI, Package, Test, and Release validation with no unresolved review threads
 
-### Launchers and compatibility
+## Readiness validation evidence
 
-- Immutable `LaunchRequest`
-- Explicit `LauncherCapabilities`
-- Capability-driven recommendation
-- Preview-first remediation with explicit safe apply
-- Refusal before mutation when a recommendation is unavailable
-- Persisted `warn` and `strict` policies
-- Per-run compatibility overrides
-- Native argument forwarding without shell execution
-- Shared semantics across execution, doctor, recommendation, and remediation
+The final PR #42 head `1e82ccf819f14fad3b6d6f2a986f0247703b632e` passed CI, Package, Test, and complete Release validation. Its Git tree is `aaad179a59b5f6b98e8319ff4c2b3818d84d392e`.
 
-### Security
+After PR #42 merged, exact `refac` commit `1b5639a699dc3e26e53a61ad8a9ee1dcb4933e03` retained that identical tree. The merge commit independently passed push CI, Package, and the full Python 3.13 test matrix on Ubuntu, macOS, and Windows.
 
-- Keyring-first credentials and no silent plaintext downgrade
-- Explicit fallback approval, private permissions, atomic writes, and symlink rejection
-- Provider credentials separated from coding-agent authentication
-- `cryptography 50.0.0` locked for `GHSA-g6cj-pr64-35w5` / `CVE-2026-69247`
-- Issue #22 closed after complete validation
-- Dependency audit without an advisory exclusion or ignore warning
-- Ready-release validation rejects non-empty audit ignore lists
-- Pinned external GitHub Actions and least-privilege workflow permissions
-- PyPI publishing and OIDC write permission absent
+The readiness branch was created directly from that exact baseline commit. Its changes are limited to release-state and release-facing documentation finalization; no runtime feature is added.
 
-### Quality and release gates
+## Final v0.3.0 scope
 
-- Primary CI audit, Ruff, and provider contract suites
-- Complete 138-test suite on Ubuntu, macOS, and Windows with Python 3.13
-- All wheel and source-distribution builds
-- Isolated installed-wheel import and CLI smoke tests
-- Package, manifest, changelog, documentation, clean-audit policy, and tag validation
-- Independent release-workflow verification
-- SHA-256 checksums and immutable GitHub Release behavior
+Profile portability is explicitly deferred because no concrete usage need has been demonstrated. It is not a v0.3.0 release blocker.
 
-## CI and release findings
+Explicit non-goals remain:
 
-PR #28 exposed mutable pagination parameters that changed a recorded first request after a second-page token was added. PR #29 added focused native-provider contract suites to primary CI.
+- provider plugins
+- automatic plugin installation or update
+- remote plugin registries
+- arbitrary filesystem plugin paths
+- credential export
+- PyPI publication
 
-PR #32 successfully reran every release gate against the exact `main` commit but failed before tag creation because its shell logic treated a 404 JSON response as an existing tag SHA. That failed run also exposed the stale audit ignore warning. No tag or release was created or overwritten.
+## Release path
 
-PR #33 fixes the audit policy itself before publication is attempted again. The final publication recovery must use the new PR #33 `main` merge commit and corrected empty-tag handling.
-
-## v0.2.0 pull requests
-
-| PR | Summary | Result |
-| --- | --- | --- |
-| #21 | Provider-aware launcher recommendations | Merged |
-| #23 | Strict compatibility and native option forwarding | Merged |
-| #24 | Persisted warn/strict policy | Merged |
-| #25 | Immutable execution contract and launcher capabilities | Merged |
-| #26 | Preview-first compatibility remediation | Merged |
-| #27 | Anthropic catalog and Claude Code routing | Merged |
-| #28 | Google Gemini catalog and Gemini CLI routing | Merged |
-| #29 | OpenAI catalog, Codex routing, and provider CI | Merged |
-| #30 | Patched cryptography lock and issue #22 closure | Merged |
-| #31 | v0.2.0 readiness declaration and `main` promotion | Merged |
-| #32 | Guarded publication recovery trigger | Failed safely; no tag created |
-| #33 | Remove stale audit ignore and enforce clean ready releases | Active |
-
-## Remaining completion steps
-
-1. Merge PR #33 after all four workflows pass on its final documented head.
-2. Target the resulting exact `main` merge commit in the guarded publication recovery.
-3. Rerun release metadata validation, clean dependency audit, Ruff, all 138 tests, builds, isolated wheel smoke tests, and checksums.
-4. Create and verify immutable tag `v0.2.0` plus one GitHub Release containing three wheels, three source distributions, and `SHA256SUMS`.
-5. Close the unmerged recovery PR after publication and remove its one-time workflow from the recovery branch.
-
-PyPI remains disabled throughout this process.
-
-## Deferred after v0.2.0
-
-- Shared provider HTTP helpers only for proven identical behavior
-- Additional safe, reversible, previewable remediation actions
-- Tested profile management and plugin-based launcher discovery
-- Static type-check enforcement as a separate quality milestone
-- Separately reviewed PyPI Trusted Publishing
+1. PR #43 promotes `release/v0.3.0-readiness` to `main`.
+2. Require the exact PR #43 readiness head to pass CI, Test, Package, and complete Release validation.
+3. Merge only that validated readiness head into `main`.
+4. Let the release workflow independently revalidate the exact `main` merge commit before creating immutable tag `v0.3.0` and its GitHub Release.
+5. Never overwrite an existing tag or release asset; PyPI publication remains disabled.
 
 ## Validation commands
 
@@ -178,8 +112,8 @@ PyPI remains disabled throughout this process.
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.2.0
 ```

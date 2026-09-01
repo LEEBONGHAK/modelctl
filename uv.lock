@@ -436,7 +436,7 @@ wheels = [
 
 [[package]]
 name = "modelctl"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "apps/modelctl" }
 dependencies = [
     { name = "modelctl-core" },
@@ -455,11 +455,12 @@ requires-dist = [
 
 [[package]]
 name = "modelctl-core"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "packages/core" }
 dependencies = [
     { name = "httpx" },
     { name = "keyring" },
+    { name = "modelctl-sdk" },
     { name = "platformdirs" },
     { name = "pydantic" },
     { name = "questionary" },
@@ -471,6 +472,7 @@ dependencies = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "keyring", specifier = ">=25" },
+    { name = "modelctl-sdk", editable = "packages/sdk" },
     { name = "platformdirs", specifier = ">=4" },
     { name = "pydantic", specifier = ">=2" },
     { name = "questionary", specifier = ">=2.0.0" },
@@ -480,12 +482,12 @@ requires-dist = [
 
 [[package]]
 name = "modelctl-sdk"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "packages/sdk" }
 
 [[package]]
 name = "modelctl-workspace"
-version = "0.2.0"
+version = "0.3.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]

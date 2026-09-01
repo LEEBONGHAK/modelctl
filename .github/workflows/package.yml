@@ -38,14 +38,46 @@ jobs:
           dist/modelctl-*.whl
 
       - name: Verify installed packages
-        run: >-
-          .package-smoke/bin/python -c
-          "import modelctl_cli, modelctl_core, modelctl_sdk"
+        run: |
+          .package-smoke/bin/python - <<'PY'
+          from importlib.resources import files
+
+          import modelctl_cli
+          import modelctl_core
+          import modelctl_sdk
+
+          assert files("modelctl_core").joinpath("py.typed").is_file()
+          assert files("modelctl_sdk").joinpath("py.typed").is_file()
+          PY
 
       - name: Verify installed CLI
         run: |
           .package-smoke/bin/modelctl version
           .package-smoke/bin/modelctl --help
+
+      - name: Install launcher plugin fixture
+        run: >-
+          uv pip install
+          --python .package-smoke/bin/python
+          --no-deps
+          tests/fixtures/launcher_plugin
+
+      - name: Verify installed launcher plugin discovery
+        run: |
+          .package-smoke/bin/python - <<'PY'
+          from modelctl_core.launcher.registry import LauncherRegistry
+
+          registry = LauncherRegistry()
+          launcher = registry.get("fixture")
+          assert launcher is not None
+          assert launcher.display_name == "Fixture Launcher"
+          record = next(
+              item for item in registry.diagnostics() if item.launcher_id == "fixture"
+          )
+          assert record.status == "loaded"
+          assert record.source == "modelctl-test-launcher-plugin==0.1.0"
+          PY
+          .package-smoke/bin/modelctl launchers list
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:

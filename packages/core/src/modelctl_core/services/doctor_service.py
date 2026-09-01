@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy import text
 
 from modelctl_core.launcher.base import LaunchRequest
+from modelctl_sdk import LAUNCHER_PLUGIN_CONTRACT_VERSION, is_contract_compatible
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class DoctorService:
         checks.append(self._credential_check(provider_id))
         checks.append(self._model_check(model))
         checks.append(self._launcher_check(launcher_id))
+        checks.extend(self._plugin_checks(launcher_id))
         checks.append(self._compatibility_check(provider_id, model, launcher_id))
         checks.append(self._database_check())
         return checks
@@ -76,13 +78,103 @@ class DoctorService:
         launcher = self.launchers.get(launcher_id)
         if launcher is None:
             return DiagnosticCheck("Launcher", "error", f"Unknown launcher: {launcher_id}")
-        if launcher.available():
+
+        try:
+            available = launcher.available()
+        except Exception as error:
+            return DiagnosticCheck(
+                "Launcher",
+                "error",
+                f"{launcher.display_name} availability check failed: "
+                f"{type(error).__name__}: {error}",
+            )
+
+        if available:
             return DiagnosticCheck("Launcher", "ok", f"{launcher.display_name} is installed")
         return DiagnosticCheck(
             "Launcher",
             "warning",
             f"{launcher.display_name} is selected but not installed",
         )
+
+    def _plugin_checks(self, selected_launcher_id: str) -> list[DiagnosticCheck]:
+        diagnostics = getattr(self.launchers, "diagnostics", None)
+        if not callable(diagnostics):
+            return []
+
+        checks: list[DiagnosticCheck] = []
+        for record in diagnostics():
+            if record.source == "builtin:modelctl":
+                continue
+
+            name = f"Launcher plugin {record.launcher_id}"
+            selected = record.launcher_id == selected_launcher_id
+
+            if record.status != "loaded":
+                status = "error" if selected else "warning"
+                detail = f"{record.source}; {record.status}"
+                if record.error:
+                    detail = f"{detail}; {record.error}"
+                checks.append(DiagnosticCheck(name, status, detail))
+                continue
+
+            launcher = self.launchers.get(record.launcher_id)
+            if launcher is None:
+                checks.append(
+                    DiagnosticCheck(
+                        name,
+                        "error" if selected else "warning",
+                        f"{record.source}; discovery reported loaded but registry entry is missing",
+                    )
+                )
+                continue
+
+            metadata = getattr(launcher, "metadata", None)
+            contract_version = getattr(metadata, "contract_version", None)
+            plugin_id = record.plugin_id or getattr(metadata, "plugin_id", "unknown")
+
+            try:
+                compatible = isinstance(contract_version, str) and is_contract_compatible(
+                    contract_version
+                )
+            except ValueError:
+                compatible = False
+
+            if not compatible:
+                checks.append(
+                    DiagnosticCheck(
+                        name,
+                        "error" if selected else "warning",
+                        f"{record.source}; plugin={plugin_id}; contract={contract_version!r} "
+                        f"is incompatible with {LAUNCHER_PLUGIN_CONTRACT_VERSION}",
+                    )
+                )
+                continue
+
+            try:
+                available = launcher.available()
+            except Exception as error:
+                checks.append(
+                    DiagnosticCheck(
+                        name,
+                        "error" if selected else "warning",
+                        f"{record.source}; plugin={plugin_id}; "
+                        f"contract={contract_version} compatible; availability check failed: "
+                        f"{type(error).__name__}: {error}",
+                    )
+                )
+                continue
+
+            checks.append(
+                DiagnosticCheck(
+                    name,
+                    "ok" if available else "warning",
+                    f"{record.source}; plugin={plugin_id}; contract={contract_version} "
+                    f"compatible; executable={'available' if available else 'unavailable'}",
+                )
+            )
+
+        return checks
 
     def _compatibility_check(
         self,

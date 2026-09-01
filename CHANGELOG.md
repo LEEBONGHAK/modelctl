@@ -4,6 +4,49 @@ All notable changes to `modelctl` are documented in this file.
 
 The project follows Semantic Versioning. Until a stable `1.0.0` release, minor versions may include breaking changes with migration notes.
 
+## [0.3.0] - 2026-09-01
+
+Third development release.
+
+### Added
+
+- Named configuration snapshots through `modelctl profiles save <name>`.
+- Profile inspection through `modelctl profiles list` and `modelctl profiles show <name>`.
+- Validated profile application through `modelctl profiles use <name>`.
+- Explicit profile deletion through `modelctl profiles delete <name>`.
+- Service and CLI regression tests for profile lifecycle, normalization, malformed data, and validation failures.
+- Public launcher plugin SDK contract with immutable launch requests, explicit capabilities, stable metadata IDs, and major-version compatibility validation.
+- Installed launcher discovery from the dedicated `modelctl.launchers` Python entry-point group.
+- Launcher source and plugin load status in `modelctl launchers list`.
+- Installed-package launcher plugin fixture in packaging smoke tests.
+- Plugin-aware `modelctl doctor` checks for distribution origin, plugin ID, SDK contract compatibility, and executable availability.
+- Strict basedpyright enforcement for the public SDK, named-profile, and launcher-plugin boundaries.
+- PEP 561 `py.typed` markers for shipped SDK and core packages, verified from installed wheels.
+
+### Changed
+
+- Coordinated the workspace, CLI, core, SDK, and lockfile versions at `0.3.0`.
+- Kept `release.toml` in `draft` throughout feature development and final documentation review, then promoted it to `ready` only on the dedicated readiness branch.
+- Applied profiles as one complete configuration snapshot instead of a hidden runtime overlay.
+- Preserved unrelated configuration keys and saved profiles when applying a profile.
+- Adapted successful external launcher plugins to the same core launcher runtime used by built-ins.
+- Deterministically reject duplicate external launcher IDs instead of choosing one based on environment ordering.
+- Treat unrelated broken or duplicate plugins as doctor warnings while escalating failure of the currently selected plugin to an error.
+- Hardened external launcher regression coverage across recommendation, remediation, strict compatibility, immutable argument forwarding, and unavailable recommendation apply.
+- Replaced dynamic profile collaborators with structural Protocol boundaries and narrowed persisted profile/plugin data after runtime validation.
+- Added the same strict type-check gate to release validation so release paths cannot bypass primary CI typing.
+- Deferred profile portability from v0.3.0 because no concrete workflow need was demonstrated.
+
+### Security
+
+- Profiles contain only provider, model, launcher, and compatibility policy values.
+- Credential material and launcher-managed authentication data are never included in profiles.
+- Unknown or extra stored profile fields are rejected instead of being silently accepted.
+- Profile application validates the complete model and launcher selection before one atomic configuration write.
+- Launcher discovery is restricted to already-installed Python package metadata; arbitrary filesystem paths, remote registries, downloads, and automatic installation remain unsupported.
+- Entry points that collide with built-in launcher IDs are rejected before their code is loaded.
+- Broken, incompatible, or malformed launcher plugins are isolated and remain visible in diagnostics without replacing built-ins.
+
 ## [0.2.0] - 2026-08-04
 
 Second development release.
@@ -64,7 +107,7 @@ First development release.
 
 - OpenRouter credential storage and model-catalog synchronization.
 - Interactive and non-interactive provider/model selection.
-- Persistent provider, model, and launcher configuration.
+- Persistent provider/model/launcher configuration.
 - Claude Code, Gemini CLI, Codex CLI, and Aider launchers.
 - Native launcher argument forwarding.
 - Automatic OpenRouter model translation for Aider.

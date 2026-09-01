@@ -1,6 +1,6 @@
 [project]
 name = "modelctl-workspace"
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.13"
 
 [dependency-groups]
@@ -32,6 +32,19 @@ select = [
     "E",
     "F",
     "B",
+]
+
+[tool.basedpyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+include = [
+    "packages/sdk/src/modelctl_sdk/launcher.py",
+    "packages/sdk/src/modelctl_sdk/__init__.py",
+    "packages/core/src/modelctl_core/services/profile_service.py",
+    "packages/core/src/modelctl_core/launcher/base.py",
+    "packages/core/src/modelctl_core/launcher/discovery.py",
+    "packages/core/src/modelctl_core/launcher/plugin_adapter.py",
+    "packages/core/src/modelctl_core/launcher/registry.py",
 ]
 
 [tool.pytest.ini_options]

@@ -6,7 +6,25 @@
 
 `modelctl`은 AI provider와 모델 선택, 로컬 credential과 기본 설정 관리, 호환성 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 ready 개발 버전은 `0.2.0`입니다. `main`은 공식 release branch이며 PyPI 게시는 비활성화되어 있습니다.
+> 최신 ready release는 `0.3.0`입니다. `main`은 공식 release branch이고 PyPI 게시는 비활성화되어 있습니다.
+
+## v0.3.0 주요 기능
+
+버전 0.3.0에는 다음 기능이 추가되었습니다.
+
+- provider/model/launcher/compatibility-policy를 묶는 이름 있는 profile
+- 공개 versioned launcher plugin SDK 계약
+- 전용 `modelctl.launchers` Python entry-point group 기반 설치 launcher 탐색
+- built-in launcher 보호와 결정적 duplicate ID 거부
+- `modelctl launchers list`의 plugin source 및 load status
+- `modelctl doctor`의 plugin-aware runtime health 진단
+- 외부 launcher의 recommendation, remediation, strict compatibility, argument forwarding 회귀 검증
+- 공개 SDK, named-profile, launcher-plugin 경계의 strict basedpyright 강제
+- 설치된 SDK/core wheel에서 검증하는 PEP 561 typed-package marker
+
+Profile portability는 실제 사용에서 구체적인 필요가 확인되지 않았기 때문에 v0.3.0에서 의도적으로 defer합니다. 추측성 범위를 늘리지 않고 실제 workflow 증거가 생기는 후속 버전에서 재검토합니다.
+
+설치된 launcher plugin은 신뢰된 실행 가능 Python 확장으로 취급합니다. modelctl은 임의 plugin directory를 스캔하거나 plugin 코드를 다운로드하거나 plugin을 자동 설치·업데이트하지 않습니다.
 
 ## v0.2.0 주요 기능
 
@@ -19,7 +37,6 @@
 - Shell 없이 native launcher 인자 전달
 - Keyring 우선 credential 저장과 명시적 평문 fallback
 - Provider credential과 launcher 인증 분리
-- Provider API contract 테스트, 138개 cross-platform 테스트, package build, 설치 wheel smoke test
 - 패치된 `cryptography 50.0.0`과 advisory 예외 없는 dependency audit
 - SHA-256 checksum을 포함한 불변 GitHub Release artifact
 
@@ -98,6 +115,22 @@ Catalog 동기화에는 저장 credential 대신 `OPENAI_API_KEY`를 사용할 �
 
 modelctl이 관리하는 provider credential은 catalog 동기화에만 사용합니다. Keyring의 secret을 launcher subprocess 환경으로 복사하지 않으며 각 코딩 에이전트 CLI가 자체 인증 흐름을 관리합니다.
 
+## 이름 있는 Profile
+
+현재 적용된 provider, model, launcher, compatibility policy를 저장합니다.
+
+```bash
+modelctl profiles save work
+modelctl profiles list
+modelctl profiles show work
+modelctl profiles use work
+modelctl profiles delete work
+```
+
+Profile 이름은 소문자로 정규화하며 문자, 숫자, 마침표, 밑줄, 하이픈을 사용할 수 있습니다. Profile 적용 전 provider/model과 launcher를 모두 검증하고 설정을 한 번만 원자적으로 저장합니다. 관련 없는 설정과 다른 profile은 그대로 보존합니다.
+
+Profile에는 credential, 환경변수 secret, launcher가 관리하는 인증정보를 포함하지 않습니다. 손상되거나 일부 필드가 누락되거나 예상하지 않은 필드가 추가된 profile은 명시적으로 거부합니다.
+
 ## Launcher 관리
 
 ```bash
@@ -107,6 +140,7 @@ modelctl launchers recommend --apply
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl launchers use aider
+modelctl doctor
 ```
 
 | ID | 코딩 에이전트 | Native provider | 기본 실행 |
@@ -119,6 +153,8 @@ modelctl launchers use aider
 `recommend`는 capability가 맞는 launcher를 제안합니다. `remediate`는 현재 launcher에 알려진 불일치가 있을 때만 변경 계획을 만듭니다.
 
 두 명령은 기본적으로 읽기 전용입니다. `--apply`는 설치된 추천 launcher만 선택하며 설정 변경 전에 사용 가능 여부를 검사합니다. 소프트웨어 설치, provider/model 변경, launcher 자동 실행은 하지 않습니다.
+
+제3자 launcher package는 `modelctl.launchers` Python entry-point group을 등록할 수 있습니다. `modelctl launchers list`는 discovery source/status를 표시하고, `modelctl doctor`는 plugin contract 호환성과 executable health를 진단합니다. 자세한 내용은 [`docs/LAUNCHER_PLUGINS.md`](docs/LAUNCHER_PLUGINS.md)를 참고하세요.
 
 ## 호환성 정책과 실행
 
@@ -165,23 +201,26 @@ modelctl auth login openrouter --allow-plaintext-fallback
 ~/.local/share/modelctl/modelctl.db
 ```
 
+이름 있는 profile은 `config.json` 내부에 저장하며 `credentials.json`이나 운영체제 keyring의 값을 참조하거나 복사하지 않습니다.
+
 ## 개발 및 검증
 
 ```bash
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
-python scripts/release_validation.py --tag v0.2.0
+python scripts/release_validation.py
 ```
 
-GitHub Actions는 provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 격리 환경 wheel 설치, release metadata, checksum 생성을 독립적으로 검증합니다.
+GitHub Actions는 strict v0.3 boundary type check, provider contract 테스트, Ubuntu·macOS·Windows 전체 pytest, 모든 배포물 build, 실제 launcher-plugin fixture와 `py.typed` marker를 포함한 격리 wheel 설치 검증, release metadata, checksum 생성을 독립적으로 검증합니다.
 
 ## 릴리스 정책
 
 Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.md`](CHANGELOG.md), 완료 기준은 [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md)에서 관리합니다.
 
-`0.2.0` manifest는 `ready`입니다. `main` 대상 검토 PR은 모든 dry-run gate를 통과해야 합니다. 병합 후 release workflow가 정확한 `main` merge commit에서 모든 검증을 다시 실행한 뒤 불변 tag `v0.2.0`과 하나의 GitHub Release를 생성합니다.
+`0.3.0` manifest는 `ready` 상태입니다. Release 경로는 검증된 readiness 계보만 `main`으로 승격하고, 불변 tag `v0.3.0`과 GitHub Release를 만들기 전에 정확한 `main` merge commit에서 audit, lint, strict type check, 전체 테스트, build, 설치 wheel smoke test, checksum을 다시 독립 검증합니다.
 
 기존 tag와 release asset은 덮어쓰지 않습니다. **어떤 workflow도 PyPI에 package를 게시하지 않습니다.** 자세한 절차는 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
 
@@ -190,7 +229,7 @@ Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.m
 ```text
 apps/modelctl/       Typer CLI 애플리케이션
 packages/core/       runtime service, credential, provider, repository, launcher
-packages/sdk/        SDK 기반
+packages/sdk/        공개 launcher plugin SDK 기반
 scripts/             release 검증 helper
 tests/               회귀, 통합, 패키징, 보안 테스트
 docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
@@ -200,10 +239,9 @@ docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
 
 Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, 알려진 한계는 [`SECURITY.md`](SECURITY.md)를 참고하세요.
 
-## v0.2.0 이후 로드맵
+## v0.3.0 이후 검토 항목
 
-- 실제로 동일한 요구가 확인된 provider HTTP 처리만 공통 helper로 추출
-- 안전하고 되돌릴 수 있으며 미리보기 가능한 조치만 remediation에 추가
-- 테스트된 profile 관리와 plugin 기반 launcher discovery
-- 별도 품질 milestone로 static type check 도입
-- PyPI Trusted Publishing 별도 검토
+- 실제 사용에서 구체적인 필요가 확인된 경우에만 profile portability 재검토
+- launcher-plugin 계약과 별도로 provider-plugin 아키텍처 검토
+- 설치 package 신뢰 경계를 약화하지 않는 plugin 배포·설치 UX 검토
+- PyPI Trusted Publishing 별도 검토; v0.3.0에서는 PyPI 게시를 계속 비활성화

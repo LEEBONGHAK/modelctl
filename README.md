@@ -6,7 +6,25 @@
 
 `modelctl` provides one CLI for selecting AI providers and models, managing local credentials and defaults, diagnosing compatibility, and launching coding-agent CLIs consistently.
 
-> Current ready development version: `0.2.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+> Latest ready release: `0.3.0`. `main` is the canonical release branch. PyPI publication remains disabled.
+
+## v0.3.0 highlights
+
+Version 0.3.0 adds:
+
+- named provider/model/launcher/compatibility-policy profiles
+- a public versioned launcher plugin SDK contract
+- installed launcher discovery through the dedicated `modelctl.launchers` Python entry-point group
+- built-in launcher protection and deterministic duplicate-ID rejection
+- plugin source and load status in `modelctl launchers list`
+- plugin-aware runtime health checks in `modelctl doctor`
+- external launcher regression coverage across recommendation, remediation, strict compatibility, and argument forwarding
+- strict basedpyright enforcement at the public SDK, named-profile, and launcher-plugin boundaries
+- PEP 561 typed-package markers verified from installed SDK/core wheels
+
+Profile portability is intentionally deferred from v0.3.0 because no concrete usage need has been demonstrated. It can be revisited in a later version based on real workflow evidence rather than speculative scope.
+
+Installed launcher plugins are treated as trusted executable Python extensions. modelctl does not scan arbitrary plugin directories, download plugin code, or install/update plugins automatically.
 
 ## v0.2.0 highlights
 
@@ -19,7 +37,6 @@
 - Native launcher argument forwarding without shell execution
 - Keyring-first credential storage with explicit plaintext fallback
 - Provider credentials kept separate from launcher authentication
-- Provider API contract tests, 138 cross-platform tests, package builds, and installed-wheel smoke tests
 - Locked `cryptography 50.0.0` and dependency audit without an advisory exclusion
 - Validated immutable GitHub Release artifacts with SHA-256 checksums
 
@@ -98,6 +115,22 @@ modelctl run
 
 Provider credentials managed by modelctl are used for catalog synchronization only. They are not copied from keyring storage into launcher subprocess environments; each coding-agent CLI owns its supported authentication flow.
 
+## Named profiles
+
+Save the current effective provider, model, launcher, and compatibility policy:
+
+```bash
+modelctl profiles save work
+modelctl profiles list
+modelctl profiles show work
+modelctl profiles use work
+modelctl profiles delete work
+```
+
+Profile names are normalized to lowercase and may contain letters, numbers, dots, underscores, and hyphens. Applying a profile validates its provider/model selection and launcher before making one atomic configuration write. Unrelated configuration and other saved profiles are preserved.
+
+Profiles contain no credentials, environment secrets, or launcher-managed authentication data. Malformed, partial, or extended profile objects are rejected explicitly.
+
 ## Launcher management
 
 ```bash
@@ -107,6 +140,7 @@ modelctl launchers recommend --apply
 modelctl launchers remediate
 modelctl launchers remediate --apply
 modelctl launchers use aider
+modelctl doctor
 ```
 
 | ID | Coding agent | Native provider | Base invocation |
@@ -119,6 +153,8 @@ modelctl launchers use aider
 `recommend` proposes a capability-compatible launcher. `remediate` creates a change plan only when the active launcher has a known mismatch.
 
 Both commands are read-only by default. Their `--apply` variants change only the selected launcher and refuse unavailable recommendations before configuration mutation. They never install software, change the provider or model, or start a launcher.
+
+Third-party launcher packages can register the `modelctl.launchers` Python entry-point group. `modelctl launchers list` shows discovery source/status, while `modelctl doctor` reports plugin contract compatibility and executable health. See [`docs/LAUNCHER_PLUGINS.md`](docs/LAUNCHER_PLUGINS.md).
 
 ## Compatibility and execution
 
@@ -165,23 +201,26 @@ The explicitly approved fallback is unencrypted plaintext. Protected paths use a
 ~/.local/share/modelctl/modelctl.db
 ```
 
+Named profiles are stored inside `config.json`. They never reference or copy values from `credentials.json` or the operating-system keyring.
+
 ## Development and validation
 
 ```bash
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
-python scripts/release_validation.py --tag v0.2.0
+python scripts/release_validation.py
 ```
 
-GitHub Actions independently runs provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation, release metadata checks, and checksum generation.
+GitHub Actions independently runs the strict v0.3 boundary type check, provider contract tests, the complete pytest suite on Ubuntu, macOS, and Windows, all distribution builds, isolated installed-wheel validation including an installed launcher-plugin fixture and `py.typed` markers, release metadata checks, and checksum generation.
 
 ## Release policy
 
 Release decisions are declared in [`release.toml`](release.toml), changes in [`CHANGELOG.md`](CHANGELOG.md), and the completion checklist in [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md).
 
-The `0.2.0` manifest is `ready`. A reviewed pull request targeting `main` must still pass every dry-run gate. After merge, the release workflow checks out the exact `main` merge commit and repeats all gates before creating immutable tag `v0.2.0` and one GitHub Release.
+The `0.3.0` manifest is `ready`. The release path promotes only a validated readiness lineage to `main`, then independently repeats audit, lint, strict type checking, tests, builds, installed-wheel smoke checks, and checksums before creating immutable tag `v0.3.0` and its GitHub Release.
 
 Existing tags and release assets are never overwritten. **No workflow publishes packages to PyPI.** See [`docs/RELEASING.md`](docs/RELEASING.md).
 
@@ -190,7 +229,7 @@ Existing tags and release assets are never overwritten. **No workflow publishes 
 ```text
 apps/modelctl/       Typer CLI application
 packages/core/       runtime services, credentials, providers, repositories, launchers
-packages/sdk/        SDK foundation
+packages/sdk/        public launcher plugin SDK foundation
 scripts/             release validation helpers
 tests/               regression, integration, packaging, and security tests
 docs/                provider, project, release, security, and PR documentation
@@ -200,10 +239,9 @@ docs/                provider, project, release, security, and PR documentation
 
 See [`SECURITY.md`](SECURITY.md) for credential behavior, reporting guidance, dependency security, release trust boundaries, and known limitations.
 
-## Post-v0.2.0 roadmap
+## Post-v0.3.0 considerations
 
-- Extract shared provider HTTP helpers only where proven integrations have identical requirements
-- Extend remediation only with safe, reversible, previewable actions
-- Add tested profile management and plugin-based launcher discovery
-- Introduce static type-check enforcement as a separate quality milestone
-- Review PyPI Trusted Publishing separately
+- Revisit profile portability only when real usage demonstrates a concrete need
+- Review provider-plugin architecture separately from the launcher-plugin contract
+- Review plugin distribution/installation UX without weakening the installed-package trust boundary
+- Review PyPI Trusted Publishing separately; PyPI publication remains disabled for v0.3.0

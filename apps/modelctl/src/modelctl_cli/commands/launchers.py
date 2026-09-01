@@ -13,7 +13,7 @@ console = Console()
 
 @launchers_app.command("list")
 def list_launchers() -> None:
-    """List supported launchers and their local installation status."""
+    """List supported launchers, plugin sources, and local installation status."""
     active = container.config.load().get("launcher", "claude")
 
     table = Table(title="Coding-agent launchers")
@@ -21,13 +21,43 @@ def list_launchers() -> None:
     table.add_column("ID")
     table.add_column("Name")
     table.add_column("Installed", justify="center")
+    table.add_column("Source")
+    table.add_column("Load status")
+
+    diagnostics_method = getattr(container.launchers, "diagnostics", None)
+    diagnostics = diagnostics_method() if callable(diagnostics_method) else []
+    if not isinstance(diagnostics, list):
+        diagnostics = []
+    loaded_records = {
+        record.launcher_id: record
+        for record in diagnostics
+        if getattr(record, "status", None) == "loaded"
+    }
 
     for launcher in container.launchers.list():
+        record = loaded_records.get(launcher.name)
         table.add_row(
             "✓" if launcher.name == active else "",
             launcher.name,
             launcher.display_name,
             "✓" if launcher.available() else "—",
+            record.source if record is not None else "—",
+            "loaded",
+        )
+
+    for record in diagnostics:
+        if getattr(record, "status", None) == "loaded":
+            continue
+        detail = record.status
+        if record.error:
+            detail = f"{detail}: {record.error}"
+        table.add_row(
+            "",
+            record.launcher_id,
+            record.display_name or "—",
+            "—",
+            record.source,
+            Text(detail),
         )
 
     console.print(table)
