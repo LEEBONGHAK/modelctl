@@ -38,6 +38,9 @@ This directory records the implementation history of `modelctl` one pull request
 | #31 | [PR-031.md](PR-031.md) | Declare v0.2.0 ready and promote the validated lineage to main / v0.2.0 ready 선언·검증 계보 main 승격 |
 | #33 | [PR-033.md](PR-033.md) | Remove stale audit exclusion and enforce clean ready releases / 오래된 audit 예외 제거·clean ready release 강제 |
 | #36 | [PR-036.md](PR-036.md) | Begin v0.3.0 with validated named profiles / 검증된 이름 있는 profile로 v0.3.0 시작 |
+| #37 | [PR-037.md](PR-037.md) | Versioned public launcher plugin SDK contract / 버전이 명시된 공개 launcher plugin SDK 계약 |
+| #38 | [PR-038.md](PR-038.md) | Superseded validated discovery draft, closed unmerged / 검증 후 도구 문제로 대체된 미병합 draft |
+| #39 | [PR-039.md](PR-039.md) | Installed launcher entry-point discovery and isolation / 설치 launcher entry-point 탐색·격리 |
 
 ## Document format / 문서 형식
 
