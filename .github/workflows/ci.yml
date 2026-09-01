@@ -30,6 +30,9 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Type check v0.3 boundaries
+        run: uv run basedpyright
+
       - name: Test provider API contracts
         run: >-
           uv run pytest
