@@ -6,11 +6,11 @@
 
 `modelctl`은 AI provider와 모델 선택, 로컬 credential과 기본 설정 관리, 호환성 진단, 여러 코딩 에이전트 CLI 실행을 하나의 명령 체계로 제공합니다.
 
-> 현재 개발 버전은 `0.3.0`(`draft`)이며 최신 ready release는 `0.2.0`입니다. `main`은 공식 release branch이고 PyPI 게시는 비활성화되어 있습니다.
+> 기능 완료 후보는 `0.3.0`(`draft`, readiness validation 대기)이며 최신 ready release는 `0.2.0`입니다. `main`은 공식 release branch이고 PyPI 게시는 비활성화되어 있습니다.
 
-## v0.3.0 개발 현황
+## v0.3.0 후보 범위
 
-현재 v0.3.0 working path에는 다음 기능이 포함되어 있습니다.
+완료된 v0.3.0 기능 범위에는 다음이 포함됩니다.
 
 - provider/model/launcher/compatibility-policy를 묶는 이름 있는 profile
 - 공개 versioned launcher plugin SDK 계약
@@ -21,6 +21,8 @@
 - 외부 launcher의 recommendation, remediation, strict compatibility, argument forwarding 회귀 검증
 - 공개 SDK, named-profile, launcher-plugin 경계의 strict basedpyright 강제
 - 설치된 SDK/core wheel에서 검증하는 PEP 561 typed-package marker
+
+Profile portability는 실제 사용에서 구체적인 필요가 확인되지 않았기 때문에 v0.3.0에서 의도적으로 defer합니다. 추측성 범위를 늘리지 않고 실제 workflow 증거가 생기는 후속 버전에서 재검토합니다.
 
 설치된 launcher plugin은 신뢰된 실행 가능 Python 확장으로 취급합니다. modelctl은 임의 plugin directory를 스캔하거나 plugin 코드를 다운로드하거나 plugin을 자동 설치·업데이트하지 않습니다.
 
@@ -218,7 +220,7 @@ GitHub Actions는 strict v0.3 boundary type check, provider contract 테스트, 
 
 Release 결정은 [`release.toml`](release.toml), 변경 사항은 [`CHANGELOG.md`](CHANGELOG.md), 완료 기준은 [`docs/RELEASE_CRITERIA.md`](docs/RELEASE_CRITERIA.md)에서 관리합니다.
 
-`0.3.0` manifest는 `draft`이므로 기능 PR에서 게시할 수 없습니다. 최신 ready release는 `main`의 `0.2.0`입니다. 향후 전용 readiness PR에서 모든 v0.3.0 완료 기준을 충족해야 승격과 게시가 가능합니다.
+`0.3.0` manifest는 최종 readiness validation 동안에도 `draft`를 유지합니다. 최신 ready release는 `main`의 `0.2.0`입니다. 오직 `main`을 대상으로 하는 전용 readiness Pull Request만 `0.3.0`을 `ready`로 변경하고 정확히 검증된 `refac` 계보를 승격할 수 있습니다.
 
 기존 tag와 release asset은 덮어쓰지 않습니다. **어떤 workflow도 PyPI에 package를 게시하지 않습니다.** 자세한 절차는 [`docs/RELEASING.md`](docs/RELEASING.md)를 참고하세요.
 
@@ -237,9 +239,10 @@ docs/                provider, 프로젝트, 릴리스, 보안, PR 문서
 
 Credential 동작, 취약점 제보, dependency 보안, release 신뢰 경계, 알려진 한계는 [`SECURITY.md`](SECURITY.md)를 참고하세요.
 
-## 남은 v0.3.0 로드맵
+## 남은 v0.3.0 릴리스 단계
 
-- 검증된 실제 사용에서 구체적 필요성이 확인된 profile 이식 기능만 추가
-- v0.3.0 문서와 release criteria 최종 검토
-- `main` 승격 전 최종 full validation과 전용 readiness 검토 수행
-- PyPI Trusted Publishing 별도 검토
+- 최종 문서 및 release criteria 검토 완료
+- 완료된 `refac` tree에서 한 번의 최종 full readiness validation 수행
+- `main` 대상 전용 readiness PR 생성 및 검증
+- 정확히 검증된 계보만 `main`으로 승격하고 tag 생성 전 release workflow가 다시 검증하도록 유지
+- PyPI Trusted Publishing은 v0.3.0 이후 별도로 검토하며 이번 릴리스 범위에서는 계속 제외
