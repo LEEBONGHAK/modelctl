@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Protocol, TypeAlias, runtime_checkable
 
 LAUNCHER_PLUGIN_CONTRACT_VERSION = "1.0"
+LAUNCHER_ENTRY_POINT_GROUP = "modelctl.launchers"
 _ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 
 
@@ -91,3 +93,6 @@ class LauncherPlugin(Protocol):
     def available(self) -> bool: ...
 
     def run(self, request: LaunchRequest) -> None: ...
+
+
+LauncherPluginFactory: TypeAlias = Callable[[], LauncherPlugin]
