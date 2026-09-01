@@ -41,6 +41,7 @@ This directory records the implementation history of `modelctl` one pull request
 | #37 | [PR-037.md](PR-037.md) | Versioned public launcher plugin SDK contract / 버전이 명시된 공개 launcher plugin SDK 계약 |
 | #38 | [PR-038.md](PR-038.md) | Superseded validated discovery draft, closed unmerged / 검증 후 도구 문제로 대체된 미병합 draft |
 | #39 | [PR-039.md](PR-039.md) | Installed launcher entry-point discovery and isolation / 설치 launcher entry-point 탐색·격리 |
+| #40 | [PR-040.md](PR-040.md) | Plugin-aware doctor diagnostics and compatibility hardening / plugin-aware doctor 진단·호환성 강화 |
 
 ## Document format / 문서 형식
 
