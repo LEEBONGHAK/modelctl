@@ -13,16 +13,16 @@ This document describes coordinated development releases for the `modelctl`, `mo
 - A completed version is promoted through a reviewed release pull request targeting `main`.
 - Tags and GitHub Releases are created only from validated commits contained in `main`.
 
-### Current v0.2.0 decision
+### Current v0.3.0 decision
 
 ```toml
-version = "0.2.0"
+version = "0.3.0"
 status = "ready"
 channel = "development"
 publish_pypi = false
 ```
 
-All three package versions match `0.2.0`. The readiness lineage includes PR #30, `cryptography 50.0.0`, and the clean-audit enforcement from PR #33.
+All three package versions match `0.3.0`. The readiness lineage includes PR #43 and publisher hardening in PR #44.
 
 ### Publication policy
 
@@ -40,10 +40,11 @@ All three package versions match `0.2.0`. The readiness lineage includes PR #30,
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.2.0
+python scripts/release_validation.py --tag v0.3.0
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 ```
 
@@ -56,21 +57,21 @@ An opened, synchronized, or reopened relevant pull request performs the complete
 - validate package versions, manifest, documentation, clean audit policy, and proposed tag
 - install the locked workspace
 - run dependency audit without an advisory exclusion or ignore warning
-- run Ruff and all 138 tests
+- run Ruff and the complete test suite
 - build wheels and source distributions without workspace source overrides
 - install built wheels in a fresh Python 3.13 environment
 - verify imports, `modelctl version`, and `modelctl --help`
 - generate `SHA256SUMS`
 - upload a temporary workflow artifact
 
-### Completing v0.2.0
+### Completing v0.3.0
 
 1. Keep the release target based on the exact validated `main` lineage.
 2. Require a clean ready-release audit policy and all completion documents.
 3. Require all pull-request workflows to pass.
 4. Merge the final security correction into `main` with the exact checked head SHA.
 5. Run publication against that exact `main` merge commit and repeat every gate.
-6. Confirm immutable tag `v0.2.0`, six Python distribution files, and `SHA256SUMS` in the GitHub Release.
+6. Confirm immutable tag `v0.3.0`, six Python distribution files, and `SHA256SUMS` in the GitHub Release.
 
 ### Trust boundaries
 
@@ -85,7 +86,7 @@ An opened, synchronized, or reopened relevant pull request performs the complete
 - Existing tags are never moved.
 - Existing GitHub Release assets are never replaced.
 - A correction after tagging requires a new patch version.
-- If `v0.2.0` already points elsewhere, publication exits without overwriting it.
+- If `v0.3.0` already points elsewhere, publication fails without overwriting it.
 
 ### PyPI
 
@@ -100,16 +101,16 @@ PyPI publication remains intentionally deferred. Enabling it requires a separate
 - 완성 버전은 `main` 대상의 검토된 release Pull Request로 승격합니다.
 - Tag와 GitHub Release는 `main`에 포함된 검증 commit에서만 생성합니다.
 
-### 현재 v0.2.0 결정
+### 현재 v0.3.0 결정
 
 ```toml
-version = "0.2.0"
+version = "0.3.0"
 status = "ready"
 channel = "development"
 publish_pypi = false
 ```
 
-세 package version은 모두 `0.2.0`입니다. Readiness 계보에는 PR #30, `cryptography 50.0.0`, PR #33의 clean-audit 강제가 포함됩니다.
+세 package version은 모두 `0.3.0`입니다. Readiness 계보에는 PR #43과 PR #44의 publisher 보완이 포함됩니다.
 
 ### 게시 정책
 
@@ -127,10 +128,11 @@ publish_pypi = false
 ```bash
 python scripts/release_validation.py
 python scripts/release_validation.py --print-status
-python scripts/release_validation.py --tag v0.2.0
+python scripts/release_validation.py --tag v0.3.0
 uv sync --all-packages --locked
 uv audit --locked
 uv run ruff check .
+uv run basedpyright
 uv run pytest
 ```
 
@@ -143,21 +145,21 @@ uv run pytest
 - Package version, manifest, 문서, clean audit policy, 제안 tag 검증
 - 잠긴 workspace 설치
 - Advisory 예외와 ignore 경고가 없는 dependency audit
-- Ruff와 전체 138개 테스트
+- Ruff와 전체 테스트
 - Workspace source override 없는 wheel·source distribution build
 - 새로운 Python 3.13 환경에 wheel 설치
 - Import, `modelctl version`, `modelctl --help` 검증
 - `SHA256SUMS` 생성
 - 임시 workflow artifact 업로드
 
-### v0.2.0 완료 절차
+### v0.3.0 완료 절차
 
 1. Release target을 정확히 검증된 `main` 계보로 유지합니다.
 2. Clean ready-release audit policy와 모든 완료 문서를 요구합니다.
 3. 모든 Pull Request workflow 통과를 요구합니다.
 4. 확인한 head SHA 그대로 최종 보안 수정을 `main`에 병합합니다.
 5. 정확한 `main` merge commit에서 게시를 실행하고 모든 gate를 다시 수행합니다.
-6. 불변 tag `v0.2.0`, Python 배포 파일 여섯 개, `SHA256SUMS`가 GitHub Release에 존재하는지 확인합니다.
+6. 불변 tag `v0.3.0`, Python 배포 파일 여섯 개, `SHA256SUMS`가 GitHub Release에 존재하는지 확인합니다.
 
 ### 신뢰 경계
 
@@ -172,8 +174,21 @@ uv run pytest
 - 기존 tag는 이동하지 않습니다.
 - 기존 GitHub Release asset은 교체하지 않습니다.
 - Tag 이후 수정은 새로운 patch version으로 처리합니다.
-- `v0.2.0`이 다른 commit을 가리키면 덮어쓰지 않고 게시를 종료합니다.
+- `v0.3.0`이 다른 commit을 가리키면 덮어쓰지 않고 실패 처리합니다.
 
 ### PyPI
 
 PyPI 게시는 의도적으로 연기했습니다. 활성화하려면 package name 소유권, 보호 environment, Trusted Publishing, dry-run 계획을 포함한 별도 검토 PR이 필요합니다. GitHub tag나 Release는 PyPI 게시를 수행하지 않습니다.
+
+## Publisher recovery / 게시 복구
+
+- Both publication workflows call `scripts/publish_release.py` and share a per-tag concurrency group with `cancel-in-progress: false`.
+- Only HTTP 404 means a tag or published Release is absent. Authentication, rate-limit, server, malformed-response, and transport failures stop publication.
+- A tag-creation conflict is re-read and accepted only when it resolves to the exact validated target commit, including annotated tags.
+- Releases are created as drafts. All six distributions and `SHA256SUMS` are downloaded and verified before publishing, then verified again after publication.
+- A completed release retry verifies the existing bundle against its own checksums without replacing assets; a complete draft can be verified and published.
+- An incomplete or corrupt release fails visibly. Inspect the retained draft and original run artifacts; never move the tag or automatically replace assets. Corrections to a tagged version require a new patch version under the immutability policy.
+- `workflow_dispatch` is validation-only. Its tag input does not change the checked-out commit; select the intended ref. A recovery publication must validate the exact tagged commit, not a later `main` commit with the same version.
+- The `/release` path checks out the requested merged PR commit and repeats audit, lint, strict type checks, tests, builds, installed typing-marker checks, and checksums. The selected commit must contain the shared publisher.
+
+두 게시 경로는 공통 publisher와 태그별 동시 실행 제어를 사용합니다. 404만 부재로 판단하며 다른 조회 오류는 실패 처리합니다. 태그 생성 충돌은 정확한 대상 commit을 재확인합니다. Release는 초안으로 만들고 배포 파일 6개와 체크섬을 내려받아 검증한 후 공개합니다. 재실행 시 기존 파일을 교체하지 않고 검증하며, 불완전한 초안은 공개하지 않습니다. 수동 workflow 실행은 검증 전용이며, 게시 복구에는 태그가 가리키는 정확한 commit을 다시 검증해야 합니다.

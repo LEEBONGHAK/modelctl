@@ -26,6 +26,7 @@ def test_release_workflow_runs_all_quality_gates_before_publication():
         ".release-smoke/bin/modelctl version",
         ".release-smoke/bin/modelctl --help",
         "sha256sum dist/* > dist/SHA256SUMS",
+        "python scripts/publish_release.py --verify-bundle",
     )
 
     for command in required_commands:
@@ -48,20 +49,25 @@ def test_release_workflow_only_auto_tags_trusted_ready_main_changes():
     assert "github.event.pull_request.merge_commit_sha" in content
     assert "needs.validate-and-build.outputs.status == 'ready'" in content
     assert "AUTO_CREATE_TAG" in content
-    assert 'ref="refs/tags/${RELEASE_TAG}"' in content
-    assert 'sha="${TARGET_SHA}"' in content
     assert "git fetch origin main" in content
-    assert "already points" in content
-    assert "no overwrite" in content
+    assert "python scripts/publish_release.py" in content
 
 
-def test_release_workflow_treats_missing_tag_as_absent():
+def test_both_publishers_share_serialization_and_implementation():
+    for name in ("release.yml", "release-command.yml"):
+        content = (ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
+        publisher = content.split("  publish-release:", 1)[1]
+        assert "group: modelctl-publish-${{ needs.validate-and-build.outputs.tag }}" in publisher
+        assert "cancel-in-progress: false" in publisher
+        assert "python scripts/publish_release.py" in publisher
+        assert "persist-credentials: false" in publisher
+        assert "gh release create" not in publisher
+
+
+def test_release_workflow_tracks_publisher_and_behavior_tests():
     content = workflow_text()
-
-    assert 'existing_tag_sha=""' in content
-    assert 'if ! existing_tag_sha="$(' in content
-    assert "--jq '.object.sha' 2>/dev/null" in content
-    assert "--jq '.object.sha' 2>/dev/null || true" not in content
+    assert content.count('- "scripts/publish_release.py"') == 2
+    assert content.count('- "tests/test_publish_release.py"') == 2
 
 
 def test_release_workflow_skips_closed_unmerged_pull_requests():
