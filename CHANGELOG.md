@@ -37,6 +37,12 @@ Third development release.
 - Added the same strict type-check gate to release validation so release paths cannot bypass primary CI typing.
 - Deferred profile portability from v0.3.0 because no concrete workflow need was demonstrated.
 
+### Fixed
+
+- Corrected first-release tag detection so a missing GitHub tag's 404 response cannot be mistaken for an existing tag SHA and silently suppress tag/Release creation.
+- Unified automatic and owner-command publishers with strict HTTP error handling, serialized tag creation, annotated-tag resolution, and draft-to-public asset/checksum verification.
+- Restored strict type checks and installed typing-marker checks to owner-command release validation.
+
 ### Security
 
 - Profiles contain only provider, model, launcher, and compatibility policy values.

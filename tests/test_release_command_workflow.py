@@ -41,6 +41,7 @@ def test_release_command_runs_complete_release_gates():
         "uv sync --all-packages --locked",
         "uv audit --locked",
         "uv run ruff check .",
+        "uv run basedpyright",
         "uv run pytest",
         "uv build packages/core --out-dir dist --no-sources",
         "uv build packages/sdk --out-dir dist --no-sources",
@@ -48,6 +49,7 @@ def test_release_command_runs_complete_release_gates():
         ".release-smoke/bin/modelctl version",
         ".release-smoke/bin/modelctl --help",
         "sha256sum dist/* > dist/SHA256SUMS",
+        "python scripts/publish_release.py --verify-bundle",
     )
 
     for command in required_commands:
@@ -57,8 +59,9 @@ def test_release_command_runs_complete_release_gates():
 def test_release_command_keeps_tag_release_and_pypi_immutable():
     content = workflow_text()
 
-    assert "refusing to move it" in content
-    assert "already exists; no overwrite" in content
+    assert "python scripts/publish_release.py" in content
+    assert 'AUTO_CREATE_TAG: "true"' in content
+    assert "ref: ${{ needs.validate-and-build.outputs.target_sha }}" in content
     assert "uv publish" not in content
     assert "publish-pypi" not in content
     assert "id-token: write" not in content

@@ -19,6 +19,8 @@ on:
       - "docs/RELEASE_CRITERIA.md"
       - "docs/RELEASING.md"
       - "scripts/release_validation.py"
+      - "scripts/publish_release.py"
+      - "tests/test_publish_release.py"
       - "tests/test_release_validation.py"
       - "tests/test_release_workflow.py"
       - "tests/test_release_command_workflow.py"
@@ -31,7 +33,7 @@ on:
       tag:
         description: "Release tag to validate, for example v0.2.0"
         required: true
-        default: "v0.2.0"
+        default: "v0.3.0"
         type: string
   push:
     branches:
@@ -50,6 +52,8 @@ on:
       - "docs/RELEASE_CRITERIA.md"
       - "docs/RELEASING.md"
       - "scripts/release_validation.py"
+      - "scripts/publish_release.py"
+      - "tests/test_publish_release.py"
       - "tests/test_release_validation.py"
       - "tests/test_release_workflow.py"
       - "tests/test_release_command_workflow.py"
@@ -171,6 +175,9 @@ jobs:
         shell: bash
         run: sha256sum dist/* > dist/SHA256SUMS
 
+      - name: Verify complete distribution bundle
+        run: python scripts/publish_release.py --verify-bundle
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: modelctl-release-${{ steps.release.outputs.version }}
@@ -179,12 +186,16 @@ jobs:
           retention-days: 30
 
   publish-release:
+    concurrency:
+      group: modelctl-publish-${{ needs.validate-and-build.outputs.tag }}
+      cancel-in-progress: false
     name: Create validated tag and GitHub Release
     needs: validate-and-build
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
        needs.validate-and-build.outputs.status == 'ready') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
+       needs.validate-and-build.outputs.status == 'ready') ||
       (github.event_name == 'pull_request' && github.event.action == 'closed' &&
        github.event.pull_request.merged == true &&
        github.event.pull_request.base.ref == 'main' &&
@@ -213,33 +224,4 @@ jobs:
           AUTO_CREATE_TAG: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main') }}
           REPOSITORY: ${{ github.repository }}
         shell: bash
-        run: |
-          set -euo pipefail
-
-          existing_tag_sha="$(
-            gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-              --jq '.object.sha' 2>/dev/null || true
-          )"
-
-          if [[ "${AUTO_CREATE_TAG}" == "true" ]]; then
-            if [[ -z "${existing_tag_sha}" ]]; then
-              gh api --method POST "repos/${REPOSITORY}/git/refs" \
-                -f ref="refs/tags/${RELEASE_TAG}" \
-                -f sha="${TARGET_SHA}" >/dev/null
-              existing_tag_sha="${TARGET_SHA}"
-              echo "Created ${RELEASE_TAG} at ${TARGET_SHA}."
-            elif [[ "${existing_tag_sha}" != "${TARGET_SHA}" ]]; then
-              echo "${RELEASE_TAG} already points to ${existing_tag_sha}; no overwrite." >&2
-              exit 0
-            fi
-          fi
-
-          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            echo "GitHub Release ${RELEASE_TAG} already exists; no overwrite."
-            exit 0
-          fi
-
-          gh release create "${RELEASE_TAG}" dist/* \
-            --verify-tag \
-            --generate-notes \
-            --title "${RELEASE_TAG}"
+        run: python scripts/publish_release.py

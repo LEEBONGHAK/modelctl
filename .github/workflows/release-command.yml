@@ -103,6 +103,9 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
+      - name: Type check v0.3 boundaries
+        run: uv run basedpyright
+
       - name: Run complete test suite
         run: uv run pytest
 
@@ -126,13 +129,25 @@ jobs:
       - name: Verify installed packages and CLI
         shell: bash
         run: |
-          .release-smoke/bin/python -c "import modelctl_cli, modelctl_core, modelctl_sdk"
+          .release-smoke/bin/python - <<'CHECK'
+          from importlib.resources import files
+
+          import modelctl_cli
+          import modelctl_core
+          import modelctl_sdk
+
+          assert files("modelctl_core").joinpath("py.typed").is_file()
+          assert files("modelctl_sdk").joinpath("py.typed").is_file()
+          CHECK
           .release-smoke/bin/modelctl version
           .release-smoke/bin/modelctl --help
 
       - name: Generate checksums
         shell: bash
         run: sha256sum dist/* > dist/SHA256SUMS
+
+      - name: Verify complete distribution bundle
+        run: python scripts/publish_release.py --verify-bundle
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
@@ -142,6 +157,9 @@ jobs:
           retention-days: 30
 
   publish-release:
+    concurrency:
+      group: modelctl-publish-${{ needs.validate-and-build.outputs.tag }}
+      cancel-in-progress: false
     name: Publish owner-approved GitHub Release
     needs: validate-and-build
     if: needs.validate-and-build.outputs.status == 'ready'
@@ -150,6 +168,11 @@ jobs:
       contents: write
 
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          ref: ${{ needs.validate-and-build.outputs.target_sha }}
+
       - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: modelctl-command-release-${{ needs.validate-and-build.outputs.version }}
@@ -161,32 +184,6 @@ jobs:
           RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
           TARGET_SHA: ${{ needs.validate-and-build.outputs.target_sha }}
           REPOSITORY: ${{ github.repository }}
+          AUTO_CREATE_TAG: "true"
         shell: bash
-        run: |
-          set -euo pipefail
-          existing_tag_sha="$(
-            gh api "repos/${REPOSITORY}/git/ref/tags/${RELEASE_TAG}" \
-              --jq '.object.sha' 2>/dev/null || true
-          )"
-
-          if [[ -z "${existing_tag_sha}" ]]; then
-            gh api --method POST "repos/${REPOSITORY}/git/refs" \
-              -f ref="refs/tags/${RELEASE_TAG}" \
-              -f sha="${TARGET_SHA}" >/dev/null
-            existing_tag_sha="${TARGET_SHA}"
-          fi
-
-          if [[ "${existing_tag_sha}" != "${TARGET_SHA}" ]]; then
-            echo "${RELEASE_TAG} already points to ${existing_tag_sha}; refusing to move it." >&2
-            exit 1
-          fi
-
-          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
-            echo "GitHub Release ${RELEASE_TAG} already exists; no overwrite."
-            exit 0
-          fi
-
-          gh release create "${RELEASE_TAG}" dist/* \
-            --verify-tag \
-            --generate-notes \
-            --title "${RELEASE_TAG}"
+        run: python scripts/publish_release.py
