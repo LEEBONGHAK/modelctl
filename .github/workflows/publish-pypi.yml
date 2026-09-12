@@ -1,0 +1,109 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Immutable release tag to publish"
+        required: true
+        default: "v0.1.0"
+        type: string
+      confirmation:
+        description: "Type publish-v0.1.0 to authorize the upload"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  validate-and-build:
+    name: Validate and build ${{ inputs.tag }}
+    if: inputs.tag == 'v0.1.0' && inputs.confirmation == 'publish-v0.1.0'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out immutable release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.tag }}
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Verify immutable tag and release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git describe --tags --exact-match)" = "v0.1.0"
+          python scripts/release_validation.py --tag v0.1.0
+
+      - name: Install locked workspace
+        run: uv sync --all-packages --locked
+
+      - name: Audit locked dependencies
+        run: uv audit --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Run complete test suite
+        run: uv run pytest
+
+      - name: Build all coordinated distributions
+        run: |
+          uv build packages/core --out-dir dist --no-sources
+          uv build packages/sdk --out-dir dist --no-sources
+          uv build apps/modelctl --out-dir dist --no-sources
+
+      - name: Verify distribution metadata
+        run: uvx twine check dist/*
+
+      - name: Verify expected v0.1.0 artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find dist -maxdepth 1 -type f | wc -l)" -eq 6
+          test "$(find dist -maxdepth 1 -type f -name '*0.1.0*' | wc -l)" -eq 6
+          ls -la dist
+
+      - name: Upload validated distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pypi-v0.1.0
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish v0.1.0 to PyPI
+    needs: validate-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/modelctl/0.1.0/
+
+    steps:
+      - name: Download validated distributions
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: pypi-v0.1.0
+          path: dist
+
+      - name: Publish modelctl distributions
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist
+          verify-metadata: true
+          skip-existing: false
+          print-hash: true
